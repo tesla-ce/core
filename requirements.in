@@ -1,0 +1,71 @@
+# DJango packages
+django==3.0.7
+django-configurations
+django-storages
+django-redis
+django-cache-memoize
+djangorestframework==3.11.0
+djangorestframework_simplejwt
+djangorestframework-datatables
+django-filter
+django-cors-headers
+django-rest-auth
+drf-extensions
+django-sslserver
+
+# Required for drf
+packaging
+
+# Parser for JSON forms
+html-json-forms
+jsonschema
+
+# Database connectors
+#mysql
+mysqlclient
+psycopg2
+
+# Celery
+celery==4.4.7
+django-celery-beat
+django-celery-results
+gevent
+# flower
+# django_celery_monitor
+rabbitmq-admin
+
+# Storage
+boto3
+
+# Utility packages
+requests
+simplejson
+
+# Vault SDK
+hvac[parser]>=0.10.9
+
+# Test requirements
+pytest
+pytest-cov
+pytest-dependency
+pytest-django
+
+# Documentation requirements
+sphinx
+sphinxcontrib-httpdomain
+recommonmark
+# m2r
+pyyaml
+uritemplate
+drf_yasg==1.17.1
+
+# Error tracking
+sentry-sdk
+
+# Prometheus exporter
+django_prometheus
+#celery-exporter
+
+
+# JWT token management
+# jwt
