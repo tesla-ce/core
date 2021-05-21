@@ -27,23 +27,6 @@ setuptools.setup(
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires='>=3.6',
-    package_data={
-        '': ['*.cfg', 'VERSION', 'messages.csv'],
-        'tesla_ce': ['lib/data/*',
-                     'templates/*',
-                     'static/*',
-                     'apps/lapi/templates/et/*',
-                     'apps/dashboards/templates/dashboards/*',
-                     'apps/dashboards/static/*',
-                     'apps/dashboards/static/assets/*'],
-    },
-    include_package_data=True,
+    python_requires='>=3.6',    
     install_requires=requirements,    
-    entry_points = {
-        'console_scripts': [
-            'tesla_ce=tesla_ce.manage:main',
-            'manage.py=tesla_ce.manage:main'
-        ],
-    }
 )
