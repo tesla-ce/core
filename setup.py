@@ -8,12 +8,14 @@ with open("requirements.txt", "r") as fh:
     requirements_list = requirements_raw.split('\n')
     requirements = []
     for req in requirements_list:
-        if not req.strip().startswith('#') and len(req.strip()) > 0:
+        # Skip comments and optional requirements
+        if not req.strip().startswith('#') and len(req.strip()) > 0 and not req.strip().startswith(
+                'mysqlclient') and not req.strip().startswith('psycopg2'):
             requirements.append(req)
 
 setuptools.setup(
+    version=0.0,
     name="tesla-ce",
-    version=0.0.0,
     author="Xavier Baro",
     author_email="xbaro@uoc.edu",
     description="TeSLA CE",
@@ -28,5 +30,9 @@ setuptools.setup(
         "Operating System :: POSIX :: Linux",
     ],
     python_requires='>=3.6',    
-    install_requires=requirements,    
+    install_requires=requirements,
+    extras_require={
+        'mysql': ["mysqlclient"],
+        'psql': ["psycopg2"]
+    }
 )
