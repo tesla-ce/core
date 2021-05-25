@@ -46,7 +46,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
-    steps:    
+    steps: 
+    - uses: actions/checkout@v2
     - name: Build package
       run: |
         # Build wheel
