@@ -23,8 +23,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/tesla-ce/core",
     project_urls = {
-        'documentation': 'https://tesla-ce.github.io/core/',
-        'source': 'https://github.com/tesla-ce/core',
+        'Documentation': 'https://tesla-ce.github.io/core/',
+        'Source': 'https://github.com/tesla-ce/core',
     },
     packages=setuptools.find_packages('src', exclude='__pycache__'),
     package_dir={'': 'src'},  # tell distutils packages are under src
