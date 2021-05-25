@@ -14,7 +14,7 @@ with open("requirements.txt", "r") as fh:
             requirements.append(req)
 
 setuptools.setup(
-    version=0.0,
+    version="0.0.0",
     name="tesla-ce",
     author="Xavier Baro",
     author_email="xbaro@uoc.edu",
@@ -22,6 +22,10 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/tesla-ce/core",
+    project_urls = {
+        'documentation': 'https://tesla-ce.github.io/core/',
+        'source': 'https://github.com/tesla-ce/core',
+    },
     packages=setuptools.find_packages('src', exclude='__pycache__'),
     package_dir={'': 'src'},  # tell distutils packages are under src
     classifiers=[
