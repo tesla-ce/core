@@ -44,7 +44,7 @@ jobs:
   publish:    
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    # if: github.event_name == 'release'
     steps: 
     - uses: actions/checkout@v2
     - name: Build package
@@ -58,5 +58,6 @@ jobs:
         # Publish the package
         python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
       env:
+        TWINE_USER: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       
