@@ -8,6 +8,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Build requirements
+      run: |        
+        python -m pip install --upgrade pip
+        python -m pip install pip-tools twine
+        pip-compile
     - uses: debricked/actions/scan@v1
       env:
         USERNAME: ${{ secrets.DEBRICKED_USERNAME }}
