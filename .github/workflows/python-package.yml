@@ -37,10 +37,12 @@ jobs:
         ports:
           - 8200:8200
       minio:
-        image: minio/minio
+        image: bitnami/minio:latest
         ports:
           - 9000:9000
-        options: server /data        
+        env: 
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
       rabbitmq:
         image: rabbitmq:3-management
         ports:
