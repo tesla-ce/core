@@ -1,3 +1,7 @@
+[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)  
+[![PyPi Version](https://img.shields.io/pypi/v/tesla-ce.svg)](https://pypi.python.org/pypi/tesla-ce/)
+
+
 # TeSLA CE Core System
 
 | :warning: This repository is **under construction**. Final release of TeSLA Community Edition source code is expected by the **end of 2021** |
