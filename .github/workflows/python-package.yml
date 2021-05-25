@@ -51,7 +51,7 @@ jobs:
       run: |
         # uild requirements
         python -m pip install --upgrade pip
-        python -m pip install pip-tools
+        python -m pip install pip-tools twine
         pip-compile
         # Build wheel
         python setup.py sdist bdist_wheel
