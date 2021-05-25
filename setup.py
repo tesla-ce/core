@@ -14,7 +14,7 @@ with open("requirements.txt", "r") as fh:
             requirements.append(req)
 
 setuptools.setup(
-    version="0.0.0",
+    version="0.0.1",
     name="tesla-ce",
     author="Xavier Baro",
     author_email="xbaro@uoc.edu",
