@@ -23,4 +23,4 @@ Contributing: Larger projects often have sections on contributing to their proje
 Credits: Include a section for credits in order to highlight and link to the authors of your project.
 
 ## License
-License: Finally, include a section for the license of your project. For more information on choosing a license, check out GitHub’s licensing guide!
+This project is licensed under AGPL v3 lisence
