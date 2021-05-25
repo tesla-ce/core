@@ -1,1 +1,5 @@
 venv/
+dist/
+build/
+src/tesla_ce.egg-info/
+requirements.txt
