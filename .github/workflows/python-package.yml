@@ -32,7 +32,23 @@ jobs:
           - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: .TeSLa-C3-password
-
+      vault:
+        image: vault
+        ports:
+          - 8200:8200
+      minio:
+        image: minio/minio
+        ports:
+          - 9000:9000
+        options: server /data        
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+          - 15672:15672
+        env:
+          RABBITMQ_DEFAULT_USER: rabbitmq
+          RABBITMQ_DEFAULT_PASS: rabbitmq
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -54,6 +70,31 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+      env:
+        MINIO_USER: minioadmin:minioadmin
+        # DJango Configuration
+        DJANGO_SETTINGS_MODULE: tesla_ce.settings
+        DJANGO_CONFIGURATION: Production        
+        # MySQL        
+        DB_ROOT_PASSWORD: .TeSLa-C3-password
+        DB_HOST: db
+        # Minio
+        TIMEZONE: Europe/Paris
+        MINIO_ACCESS_KEY: minioadmin
+        MINIO_SECRET_KEY: minioadmin
+        MINIO_BROWSER: on
+        STORAGE_ACCESS_KEY: minioadmin
+        STORAGE_SECRET_KEY: minioadmin
+        STORAGE_BUCKET_NAME: tesla
+        STORAGE_REGION: eu-west-1
+        STORAGE_URL: http://minio:9000
+        # RabbitMQ
+        RABBITMQ_USER: rabbitmq
+        RABBITMQ_GROUP: rabbitmq
+        # TEST ENVIRONMENT #        
+        TESLA_DOMAIN: tesla-ce
+        VAULT_MANAGEMENT: 1
+        VAULT_URL: http://vault:8200
   publish:    
     needs: build
     runs-on: ubuntu-latest
