@@ -3,6 +3,9 @@
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
+!src/tesla_ce/lib
+!src/tesla_ce/lib/deploy
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
@@ -201,7 +204,6 @@ dmypy.json
 /tmp/
 credentials.json
 
-!src/tesla_ce/lib
 /dev_conf.cfg
 deploy/
 tesla-ce.cfg
