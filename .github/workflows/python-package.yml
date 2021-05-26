@@ -37,6 +37,7 @@ jobs:
         image: vault
         ports:
           - 8200:8200
+        options: --cap-add=IPC_LOCK
       minio:
         image: bitnami/minio:latest
         ports:
