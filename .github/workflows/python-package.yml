@@ -71,8 +71,9 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      run: |
-        pytest ./src/tests ./src
+      run: |      
+        python setup.py install
+        pytest --cov=tesla_ce
       env:
         MINIO_USER: minioadmin:minioadmin
         # DJango Configuration
