@@ -205,7 +205,6 @@ dmypy.json
 credentials.json
 
 /dev_conf.cfg
-deploy/
 tesla-ce.cfg
 celerybeat.pid
 
