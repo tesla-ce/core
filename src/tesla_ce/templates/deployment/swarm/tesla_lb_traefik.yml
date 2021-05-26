@@ -1,0 +1,41 @@
+version: '3.5'
+services:
+  traefik:
+    image: traefik:v2.1
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      - "--serverstransport.insecureskipverify=true"
+      - "--certificatesresolvers.tesla-tlschallenge.acme.tlschallenge=true"
+      - "--certificatesresolvers.tesla-tlschallenge.acme.email={{ TESLA_ADMIN_MAIL }}"
+      - "--certificatesresolvers.tesla-tlschallenge.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.tesla-tlschallenge.acme.httpchallenge.entrypoint=http"
+      - "--providers.docker.network=tesla_public"
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/letsencrypt
+    networks:
+      - tesla_public
+volumes:
+  traefik_data:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/traefik
+      o: bind
+
+networks:
+  tesla_public:
+    external: true

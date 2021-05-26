@@ -1,0 +1,180 @@
+version: '3.5'
+services:
+  database:
+    image: mariadb
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+    networks:
+      - tesla_private
+    environment:
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/DB_ROOT_PASSWORD
+      - MYSQL_DATABASE={{ VAULT_DB_NAME }}
+      - MYSQL_USER={{ VAULT_DB_USER }}
+      - MYSQL_PASSWORD_FILE=/run/secrets/VAULT_DB_PASSWORD
+    volumes:
+      - db_volume:/var/lib/mysql
+    ports:
+      - 3306:3306
+    secrets:
+      - DB_ROOT_PASSWORD
+      - VAULT_DB_PASSWORD
+
+  vault:
+    image: vault
+    command: "server -config /local_config.json"
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      {% if DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.vault.rule=Host(`vault.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.vault.entrypoints=https"
+        - "traefik.http.routers.vault.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.vault-service.loadbalancer.server.port=8200"
+        - "traefik.http.routers.vault.service=vault-service"
+      {% endif %}
+    environment:
+      SKIP_SETCAP: 1
+      VAULT_API_ADDR: "https://vault.{{ TESLA_DOMAIN }}"
+    configs:
+      - source: vault_config
+        target: /local_config.json
+    networks:
+      - tesla_public
+      - tesla_private
+
+  redis:
+    image: redis:alpine
+    command: sh -c '[ "$$REDIS_PASS_FILE" ] && ( cat "$$REDIS_PASS_FILE" | xargs -0 redis-server --requirepass ) || redis-server'
+    environment:
+      REDIS_PASS_FILE: /run/secrets/REDIS_PASSWORD
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+    networks:
+      - tesla_private
+    volumes:
+      - redis_volume:/data
+    ports:
+      - 6379:6379
+    secrets:
+      - REDIS_PASSWORD
+
+  minio:
+    image: minio/minio
+    volumes:
+      - minio_volume:/data
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      {% if DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.minio.rule=Host(`storage.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.minio.entrypoints=https"
+        - "traefik.http.routers.minio.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.minio-service.loadbalancer.server.port=9000"
+        - "traefik.http.routers.minio.service=minio-service"
+      {% endif %}
+    environment:
+      MINIO_REGION_NAME: {{ STORAGE_REGION }}
+    command: server /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    secrets:
+      - source: STORAGE_ACCESS_KEY
+        target: access_key
+      - source: STORAGE_SECRET_KEY
+        target: secret_key
+    networks:
+      - tesla_public
+      - tesla_private
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      {% if DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.rabbitmq.rule=Host(`rabbitmq.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.rabbitmq.entrypoints=https"
+        - "traefik.http.routers.rabbitmq.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.rabbitmq-service.loadbalancer.server.port={{ RABBITMQ_ADMIN_PORT }}"
+        - "traefik.http.routers.rabbitmq.service=rabbitmq-service"
+      {% endif %}
+    environment:
+      RABBITMQ_DEFAULT_USER_FILE: /run/secrets/RABBITMQ_ADMIN_USER
+      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/RABBITMQ_ADMIN_PASSWORD
+      RABBITMQ_ERLANG_COOKIE: {{ RABBITMQ_ERLANG_COOKIE }}
+    secrets:
+      - RABBITMQ_ADMIN_USER
+      - RABBITMQ_ADMIN_PASSWORD
+      - RABBITMQ_ERLANG_COOKIE
+    networks:
+      - tesla_public
+      - tesla_private
+    volumes:
+      - rabbitmq_volume:/var/lib/rabbitmq
+    ports:
+      - 5672:5672
+volumes:
+  db_volume:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/db
+      o: bind
+  redis_volume:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/redis
+      o: bind
+  minio_volume:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/minio
+      o: bind
+  rabbitmq_volume:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/rabbitmq
+      o: bind
+
+secrets:
+  DB_ROOT_PASSWORD:
+    file: ./secrets/DB_ROOT_PASSWORD
+  VAULT_DB_PASSWORD:
+    file: ./secrets/VAULT_DB_PASSWORD
+  REDIS_PASSWORD:
+    file: ./secrets/REDIS_PASSWORD
+  STORAGE_ACCESS_KEY:
+    file: ./secrets/STORAGE_ACCESS_KEY
+  STORAGE_SECRET_KEY:
+    file: ./secrets/STORAGE_SECRET_KEY
+  RABBITMQ_ADMIN_USER:
+    file: ./secrets/RABBITMQ_ADMIN_USER
+  RABBITMQ_ADMIN_PASSWORD:
+    file: ./secrets/RABBITMQ_ADMIN_PASSWORD
+  RABBITMQ_ERLANG_COOKIE:
+    file: ./secrets/RABBITMQ_ERLANG_COOKIE
+
+configs:
+  vault_config:
+    file: ./config/vault_config.json
+
+networks:
+  tesla_public:
+    external: true
+  tesla_private:
+    external: true

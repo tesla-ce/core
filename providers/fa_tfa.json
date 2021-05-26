@@ -1,0 +1,17 @@
+{
+  "instrument": 4,
+  "acronym": "tfa",
+  "version": "1.0.0",
+  "url": "https://git.sunai.uoc.edu/tesla-ce/providers/tfr",
+  "image": "registry.sunai.uoc.edu:443/tesla-ce/providers/tfr:latest",
+  "name": "TeSLA Forensic Analysis",
+  "description": "Forensic Analysis instrument provider",
+  "has_service": false,
+  "service_port": null,
+  "options_schema": null,
+  "queue": "fa_tfa",
+  "allow_validation": true,
+  "alert_below": 0.3,
+  "warning_below": 0.6,
+  "inverted_polarity": true
+}

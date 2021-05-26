@@ -1,0 +1,9 @@
+include requirements.txt
+include LICENSE
+recursive-include src/tesla_ce/lib/data *
+recursive-include src/tesla_ce/management *
+recursive-include src/tesla_ce/templates *
+recursive-include src/tesla_ce/static *
+recursive-include src/tesla_ce/apps/lapi/templates *
+recursive-include src/tesla_ce/apps/dashboards/templates *
+recursive-include src/tesla_ce/apps/dashboards/static *

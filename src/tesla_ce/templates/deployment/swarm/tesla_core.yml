@@ -1,0 +1,71 @@
+version: '3.5'
+services:
+  {% for service in services %}
+  {{ service.module }}:
+  {% if service.module == "dashboards" %}
+    image: registry.sunai.uoc.edu/tesla-ce/angular/tesla-ce:latest
+  {% else %}
+    image: {{ DEPLOYMENT_IMAGE }}:{{ DEPLOYMENT_VERSION }}
+  {% endif %}
+  {% if service.deployment.type == "worker" %}
+    command: /venv/bin/celery -A tesla_ce worker -E -l info -P gevent
+  {% endif %}
+  {% if service.deployment.type == "beat" %}
+    command: /venv/bin/celery -A tesla_ce beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+  {% endif %}
+  {% if service.module == "dashboards" %}
+
+  {% else %}
+    healthcheck:
+      test: ["CMD-SHELL", "/venv/bin/tesla_ce check"]
+      start_period: 20s
+      interval: 30s
+  {% endif %}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      {% if service.deployment.public is True and DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.{{ service.module }}.rule=Host(`{{ TESLA_DOMAIN }}`) && PathPrefix(`/{{ service.deployment.base_path }}`)"
+        - "traefik.http.routers.{{ service.module }}.entrypoints=https"
+        - "traefik.http.routers.{{ service.module }}.tls.certresolver=tesla-tlschallenge"
+      {% if service.module == "dashboards" %}
+        - "traefik.http.services.{{ service.module }}-service.loadbalancer.server.port=80"
+      {% else %}
+        - "traefik.http.services.{{ service.module }}-service.loadbalancer.server.port=5000"
+      {% endif %}
+        - "traefik.http.routers.{{ service.module }}.service={{ service.module }}-service"
+      {% endif %}
+    environment:
+      VAULT_URL: {{ VAULT_URL }}
+      VAULT_ROLE_ID_FILE: {{ DEPLOYMENT_SECRETS_PATH }}/{{ service.module|upper }}_VAULT_ROLE_ID
+      VAULT_SECRET_ID_FILE: {{ DEPLOYMENT_SECRETS_PATH }}/{{ service.module|upper }}_VAULT_SECRET_ID
+      VAULT_MOUNT_PATH_KV: {{ VAULT_MOUNT_PATH_KV }}
+      VAULT_MOUNT_PATH_APPROLE: {{ VAULT_MOUNT_PATH_APPROLE }}
+      {% if service.module == "dashboards" %}
+      API_URL: https://{{ TESLA_DOMAIN }}/api/v2
+      {% endif %}
+    secrets:
+      - {{ service.module|upper }}_VAULT_ROLE_ID
+      - {{ service.module|upper }}_VAULT_SECRET_ID
+    networks:
+      - tesla_private
+      {% if service.deployment.public is True %}
+      - tesla_public
+      {% endif %}
+  {% endfor %}
+
+networks:
+  tesla_public:
+    external: true
+  tesla_private:
+    external: true
+secrets:
+  {% for service in services %}
+  {{ service.module|upper }}_VAULT_ROLE_ID:
+    file: ./secrets/{{ service.module|upper }}_VAULT_ROLE_ID
+  {{ service.module|upper }}_VAULT_SECRET_ID:
+    file: ./secrets/{{ service.module|upper }}_VAULT_SECRET_ID
+  {% endfor %}

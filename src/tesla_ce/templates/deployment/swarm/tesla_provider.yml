@@ -1,0 +1,40 @@
+version: '3.5'
+services:
+  {{ acronym }}_provider:
+    image: {{ image }}
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      {% if has_service and DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.{{ acronym }}.rule=Host(`{{ acronym }}.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.{{ acronym }}.entrypoints=https"
+        - "traefik.http.routers.{{ acronym }}.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.{{ acronym }}-service.loadbalancer.server.port={{ service_port }}"
+        - "traefik.http.routers.{{ acronym }}.service={{ acronym }}-service"
+      {% endif %}
+    environment:
+      ROLE_ID_FILE: "/run/secrets/ROLE_ID"
+      SECRET_ID_FILE: "/run/secrets/SECRET_ID"
+      API_URL: "https://{{ TESLA_DOMAIN }}"
+    secrets:
+      - source: {{ acronym|upper }}_ROLE_ID
+        target: ROLE_ID
+      - source: {{ acronym|upper }}_SECRET_ID
+        target: SECRET_ID
+    networks:
+      - tesla_public
+      - tesla_private
+secrets:
+  {{ acronym|upper }}_ROLE_ID:
+    file: ./secrets/{{ acronym|upper }}_ROLE_ID
+  {{ acronym|upper }}_SECRET_ID:
+    file: ./secrets/{{ acronym|upper }}_SECRET_ID
+
+networks:
+  tesla_public:
+    external: true
+  tesla_private:
+    external: true

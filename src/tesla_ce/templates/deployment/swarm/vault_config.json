@@ -1,0 +1,19 @@
+{
+  "ui": true,
+  "backend": {
+    "mysql": {
+      "ha_enabled": "true",
+      "address" : "{{ VAULT_DB_HOST}}:{{ VAULT_DB_PORT }}",
+      "username": "{{ VAULT_DB_USER }}",
+      "password": "{{ VAULT_DB_PASSWORD }}",
+      "database": "{{ VAULT_DB_NAME }}"
+    }
+  },
+  "listener": {
+    "tcp": {
+      "address": "0.0.0.0:8200",
+      "tls_disable": true
+    }
+  },
+  "disable_mlock": true
+}

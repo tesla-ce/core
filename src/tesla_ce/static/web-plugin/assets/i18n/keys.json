@@ -1,0 +1,18 @@
+{
+	"ETHICAL_WARNING": {
+    "HEADER": "tesla_warning",
+    "MESSAGE": "tesla_info",
+    "ACTIVE_INSTRUMENTS": "tesla_enabled_instruments"
+  },
+  "ACTIONS": {
+    "ACCEPT_CONSENT": "tesla_agreement_accept_btn",
+    "DECLINE_CONSENT": "tesla_agreement_decline_btn"
+  },
+  "INSTRUMENTS": {
+    "FR": "tesla_instrument_fr_info",
+    "KS": "tesla_instrument_ks_info",
+    "VR": "tesla_instrument_vr_info",
+    "PLAGIARISM": "tesla_instrument_tpt_info",
+    "FA": "tesla_instrument_fa_info"
+  }
+}
