@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        #python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.6]
     # Service containers to run with `runner-job`
     services:
       # Label used to access the service container
@@ -71,7 +72,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest
+        pytest --rootdir=src
       env:
         MINIO_USER: minioadmin:minioadmin
         # DJango Configuration
