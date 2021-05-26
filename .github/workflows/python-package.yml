@@ -84,7 +84,7 @@ jobs:
         MINIO_USER: minioadmin:minioadmin
         # DJango Configuration
         DJANGO_SETTINGS_MODULE: tesla_ce.settings
-        DJANGO_CONFIGURATION: Production        
+        DJANGO_CONFIGURATION: Test
         # MySQL        
         DB_ROOT_PASSWORD: .TeSLa-C3-password
         DB_HOST: localhost
@@ -103,6 +103,7 @@ jobs:
         RABBITMQ_GROUP: rabbitmq
         # TEST ENVIRONMENT #        
         TESLA_DOMAIN: tesla-ce
+        TESLA_ADMIN_MAIL: test@tesla-ce.org
         VAULT_MANAGEMENT: 1
         VAULT_URL: http://localhost:8200
   publish:    
