@@ -44,6 +44,7 @@ def create_module_client(client, module):
     assert 'role_id' in credentials and 'secret_id' in credentials
     config = ConfigManager(load_config=False)
     config.config.set('VAULT_SSL_VERIFY', client.config.config.get('VAULT_SSL_VERIFY'))
+    config.config.set('VAULT_TOKEN', None)
     config.load_vault(vault_url=client.config.config.get('VAULT_URL'),
                       role_id=credentials['role_id'],
                       secret_id=credentials['secret_id'])
