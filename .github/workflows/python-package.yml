@@ -133,8 +133,14 @@ jobs:
         with:
           fail_ci_if_error: true
           env_vars: PYTHON
+      - name: Export coverage data        
+        if: matrix.python-version == 3.9
+        run: |
+          coverage xml
+          cat coverage.xml
       - name: SonarQube analysis
         uses: docker://sonarsource/sonar-scanner-cli:latest
+        if: matrix.python-version == 3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
