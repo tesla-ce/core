@@ -131,7 +131,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           fail_ci_if_error: true
-          env_vars: PYTHON
+          env_vars: PYTHON=${{ matrix.python-version }}
   publish:    
     needs: build
     runs-on: ubuntu-latest
