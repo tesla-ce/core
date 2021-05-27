@@ -33,9 +33,9 @@ jobs:
           - 3306:3306
         env:
           MYSQL_ROOT_PASSWORD: .TeSLa-C3-password          
-          MYSQL_DATABASE: vault
-          MYSQL_USER: vault
-          MYSQL_PASSWORD: vault-password
+          MYSQL_DATABASE: tesla
+          MYSQL_USER: tesla
+          MYSQL_PASSWORD: tesla-password
         options: >-
           --health-cmd "mysqladmin ping"
           --health-interval 5s
@@ -47,7 +47,8 @@ jobs:
         ports:
           - 8200:8200
         env:
-          VAULT_LOCAL_CONFIG: '{"disable_mlock": true, "ui": true, "listener": {"tcp": {"address": "0.0.0.0:8200", "tls_disable": 1}}, "storage": {"mysql": {"ha_enabled": "false", "address": "db:3306", "username": "vault", "password": "vault-password", "database": "vault"}}}, "telemetry": { "prometheus_retention_time": "30s", "disable_hostname": "true" }'
+          VAULT_DEV_ROOT_TOKEN_ID: sRRkAJtED7TmrbSf3zheD3LM  
+          VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
         options: >-
           --cap-add=IPC_LOCK 
           --name=vault          
@@ -71,88 +72,78 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5        
-    steps:
-    - name: Prepare database for TeSLA
-      run: |
-        # Create a database for TeSLA
-        mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "CREATE DATABASE IF NOT EXISTS tesla CHARACTER SET utf8 COLLATE utf8_general_ci;";
-        # Create a user for TeSLA
-        mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "GRANT ALL ON tesla.* to tesla@'%' IDENTIFIED BY 'tesla-password';";
-        mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "GRANT ALL ON tesla.* to tesla@'localhost' IDENTIFIED BY 'tesla-password';";
-
-        docker ps
-        docker logs vault
-        docker logs db
-      
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install flake8 pytest pip-tools pytest-mock mock
-        if [ -f requirements.in ]; then pip-compile; fi
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Install TeSLA CE Package
-      run: |      
-        python setup.py install
-    - name: Test with pytest
-      run: |        
-        pytest --cov=tesla_ce
-      env:        
-        # DJango Configuration
-        DJANGO_SETTINGS_MODULE: tesla_ce.settings
-        DJANGO_CONFIGURATION: Test
-        # MySQL        
-        DB_ROOT_PASSWORD: .TeSLa-C3-password
-        DB_HOST: 127.0.0.1
-        DB_NAME: tesla
-        DB_USER: tesla
-        DB_PORT: 3306
-        DB_PASSWORD: tesla-password
-        # Minio
-        TIMEZONE: Europe/Paris
-        MINIO_ACCESS_KEY: minioadmin
-        MINIO_SECRET_KEY: minioadmin
-        MINIO_BROWSER: on
-        STORAGE_ACCESS_KEY: minioadmin
-        STORAGE_SECRET_KEY: minioadmin
-        STORAGE_BUCKET_NAME: tesla
-        STORAGE_REGION: eu-west-1
-        STORAGE_URL: http://localhost:9000
-        # RabbitMQ
-        RABBITMQ_USER: rabbitmq
-        RABBITMQ_GROUP: rabbitmq
-        # TEST ENVIRONMENT #        
-        TESLA_DOMAIN: tesla-ce
-        TESLA_ADMIN_MAIL: test@tesla-ce.org
-        VAULT_MANAGEMENT: 1
-        VAULT_URL: http://localhost:8200        
+    steps:    
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install flake8 pytest pip-tools pytest-mock mock
+          if [ -f requirements.in ]; then pip-compile; fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Install TeSLA CE Package
+        run: |      
+          python setup.py install
+      - name: Test with pytest
+        run: |        
+          pytest --cov=tesla_ce
+        env:        
+          # DJango Configuration
+          DJANGO_SETTINGS_MODULE: tesla_ce.settings
+          DJANGO_CONFIGURATION: Test
+          # MySQL        
+          DB_ROOT_PASSWORD: .TeSLa-C3-password
+          DB_HOST: 127.0.0.1
+          DB_NAME: tesla
+          DB_USER: tesla
+          DB_PORT: 3306
+          DB_PASSWORD: tesla-password
+          # Minio
+          TIMEZONE: Europe/Paris
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin
+          MINIO_BROWSER: on
+          STORAGE_ACCESS_KEY: minioadmin
+          STORAGE_SECRET_KEY: minioadmin
+          STORAGE_BUCKET_NAME: tesla
+          STORAGE_REGION: eu-west-1
+          STORAGE_URL: http://localhost:9000
+          # RabbitMQ
+          RABBITMQ_USER: rabbitmq
+          RABBITMQ_GROUP: rabbitmq
+          # TEST ENVIRONMENT #        
+          TESLA_DOMAIN: tesla-ce
+          TESLA_ADMIN_MAIL: test@tesla-ce.org
+          VAULT_MANAGEMENT: 1
+          VAULT_URL: http://localhost:8200       
+          VAULT_DEV_ROOT_TOKEN_ID: sRRkAJtED7TmrbSf3zheD3LM
+          VAULT_TOKEN: sRRkAJtED7TmrbSf3zheD3LM            
   publish:    
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps: 
-    - uses: actions/checkout@v2
-    - name: Build package
-      run: |
-        # Build requirements
-        python -m pip install --upgrade pip
-        python -m pip install pip-tools twine
-        pip-compile
-        # Build wheel
-        python setup.py sdist bdist_wheel
-        # Publish the package
-        python -m twine upload dist/*
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      
+      - uses: actions/checkout@v2
+      - name: Build package
+        run: |
+          # Build requirements
+          python -m pip install --upgrade pip
+          python -m pip install pip-tools twine
+          pip-compile
+          # Build wheel
+          python setup.py sdist bdist_wheel
+          # Publish the package
+          python -m twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+
