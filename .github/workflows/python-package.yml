@@ -46,7 +46,8 @@ jobs:
         ports:
           - 8200:8200
         env:
-          VAULT_DEV_ROOT_TOKEN_ID: sRRkAJtED7TmrbSf3zheD3LM          
+          VAULT_DEV_ROOT_TOKEN_ID: sRRkAJtED7TmrbSf3zheD3LM  
+          VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
         options: >-
           --cap-add=IPC_LOCK 
           --name=vault          
@@ -128,7 +129,7 @@ jobs:
         TESLA_ADMIN_MAIL: test@tesla-ce.org
         VAULT_MANAGEMENT: 1
         VAULT_URL: http://localhost:8200
-        VAULT_TOKEN: s.sRRkAJtED7TmrbSf3zheD3LM 
+        VAULT_TOKEN: sRRkAJtED7TmrbSf3zheD3LM 
   publish:    
     needs: build
     runs-on: ubuntu-latest
