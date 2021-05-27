@@ -133,14 +133,15 @@ jobs:
         with:
           fail_ci_if_error: true
           env_vars: PYTHON
-      - name: Export coverage data for SonarQube        
+      - name: Export coverage and lint data for SonarQube        
         if: matrix.python-version == 3.9
         env:
           TESLA_VERSION: 0.0.1
         run: |
           coverage xml          
           sed -i 's+${{ env.LD_LIBRARY_PATH }}/python${{ matrix.python-version }}/site-packages/tesla_ce-${{ env.TESLA_VERSION }}-py${{ matrix.python-version }}.egg+src+g' coverage.xml
-          cat coverage.xml
+          python -m pip install pyflakes pylint pylint-django
+          pylint --load-plugins pylint_django --exit-zero --max-line-length=120 src/tesla_ce tests/ -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" | tee pylint.txt
       - name: SonarQube analysis
         uses: docker://sonarsource/sonar-scanner-cli:latest
         if: matrix.python-version == 3.9
