@@ -1,5 +1,6 @@
 [![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)  
 [![PyPi Version](https://img.shields.io/pypi/v/tesla-ce.svg)](https://pypi.python.org/pypi/tesla-ce/)
+[![codecov](https://codecov.io/gh/tesla-ce/core/branch/main/graph/badge.svg?token=PJJQMW981P)](https://codecov.io/gh/tesla-ce/core)
 
 
 # TeSLA CE Core System
