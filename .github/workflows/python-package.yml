@@ -133,12 +133,13 @@ jobs:
         with:
           fail_ci_if_error: true
           env_vars: PYTHON
-      - name: Export coverage data        
+      - name: Export coverage data for SonarQube        
         if: matrix.python-version == 3.9
+        env:
+          TESLA_VERSION: 0.0.1
         run: |
-          coverage xml
-          cat coverage.xml
-          sed -i 's+${{ env.LD_LIBRARY_PATH }}/python3.9/site-packages/tesla_ce-0.0.1-py3.9.egg+src+g' coverage.xml
+          coverage xml          
+          sed -i 's+${{ env.LD_LIBRARY_PATH }}/python${{ matrix.python-version }}/site-packages/tesla_ce-${{ env.TESLA_VERSION }}-py${{ matrix.python-version }}.egg+src+g' coverage.xml
           cat coverage.xml
       - name: SonarQube analysis
         uses: docker://sonarsource/sonar-scanner-cli:latest
