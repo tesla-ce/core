@@ -1,9 +1,9 @@
-[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)  
 [![PyPi Version](https://img.shields.io/pypi/v/tesla-ce.svg)](https://pypi.python.org/pypi/tesla-ce/)
 [![codecov](https://codecov.io/gh/tesla-ce/core/branch/main/graph/badge.svg?token=PJJQMW981P)](https://codecov.io/gh/tesla-ce/core)
 [![Vulnerability scan](https://github.com/tesla-ce/core/actions/workflows/debricked.yml/badge.svg)](https://github.com/tesla-ce/core/actions/workflows/debricked.yml)
 [![CodeQL](https://github.com/tesla-ce/core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/tesla-ce/core/actions/workflows/codeql-analysis.yml)
-
+[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)  
+[![Quality gate](https://sonar.sunai.uoc.edu/api/project_badges/quality_gate?project=tesla-ce_core)](https://sonar.sunai.uoc.edu/dashboard?id=tesla-ce_core)
 # TeSLA CE Core System
 
 | :warning: This repository is **under construction**. Final release of TeSLA Community Edition source code is expected by the **end of 2021** |
@@ -25,4 +25,4 @@ Contributing: Larger projects often have sections on contributing to their proje
 Credits: Include a section for credits in order to highlight and link to the authors of your project.
 
 ## License
-This project is licensed under AGPL v3 lisence
+This project is licensed under [AGPL v3 licence](http://www.gnu.org/licenses/agpl-3.0).
