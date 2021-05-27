@@ -129,9 +129,10 @@ jobs:
         uses: codecov/codecov-action@v1.5.0
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          PYTHON: ${{ matrix.python-version }}
         with:
           fail_ci_if_error: true
-          env_vars: PYTHON=${{ matrix.python-version }}
+          env_vars: PYTHON
   publish:    
     needs: build
     runs-on: ubuntu-latest
