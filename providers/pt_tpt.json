@@ -1,0 +1,17 @@
+{
+  "instrument": 5,
+  "acronym": "tpt",
+  "version": "1.0.0",
+  "url": "https://git.sunai.uoc.edu/tesla-ce/providers/tpt",
+  "image": "registry.sunai.uoc.edu:443/tesla-ce/providers/tpt:latest",
+  "name": "TeSLA Plagiarism Tool",
+  "description": "Plagiarism Tool instrument provider",
+  "has_service": false,
+  "service_port": null,
+  "options_schema": null,
+  "queue": "pt_tpt",
+  "allow_validation": true,
+  "alert_below": 0.3,
+  "warning_below": 0.6,
+  "inverted_polarity": true
+}

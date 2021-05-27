@@ -1,0 +1,25 @@
+code;datatype;description;meaning;en;ca;es
+OK;html;Status message;Everything went as expected;Ok;Vàlid;Valido
+ERROR;html;Status message;Something failed;Error;Error;Error
+WARNING;html;Status message;There is something that should be checked;Warning;Avís;Aviso
+ALERT;html;Status message;There is something that must be checked;Alert;Alerta;Alerta
+PROVIDER_MULTIPLE_PEOPLE;html;Provider message;Provider detected multiple persons during the assessment activity;Multiple people detected;Varies persones detectades;Varias personas detectadas
+PROVIDER_INCOMPLETE_ENROLMENT;html;Provider message;;;;
+SENSOR_CAMERA_NO_GRANT;html;Sensor message;;;;
+SENSOR_MICROPHONE_NO_GRANT;html;Sensor message;;;;
+SENSOR_CAMERA_MISSING;html;Sensor message;;;;
+SENSOR_MICROPHONE_MISSING;html;Sensor message;;;;
+SENSOR_CAMERA_APP_BLOCKING;html;Sensor message;;;;
+SENSOR_MICROPHONE_APP_BLOCKING;html;Sensor message;;;;
+SENSOR_BROWSER_NOT_SUPPORTED;html;Sensor message;;;;
+INTEGRITY_OTHER_WINDOW;html;Integrity message;;;;
+SENSOR_MICROPHONE_STARTED;html;Sensor message;The microphone started recording;Microphone started;Micròfon engegat;Micro encendido
+SENSOR_CAMERA_STARTED;html;Sensor message;The camera started recording;Camera started;Càmera engegada;Camera encendida
+SENSOR_CAMERA_BLACK_IMAGE;html;Sensor message;Camera is recording black images;Black image;Imatge en negre;Imágen en negro
+PROVIDER_NO_FACE_DETECTED;html;Provider message;Cannot detect any face on provided image;No face detected;No s'ha detectat cap cara;No se ha detectado ninguna cara
+PROVIDER_INVALID_MIMETYPE;html;Provider message;Mimetype on received request is not accepted;Invalid Mimetype;El mimetype no és vàlid;El mimetype no es válido
+PROVIDER_BLACK_IMAGE;html;Provider message;Black image provided by sensor;Imatge negra del sensor;Imágen negra del sensor
+PROVIDER_INVALID_SAMPLE_DATA;html;Provider message;;;;
+PROVIDER_MISSING_MIMETYPE;html;Provider message;;;;
+PROVIDER_EXTERNAL_SERVICE_DOWN;html;Provider message;;;;
+PROVIDER_EXTERNAL_SERVICE_TIMEOUT;html;Provider message;;;;

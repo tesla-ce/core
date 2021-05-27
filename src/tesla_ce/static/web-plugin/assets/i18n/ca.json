@@ -1,0 +1,27 @@
+{
+    "ACTIONS": {
+        "ACCEPT_CONSENT": "Acceptar",
+        "CLEAR": "Neteja",
+        "CLOSE": "Tanca",
+        "DECLINE_CONSENT": "Declinar"
+    },
+    "ETHICAL_WARNING": {
+        "ACTIVE_INSTRUMENTS": "Els següents instruments estan seleccionats",
+        "HEADER": "Avís",
+        "MESSAGE": "Aquesta activitat està gestionada pel sistema TeSLA. A continuació es mostren els instruments que s'utilitzaran durant i/o després de l'activitat. Tingues en compte que en el moment que acceptis pot ser que s'activi la teva webcam i el micròfon."
+    },
+    "INSTRUMENTS": {
+        "FA": "Estil d'escriptura",
+        "FR": "Reconeixement facial",
+        "KS": "Ritme d'escriptura des de teclat",
+        "PLAGIARISM": "Detecció de plagi",
+        "VR": "Reconeixement de veu"
+    },
+    "NOTIFICATION": {
+        "CONSENT": {
+            "ACCEPTED": "Consentiment ètic acceptat"
+        },
+        "HEADER": "Notificacions",
+        "SESSION_EXPIRED": "La sessió ha caducat. Si us plau torni a entrar."
+    }
+}

@@ -1,0 +1,45 @@
+{
+  "mode": "verification",
+  "learner": {
+    "id": 1,
+    "learner_id": "9cfd197a-3b42-4361-841a-a45ef435b0e6",
+    "first_name": "Xavier",
+    "last_name": "Bar\u00f3 Sol\u00e9",
+    "picture": null,
+    "institution_id": 1
+  }, "session_id": 84,
+  "activity": {
+    "enabled": true,
+    "course": {
+      "id": 1,
+      "code": "course 1",
+      "description": "",
+      "start": null,
+      "end": null},
+    "id": 1,
+    "name": "quiz1",
+    "description": "",
+    "start": null,
+    "end": null,
+    "allow_reject_capture": false,
+    "redirect_reject_url": null,
+    "rejected_message": null,
+    "vle_id": 1
+  },
+  "accessibility": {
+    "high_contrast": false, "big_fonts": false, "text_to_speech": false
+  },
+  "instruments": [1, 2, 3, 4, 5],
+  "sensors": {"camera": [1], "keyboard": [2], "microphone": [3], "assessment": [4, 5]},
+  "api_url": "http://localhost:8000",
+  "dashboard_url": null,
+  "logo_url": null,
+  "token": {
+    "access_token": "eyJhbGciOiAiUlMyNTYiLCAidHlwIjogIkpXVCIsICJ2ZXIiOiAidXNlcnM6djEifQ==.eyJpc3MiOiAiaHR0cHM6Ly92YXVsdC5sb2NhbHRlc2xhY2UucmNvZC5uZXQiLCAiaWF0IjogMTU5NjYyMDkyMywgImV4cCI6IDE1OTY2MjE4MjMsICJncm91cCI6ICJ1c2VycyIsICJzdWIiOiAiYWRtaW5fbW9vZGxlQHRlc2xhLXByb2plY3QuZXUiLCAidHlwZSI6ICJ1c2VyIiwgInBrIjogMSwgInNjb3BlIjogWyIvYXBpL3YyL2luc3RpdHV0aW9uLzEvdXNlci8xLyoiXSwgImZpbHRlcnMiOiBudWxsfQ==.cHhwRGNxQmorSnpTL05JQStTcTdqRGFPRW5EVStBL3RxbjMrdzBxVmplOTJNbWJIV3BjREhxOUcwMFZiaThoQWpCbEpXS1dCMko5Z3JOcDBRVUllUlJ6ajJ6Y1dDS1E2bDBqZ3NGY1NEK2I3NnpvcU1sTERGQXQ1SXU5ekd1cktneFNLN1cwWURIUGtNNEpiMEtOM25jZ3MxNGZMNk5JSnZyREM5c1dEaDBuWVVNZERZYzJzdVh3SnJ0ekFNYVpwS3RjRm1mS2Z1QkZpSmhrUjRUcHQ2bnJFZXlRd21mL09JTG9zcStKU2VHMHdJcXM1SUY1endHSjZ3eURXczV4UWs3UFpSbVBnN0NUMTdNeEZ2Q3ZXakU4MEdHQmk0Q05OckY1QlUwUG5wT21pcWNSdVZ6ai9XZGgvTVh6aTNWbXVESTBJTmJzRE1Xayt6b0h2M3pEWVJTUUpReVY4UnRTdEtRQkRJZEx4bUEzSFFDREVkeWQ3ZzE0VlpOZ1c5VjkyUityZEMzRlFvRDhZSnB3enoxbmlvWVdQazhZaGI1OFc0Rmd3UU4rb0VvOGtYNzlHQVRTUlUxbVVpQklINHBkMmxVSGQrekRMYWdhS0VDVDdxaEFuWkFOOGZGMlFqZllWSkFtZlFNd0pOMys3RFNaT29nYWxCL2dBUFAvWUd4bldBcE1tMEdGUXlVZTM1TnFWMWl4WVhvbGVRY01FeUhMcWxHTUxUbThSMW8ySHlKYnVNUkRZY2lJdE1vOXNxOWxyTkd5UzI0SXRjcTdQd0REZThaMjJwRWJpOThXZmphT29RK0N5WkUxWXQwRG5uQXVtYWJFVlJNNHAzWjRsbVp0Q21iK0JGTUxvd25KT0hiK2lzQm0rOVU1MUpaTXlNSC9zNTJvNEN5ejZkWlk9",
+    "refresh_token": "eyJhbGciOiAiUlMyNTYiLCAidHlwIjogIkpXVCIsICJ2ZXIiOiAidXNlcnM6djEifQ==.eyJpc3MiOiAiaHR0cHM6Ly92YXVsdC5sb2NhbHRlc2xhY2UucmNvZC5uZXQiLCAiaWF0IjogMTU5NjYyMDkyMywgImV4cCI6IDE1OTY3MDczMjMsICJncm91cCI6ICJ1c2VycyIsICJzdWIiOiAiYWRtaW5fbW9vZGxlQHRlc2xhLXByb2plY3QuZXUiLCAidHlwZSI6ICJ1c2VyIiwgInBrIjogMSwgInNjb3BlIjogIi9hcGkvdjIvYXV0aC90b2tlbi9yZWZyZXNoIiwgImZpbHRlcnMiOiBudWxsLCAidHRsIjogMTV9.RVU2UDVQRVg2aFVvSW5qQjRWaTZKNlJ4aXMzbFZhblFTd1FlSU14QjBldGVKcVNtRDM3UUMyUlZtRWZmUENhQ1poYlBwNk4wYVp2ckozeHNndU5iVE1naXdLQjlpdjRrcVBGMHhxY3pSWGk4clhqc01IaTdxV2RHY2ZaNDROU21oMkowcWdxZ3RmZlBSVm9jR0VnaXFuWUcwcE9zb2o2TEQ3c2lNYjlDT0l5ajk3dVdCT01BZzEwK3JGcjZvd0dLN2M2UStSZDlCRlY1V091V0FITlZNQjJ5NFpJT3BjVXdMemNDaE1QcHVNaE9Vay9Bc3B3Q3QwQW9FaVNPK1B0OVFTZVRrZ0UwcitQUTEzbUgrWmdaZ1oyaUhaVjJLcG13aXdmWTl1azl1NUxHRWY1V2hTVXhPcGxUZmQ2MFpWTTg1NEl5WFh0RGFOV21YMzZ4OUZmYys2K0xpZDVVK3M2cUV0emF5ejlHMm9TT2dFQ3VpbGEwbmtwdXJzS0UzY3lKWjd2aTFxbWwwQzFXWUROUUREMitYWHM3aFZkZW81OEQ2OUtDM3ZJajlWazViaTJlRVpKTWhJWUFua1ZiKyt4RFUwQlpxQWRDbTlGUzlVRnlCNUg1bHhrTGZEMEhONUlXdTlDdzJIYnhlNXdlZGFEQkxidlFuTjlvUWU4QUkyM2JvWHVILzBFeDJydHlYT0p4amhxa2d4RnNhUUU3UkZRYzBoTmtQT2NNTGppa0psSGp1T0ZxWUx1VUdmRFdjRUhDL3RJWlo1S0tNQlk2ZEUzNHNXMlh4UFYzTVQ1Q0R5UGlnUmtOTW94cU1Lc1JvdWt6RGZBNjlWWEVXUkZMUXVoRmEvYzFoVTVoVUdqSVB2QmRwaVJKYWVOa3VVSlYwVlNkRWlEMzhEcSsxVFE9"
+  },
+  "enrolment": null,
+  "launcher": null,
+  "base_url": "http://localhost:4200/",
+  "locale": "ca"
+}

@@ -1,0 +1,27 @@
+{
+    "ACTIONS": {
+        "ACCEPT_CONSENT": "Accept",
+        "CLEAR": "Clear",
+        "CLOSE": "Close",
+        "DECLINE_CONSENT": "Reject"
+    },
+    "ETHICAL_WARNING": {
+        "ACTIVE_INSTRUMENTS": "The following instruments are enabled",
+        "HEADER": "Warning",
+        "MESSAGE": "This activity is managed by the TeSLA system. Below are the instruments that will be used during and/or after the activity. Please note that your webcam and microphone may be activated at the time you accept."
+    },
+    "INSTRUMENTS": {
+        "FA": "Forensic Analysis",
+        "FR": "Face recognition",
+        "KS": "Keystroke dynamics recognition",
+        "PLAGIARISM": "Plagiarism detection",
+        "VR": "Voice recognition"
+    },
+    "NOTIFICATION": {
+        "CONSENT": {
+            "ACCEPTED": "Ethical warning accepted"
+        },
+        "HEADER": "Notifications",
+        "SESSION_EXPIRED": "Session has expired. Please log in again."
+    }
+}

@@ -1,0 +1,259 @@
+/*
+ * Copyright (c) 2020 Xavier Baró
+ *
+ *     This program is free software: you can redistribute it and/or modify
+ *     it under the terms of the GNU Affero General Public License as
+ *     published by the Free Software Foundation, either version 3 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This program is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU Affero General Public License for more details.
+ *
+ *     You should have received a copy of the GNU Affero General Public License
+ *     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/*
+ * Modal dialogs
+*/
+.tesla-modal {
+    position: fixed;
+    background: rgba(0, 0, 0, .6);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-clip: border-box;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: .25rem;
+}
+
+.tesla-modal-header {
+    padding: .75rem 1.25rem;
+    margin-bottom: 0;
+    background-color: rgba(0,0,0,.03);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.tesla-modal-header:first-child {
+    border-radius: calc(.25rem - 1px) calc(.25rem - 1px) 0 0;
+}
+
+.tesla-modal-body {
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    padding: 1.25rem;
+}
+
+.tesla-modal-content {
+    width: fit-content;
+    max-width: 100%;
+    height: fit-content;
+    max-height: 100%;
+    background: white;
+    border-radius: .25rem;
+}
+
+.tesla-modal-footer:last-child {
+    border-radius: 0 0 calc(.25rem - 1px) calc(.25rem - 1px);
+}
+
+.tesla-modal-footer {
+    padding: .75rem 1.25rem;
+    background-color: rgba(0,0,0,.03);
+    border-top: 1px solid rgba(0,0,0,.125);
+}
+
+.tesla-visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+}
+
+.tesla-message {
+    color: #6c757d!important;
+}
+
+.tesla-message-ethicwarning {
+
+}
+
+.tesla-modal.tesla-modal-top {
+    z-index: 1000003;
+}
+
+/*
+ *  TeSLA Menu
+ */
+.tesla-toggle {
+  cursor: move;
+  text-align: center;
+  height: 100px;
+  width: 100px;
+  border-radius: 50%;
+  /*position: absolute;*/
+  position: fixed;
+  /* margin: auto; */
+  top: 0px;
+  /*bottom: 0px;
+  left: 0px;*/
+  right: 0px;
+  z-index: 100002;
+}
+
+.tesla-toggle.tesla-no-logo {
+  background-color: #1a75b8;
+}
+
+.tesla-icon-menu {
+  font-size: 60px;
+  color: white;
+  display: block;
+  margin-top: 20px;
+  transition: 0.7s;
+}
+
+.tesla-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.2;
+    z-index: 100000;
+    background-color: black;
+}
+
+.tesla-menu {
+  background-color: white;
+  height: 100px;
+  width: 100px;
+  transform: scale(0);
+  border-radius: 50%;
+  border-style: double;
+  border-color: #1a75b8;
+  /*position: absolute;*/
+  position: fixed;
+  margin: auto;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  z-index: 100001;
+  transition: 0.7s;
+  box-sizing: initial;
+}
+
+.tesla-menu > a {
+  display: inline-block;
+  position: absolute;
+  font-size: 15px;
+  color: #BBBBBB;
+  outline: none;
+}
+
+.tesla-menu > a:nth-child(1){
+  top: 6px;
+  left: 45px;
+}
+
+.tesla-menu > a:nth-child(2){
+  top: 24px;
+  left: 77px;
+}
+
+.tesla-menu > a:nth-child(3){
+  top: 58px;
+  left: 76px;
+}
+
+.tesla-menu > a:nth-child(4){
+  top: 78px;
+  left: 42px;
+}
+
+.tesla-menu > a:nth-child(5){
+  top: 58px;
+  left: 10px;
+}
+
+.tesla-menu > a:nth-child(6){
+  top: 23px;
+  left: 12px;
+}
+
+.tesla-menu > a.tesla-network-stat {
+  top: 41px;
+  left: 37px;
+  font-size: 20px;
+}
+
+.tesla-menu > a:not(.tesla-menu-status):hover {
+  color: #1a75b8;
+}
+
+.tesla-menu > a.tesla-menu-status.tesla-status-ok {
+  color: #15b453;
+}
+.tesla-menu > a.tesla-menu-status.tesla-status-warning {
+  color: #efbb2d;
+}
+.tesla-menu > a.tesla-menu-status.tesla-status-error {
+  color: #e52e06;
+}
+
+
+/*
+* Notification badge
+*/
+.tesla-notification {
+  padding: 15px 26px;
+  position: relative;
+  display: inline-block;
+}
+
+.tesla-badge {
+    position: absolute;
+    top: -5px;
+    right: -7px;
+    padding: 2px 5px;
+    border-radius: 100%;
+    background-color: red;
+    font-size: 8px;
+    color: white;
+}
+
+
+/*
+* Alerts table
+*/
+table.tesla-alerts-table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table.tesla-alerts-table td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}

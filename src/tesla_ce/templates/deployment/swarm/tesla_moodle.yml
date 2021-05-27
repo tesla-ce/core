@@ -1,0 +1,99 @@
+version: '3.5'
+services:
+  moodle:
+    image: registry.sunai.uoc.edu/tesla-ce/teslace-moodle-plugin:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      {% if DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.moodle.rule=Host(`moodle.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.moodle.entrypoints=https"
+        - "traefik.http.routers.moodle.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.moodle-service.loadbalancer.server.port=80"
+        - "traefik.http.routers.moodle.service=moodle-service"
+      {% endif %}
+    environment:
+      MOODLE_DBHOST: "{{ MOODLE_DB_HOST }}"
+      MOODLE_DBUSER: "{{ MOODLE_DB_USER }}"
+      MOODLE_DBNAME: "{{ MOODLE_DB_NAME }}"
+      MOODLE_DBPASS_FILE: "/run/secrets/MOODLE_DB_PASSWORD"
+      MOODLE_DBPORT: {{ MOODLE_DB_PORT }}
+      MOODLE_DBPREFIX: "{{ MOODLE_DB_PREFIX }}"
+      CRON_MOODLE_INTERVAL: {{ MOODLE_CRON_INTERVAL }}
+      MOODLECFG_SSLPROXY: 'true'
+      MOODLE_WWWROOT: "https://moodle.{{ TESLA_DOMAIN }}"
+      MOODLE_FULLNAME: "{{ MOODLE_FULL_NAME }}"
+      MOODLE_SHORTNAME: "{{ MOODLE_SHORT_NAME }}"
+      MOODLE_SUMMARY: "{{ MOODLE_SUMMARY }}"
+      MOODLE_ADMINUSER: "{{ MOODLE_ADMIN_USER }}"
+      MOODLE_ADMINPASS_FILE: "/run/secrets/MOODLE_ADMIN_PASSWORD"
+      MOODLE_ADMINEMAIL: "{{ MOODLE_ADMIN_EMAIL }}"
+      ROLE_ID_FILE: "/run/secrets/ROLE_ID"
+      SECRET_ID_FILE: "/run/secrets/SECRET_ID"
+      API_URL: "https://{{ TESLA_DOMAIN }}"
+      LTI_URL: "https://lti.{{ TESLA_DOMAIN }}"
+    secrets:
+      - MOODLE_DB_PASSWORD
+      - MOODLE_ADMIN_PASSWORD
+      - source: MOODLE_ROLE_ID
+        target: ROLE_ID
+      - source: MOODLE_SECRET_ID
+        target: SECRET_ID
+    volumes:
+      - moodle_volume:/var/moodledata
+    networks:
+      - tesla_public
+      - tesla_private
+
+  lti:
+    image: registry.sunai.uoc.edu/tesla-ce/lti:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      {% if DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.lti.rule=Host(`lti.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.lti.entrypoints=https"
+        - "traefik.http.routers.lti.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.lti-service.loadbalancer.server.port=5000"
+        - "traefik.http.routers.lti.service=lti-service"
+      {% endif %}
+    environment:
+      ROLE_ID_FILE: "/run/secrets/ROLE_ID"
+      SECRET_ID_FILE: "/run/secrets/SECRET_ID"
+      API_URL: "https://{{ TESLA_DOMAIN }}"
+    secrets:
+      - source: MOODLE_ROLE_ID
+        target: ROLE_ID
+      - source: MOODLE_SECRET_ID
+        target: SECRET_ID
+    networks:
+      - tesla_public
+      - tesla_private
+secrets:
+  MOODLE_DB_PASSWORD:
+    file: ./secrets/MOODLE_DB_PASSWORD
+  MOODLE_ADMIN_PASSWORD:
+    file: ./secrets/MOODLE_ADMIN_PASSWORD
+  MOODLE_ROLE_ID:
+    file: ./secrets/MOODLE_ROLE_ID
+  MOODLE_SECRET_ID:
+    file: ./secrets/MOODLE_SECRET_ID
+
+volumes:
+  moodle_volume:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/moodle
+      o: bind
+
+networks:
+  tesla_public:
+    external: true
+  tesla_private:
+    external: true

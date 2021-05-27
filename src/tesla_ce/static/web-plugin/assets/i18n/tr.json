@@ -1,0 +1,17 @@
+{
+    "ACTIONS": {
+        "ACCEPT_CONSENT": "Kabul et",
+        "DECLINE_CONSENT": "Reddet"
+    },
+    "ETHICAL_WARNING": {
+        "ACTIVE_INSTRUMENTS": "İzleyen araçlar etkindir",
+        "MESSAGE": "TeSLA ile ilgili etik bilgi, öğrenci etkinliğe ulaşmak için önce onay vermelidir"
+    },
+    "INSTRUMENTS": {
+        "FA": "Forensik Analiz",
+        "FR": "Yüz Tanıma",
+        "KS": "Tuşa Vuruş Dinamikleri",
+        "PLAGIARISM": "İntihal",
+        "VR": "Ses Tanıma"
+    }
+}

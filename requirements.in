@@ -1,10 +1,10 @@
 # DJango packages
-django==3.0.7
+django
 django-configurations
 django-storages
 django-redis
 django-cache-memoize
-djangorestframework==3.11.0
+djangorestframework
 djangorestframework_simplejwt
 djangorestframework-datatables
 django-filter
@@ -26,7 +26,7 @@ mysqlclient
 psycopg2
 
 # Celery
-celery==4.4.7
+celery==5.0.5
 django-celery-beat
 django-celery-results
 gevent
@@ -57,7 +57,7 @@ recommonmark
 # m2r
 pyyaml
 uritemplate
-drf_yasg==1.17.1
+drf_yasg
 
 # Error tracking
 sentry-sdk

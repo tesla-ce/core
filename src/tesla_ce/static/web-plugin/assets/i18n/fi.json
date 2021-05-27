@@ -1,0 +1,17 @@
+{
+    "ACTIONS": {
+        "ACCEPT_CONSENT": "Hyväksy"
+    },
+    "ETHICAL_WARNING": {
+        "ACTIVE_INSTRUMENTS": "Seuraavat työkalut ovat käytössä",
+        "HEADER": "Varoitus",
+        "MESSAGE": "Eettistä tietoa TeSLAsta, opiskelijan täytyy antaa suostumuksensa aloittaaksen toiminnon"
+    },
+    "INSTRUMENTS": {
+        "FA": "Tekstityylin tunnistus",
+        "FR": "Kasvontunnistus",
+        "KS": "Näppäilyntunnistus",
+        "PLAGIARISM": "Plagioinnin tunnistus",
+        "VR": "Äänentunnistus"
+    }
+}

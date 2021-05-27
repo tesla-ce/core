@@ -14,7 +14,3 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ TeSLA CE Client tests """
 
-
-def test_demo():
-    """ Empty test used for environment setup """
-    assert 2 == int('2')

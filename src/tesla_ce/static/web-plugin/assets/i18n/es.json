@@ -1,0 +1,27 @@
+{
+    "ACTIONS": {
+        "ACCEPT_CONSENT": "Aceptar",
+        "CLEAR": "Limpiar",
+        "CLOSE": "Cerrar",
+        "DECLINE_CONSENT": "Declinar"
+    },
+    "ETHICAL_WARNING": {
+        "ACTIVE_INSTRUMENTS": "Los siguientes instrumentos están habilitados",
+        "HEADER": "Aviso",
+        "MESSAGE": "Esta actividad está gestionada por el sistema TeSLA. A continuación se muestran los instrumentos que se utilizarán durante o después de la actividad. Ten en cuenta que en el momento que aceptes, puede ser que se active tu webcam y/o micrófono."
+    },
+    "INSTRUMENTS": {
+        "FA": "Estilo de escritura",
+        "FR": "Reconocimiento Facial",
+        "KS": "Ritmo de escritura desde teclado",
+        "PLAGIARISM": "Detección de plagio",
+        "VR": "Reconocimiento de voz"
+    },
+    "NOTIFICATION": {
+        "CONSENT": {
+            "ACCEPTED": "Consentimiento ético aceptado"
+        },
+        "HEADER": "Notificaciones",
+        "SESSION_EXPIRED": "La sesión ha caducado. Por favor entre de nuevo."
+    }
+}

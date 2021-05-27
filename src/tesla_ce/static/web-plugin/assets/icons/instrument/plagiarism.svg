@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 423.7 417.11">
+  <defs>
+    <style>
+      .plagiarism-cls-2, .plagiarism-cls-4 {
+        fill: none;
+      }
+
+      .plagiarism-cls-2, .plagiarism-cls-3, .plagiarism-cls-4, .plagiarism-cls-5, .plagiarism-cls-9 {
+        stroke: #fff;
+        stroke-miterlimit: 10;
+      }
+
+      .plagiarism-cls-2 {
+        stroke-width: 10.37px;
+      }
+
+      .plagiarism-cls-3 {
+        stroke-width: 15.56px;
+      }
+
+      .plagiarism-cls-4 {
+        stroke-width: 17.54px;
+      }
+
+      .plagiarism-cls-5, .plagiarism-cls-9 {
+        stroke-linecap: round;
+        stroke-width: 16.05px;
+      }
+
+    </style>
+  </defs>
+  <g class="tesla_instrument tesla_instrument_plagiarism">
+    <path class="tesla-primary-color plagiarism-cls-1"
+          d="M333,164.36V82.46a42.32,42.32,0,0,0-42.32-42.32H105.06A42.32,42.32,0,0,0,62.74,82.46V372.21a42.31,42.31,0,0,0,42.32,42.31H290.68A42.31,42.31,0,0,0,333,372.21V164.36Z"
+          transform="translate(-62.74 -40.14)"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="39.68" x2="234.95" y2="39.68"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="80.02" x2="234.95" y2="80.02"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="120.36" x2="234.95" y2="120.36"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="160.7" x2="234.95" y2="160.7"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="201.04" x2="234.95" y2="201.04"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="241.38" x2="234.95" y2="241.38"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="281.72" x2="234.95" y2="281.72"/>
+    <line class="plagiarism-cls-2" x1="36.67" y1="322.05" x2="234.95" y2="322.05"/>
+    <path class="tesla-primary-color plagiarism-cls-1"
+          d="M342.3,301.09a68,68,0,0,0-7.85-86.64c-.42-.41-.87-.76-1.29-1.16V163.8a109.28,109.28,0,1,0,0,197.44l-.09-34.75,19.49,21.22,18.58-19.07-20.61-18.91Z"
+          transform="translate(-62.74 -40.14)"/>
+    <path class="tesla-primary-color plagiarism-cls-1"
+          d="M454.21,404.59l-74.56-68.18L360.14,356l68.31,74.38a17.29,17.29,0,0,0,24.46,0l1.3-1.3A17.29,17.29,0,0,0,454.21,404.59Z"
+          transform="translate(-62.74 -40.14)"/>
+    <circle class="tesla-primary-color plagiarism-cls-3" cx="223.69" cy="222.37" r="87.21"/>
+    <g>
+      <line class="plagiarism-cls-4" x1="171.83" y1="186.16" x2="275.54" y2="186.16"/>
+      <line class="plagiarism-cls-4" x1="171.83" y1="222.38" x2="275.54" y2="222.38"/>
+      <line class="plagiarism-cls-4" x1="171.83" y1="258.6" x2="275.54" y2="258.6"/>
+    </g>
+  </g>
+  <g class="tesla_group_status">
+    <g class="tesla-status tesla_status_warning">
+      <path class="tesla-status-warning plagiarism-cls-5"
+            d="M374.11,429H283c-10.12,0-16.45-11.12-11.39-20l45.57-80.08,45.57-80.07a13.06,13.06,0,0,1,22.78,0l45.56,80.07,45.57,80.08c5.06,8.89-1.26,20-11.39,20Z"
+            transform="translate(-62.74 -40.14)"/>
+      <path data-name="!" class="tesla-tertiary-color plagiarism-cls-6"
+            d="M374,289.85c6.37,0,14.51,1.24,13.39,9.82-1.21,9.91-6.41,45.21-9.26,69.67a3.44,3.44,0,0,1-3.41,3h-1.34a3.42,3.42,0,0,1-3.41-3.05c-2.57-23.3-8-59.11-9.17-70C359.59,291.57,367.24,289.85,374,289.85Zm.18,121.47c-7.21,0-12.57-5.29-12.57-13,0-7.44,5.36-13.1,12.57-13.1,7.39,0,12.75,5.66,12.75,13.1C387,406,381.6,411.32,374.21,411.32Z"
+            transform="translate(-62.74 -40.14)"/>
+    </g>
+    <g class="tesla-status tesla_status_error">
+      <circle class="plagiarism-cls-7 tesla-status-error" cx="374.11" cy="353.55" r="95.67"
+              transform="translate(-203.17 327.94) rotate(-45)"/>
+      <path class="tesla-tertiary-color plagiarism-cls-6"
+            d="M374.11,265.91a87.65,87.65,0,1,1-87.65,87.64,87.74,87.74,0,0,1,87.65-87.64m0-16.06A103.7,103.7,0,1,0,477.8,353.55a103.7,103.7,0,0,0-103.69-103.7Z"
+            transform="translate(-62.74 -40.14)"/>
+      <polygon class="tesla-tertiary-color plagiarism-cls-6"
+               points="367.08 276.25 348.52 257.69 311.32 294.9 274.2 257.79 255.65 276.34 292.76 313.45 255.74 350.48 274.3 369.03 311.32 332.01 348.43 369.13 366.99 350.57 329.87 313.45 367.08 276.25"/>
+    </g>
+    <g class="tesla-status tesla_status_success">
+      <circle class="plagiarism-cls-8 tesla-status-success" cx="374.11" cy="353.55" r="95.67"
+              transform="translate(-203.17 327.94) rotate(-45)"/>
+      <path class="tesla-tertiary-color plagiarism-cls-6"
+            d="M374.11,265.91a87.65,87.65,0,1,1-87.65,87.64,87.74,87.74,0,0,1,87.65-87.64m0-16.06A103.7,103.7,0,1,0,477.8,353.55a103.7,103.7,0,0,0-103.69-103.7Z"
+            transform="translate(-62.74 -40.14)"/>
+      <path class="tesla-tertiary-color plagiarism-cls-6"
+            d="M359.77,368.16c1.51-2.15,2.92-4.15,4.34-6.15,8-11.32,16.42-22.35,25.48-32.86,7-8.06,14.12-15.94,21.21-23.88,1.54-1.73,2.66-1.74,4.32-.18l10.68,10c2.62,2.45,2.63,3,.26,5.67-5.26,5.91-10.65,11.7-15.7,17.78-6.48,7.78-12.94,15.59-18.93,23.75C382.81,374,374.63,386.1,366.27,398c-.65.93-1.2,1.93-1.84,2.87-1.38,2-2.8,2.17-4.47.31-3.68-4.07-7.29-8.21-11-12.29a325,325,0,0,0-26.67-26.73c-.36-.31-.71-.63-1-1-1.18-1.21-1.28-2.18-.17-3.5,2.95-3.51,5.95-7,8.94-10.48.55-.65,1.1-1.3,1.67-1.93,1.38-1.53,2.51-1.65,4-.28,4.18,3.79,8.37,7.55,12.42,11.46,3.61,3.49,7,7.15,10.57,10.73C359,367.49,359.28,367.72,359.77,368.16Z"
+            transform="translate(-62.74 -40.14)"/>
+    </g>
+    <g class="tesla-status tesla_status_info">
+      <circle class="tesla-primary-color plagiarism-cls-1" cx="374.11" cy="353.55" r="95.67"
+              transform="translate(-203.17 327.94) rotate(-45)"/>
+      <path class="tesla-tertiary-color  plagiarism-cls-6"
+            d="M374.11,265.91a87.65,87.65,0,1,1-87.65,87.64,87.74,87.74,0,0,1,87.65-87.64m0-16.06A103.7,103.7,0,1,0,477.8,353.55a103.7,103.7,0,0,0-103.69-103.7Z"
+            transform="translate(-62.74 -40.14)"/>
+      <path class="tesla-tertiary-color  plagiarism-cls-6"
+            d="M348.41,426v-7.11c12.74-1.48,14.16-2.45,14.16-18V356.55c0-14.55-1-15.44-12.46-17.09V332.8a205.91,205.91,0,0,0,37.31-8.33v76.41c0,15.16,1.13,16.56,14.6,18V426Zm25.07-118a14.82,14.82,0,0,1-14.57-14.42A14.6,14.6,0,0,1,373.7,279a14.24,14.24,0,0,1,14.41,14.58A14.54,14.54,0,0,1,373.48,308Z"
+            transform="translate(-62.74 -40.14)"/>
+    </g>
+  </g>
+</svg>

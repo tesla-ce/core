@@ -1,0 +1,41 @@
+version: '3.5'
+services:
+  moodle:
+    image: registry.sunai.uoc.edu:443/tesla-ce/lti:latest
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: 1
+      {% if DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.lti.rule=Host(`lti.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.lti.entrypoints=https"
+        - "traefik.http.routers.lti.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.lti-service.loadbalancer.server.port=5000"
+        - "traefik.http.routers.lti.service=lti-service"
+      {% endif %}
+    environment:
+      ROLE_ID_FILE: "/run/secrets/ROLE_ID"
+      SECRET_ID_FILE: "/run/secrets/SECRET_ID"
+      API_URL: "https://{{ TESLA_DOMAIN }}"
+      LTI_URL: "https://lti.{{ TESLA_DOMAIN }}"
+    secrets:
+      - source: LTI_ROLE_ID
+        target: ROLE_ID
+      - source: LTI_SECRET_ID
+        target: SECRET_ID
+    networks:
+      - tesla_public
+      - tesla_private
+secrets:
+  LTI_ROLE_ID:
+    file: ./secrets/LTI_ROLE_ID
+  LTI_SECRET_ID:
+    file: ./secrets/LTI_SECRET_ID
+
+networks:
+  tesla_public:
+    external: true
+  tesla_private:
+    external: true
