@@ -76,8 +76,8 @@ jobs:
         # Create a database for TeSLA
         mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "CREATE DATABASE IF NOT EXISTS tesla CHARACTER SET utf8 COLLATE utf8_general_ci;";
         # Create a user for TeSLA
-        mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "GRANT ALL ON \'tesla\'.* to \'tesla\'@'%' IDENTIFIED BY 'tesla-password';";
-        mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "GRANT ALL ON \'tesla\'.* to \'tesla\'@'localhost' IDENTIFIED BY 'tesla-password';";
+        mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "GRANT ALL ON tesla.* to tesla@'%' IDENTIFIED BY 'tesla-password';";
+        mysql --host=127.0.0.1 --user=root --password=.TeSLa-C3-password -e "GRANT ALL ON tesla.* to tesla@'localhost' IDENTIFIED BY 'tesla-password';";
 
         docker ps
         docker logs vault
