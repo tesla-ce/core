@@ -134,14 +134,17 @@ jobs:
           fail_ci_if_error: true
           env_vars: PYTHON
       - name: Export coverage and lint data for SonarQube        
-        if: matrix.python-version == 3.9
-        env:
-          TESLA_VERSION: 0.0.1
+        if: matrix.python-version == 3.9        
         run: |
-          coverage xml          
-          sed -i 's+${{ env.LD_LIBRARY_PATH }}/python${{ matrix.python-version }}/site-packages/tesla_ce-${{ env.TESLA_VERSION }}-py${{ matrix.python-version }}.egg+src+g' coverage.xml
+          # Generate XML report
+          coverage xml         
+          # Replace the file paths to fit with source paths instead of installed package paths
+          sed -i 's+${{ env.LD_LIBRARY_PATH }}/python${{ matrix.python-version }}/site-packages/tesla_ce-${{ secrets.TESLA_VERSION }}-py${{ matrix.python-version }}.egg+src+g' coverage.xml
+          # Perform PyLint Analysis
           python -m pip install pyflakes pylint pylint-django
           pylint --load-plugins pylint_django --exit-zero --max-line-length=120 src/tesla_ce tests/ -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" | tee pylint.txt
+          # Set the current version to SonarQube configuration file
+          echo 'sonar.projectVersion=${{ secrets.TESLA_VERSION }}' >> sonar-project.properties          
       - name: SonarQube analysis
         uses: docker://sonarsource/sonar-scanner-cli:latest
         if: matrix.python-version == 3.9
