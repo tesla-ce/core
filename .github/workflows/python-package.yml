@@ -32,12 +32,25 @@ jobs:
         ports:          
           - 3306:3306
         env:
-          MYSQL_ROOT_PASSWORD: .TeSLa-C3-password
+          MYSQL_ROOT_PASSWORD: .TeSLa-C3-password          
+          MYSQL_DATABASE: tesla
+          MYSQL_USER: tesla
+          MYSQL_PASSWORD: tesla-password
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 3
       vault:
         image: vault
         ports:
           - 8200:8200
-        options: --cap-add=IPC_LOCK
+        options: >-
+          --cap-add=IPC_LOCK 
+          --health-cmd "curl -sS http://127.0.0.1:8200 || exit 1" 
+          --health-timeout 10s 
+          --health-retries 3 
+          --health-interval 5s
       minio:
         image: bitnami/minio:latest
         ports:
@@ -76,18 +89,23 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
+    - name: Install TeSLA CE Package
       run: |      
         python setup.py install
+    - name: Test with pytest
+      run: |        
         pytest --cov=tesla_ce
-      env:
-        MINIO_USER: minioadmin:minioadmin
+      env:        
         # DJango Configuration
         DJANGO_SETTINGS_MODULE: tesla_ce.settings
         DJANGO_CONFIGURATION: Test
         # MySQL        
         DB_ROOT_PASSWORD: .TeSLa-C3-password
         DB_HOST: localhost
+        DB_NAME: tesla
+        DB_USER: tesla
+        DB_PORT: 3306
+        DB_PASSWORD: tesla-password
         # Minio
         TIMEZONE: Europe/Paris
         MINIO_ACCESS_KEY: minioadmin
