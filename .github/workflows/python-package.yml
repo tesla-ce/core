@@ -46,7 +46,7 @@ jobs:
         ports:
           - 8200:8200
         env:
-          VAULT_DEV_ROOT_TOKEN_ID: s.sRRkAJtED7TmrbSf3zheD3LM          
+          VAULT_DEV_ROOT_TOKEN_ID: sRRkAJtED7TmrbSf3zheD3LM          
         options: >-
           --cap-add=IPC_LOCK 
           --name=vault          
