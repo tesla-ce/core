@@ -97,6 +97,13 @@ jobs:
         TESLA_DOMAIN: tesla-ce
         VAULT_MANAGEMENT: 1
         VAULT_URL: http://vault:8200
+    - name: "Upload coverage to Codecov"
+      uses: codecov/codecov-action@v1.5.0
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      with:
+        fail_ci_if_error: true
+        env_vars: PYTHON
   publish:    
     needs: build
     runs-on: ubuntu-latest
