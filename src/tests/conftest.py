@@ -44,7 +44,6 @@ def create_module_client(client, module):
     assert 'role_id' in credentials and 'secret_id' in credentials
     config = ConfigManager(load_config=False)
     config.config.set('VAULT_SSL_VERIFY', client.config.config.get('VAULT_SSL_VERIFY'))
-    config.config.set('VAULT_TOKEN', None)
     config.load_vault(vault_url=client.config.config.get('VAULT_URL'),
                       role_id=credentials['role_id'],
                       secret_id=credentials['secret_id'])
@@ -97,6 +96,9 @@ def admin_client(django_db_blocker):
         print(json.dumps(report))
         assert report['valid']
         client.initialize()
+
+        # Remove Vault Token from environment if present
+        del os.environ['VAULT_TOKEN']
 
         # Generate credentials for API and LAPI
         credentials_api = client.vault.get_module_credentials('api')
