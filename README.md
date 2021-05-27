@@ -1,7 +1,8 @@
 [![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)  
 [![PyPi Version](https://img.shields.io/pypi/v/tesla-ce.svg)](https://pypi.python.org/pypi/tesla-ce/)
 [![codecov](https://codecov.io/gh/tesla-ce/core/branch/main/graph/badge.svg?token=PJJQMW981P)](https://codecov.io/gh/tesla-ce/core)
-
+[![Vulnerability scan](https://github.com/tesla-ce/core/actions/workflows/debricked.yml/badge.svg)](https://github.com/tesla-ce/core/actions/workflows/debricked.yml)
+[![CodeQL](https://github.com/tesla-ce/core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/tesla-ce/core/actions/workflows/codeql-analysis.yml)
 
 # TeSLA CE Core System
 
