@@ -133,6 +133,12 @@ jobs:
         with:
           fail_ci_if_error: true
           env_vars: PYTHON
+      - name: SonarQube analysis
+        uses: docker://sonarsource/sonar-scanner-cli:latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
   publish:    
     needs: build
     runs-on: ubuntu-latest
