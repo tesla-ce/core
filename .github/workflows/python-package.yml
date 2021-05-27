@@ -106,7 +106,7 @@ jobs:
         DJANGO_CONFIGURATION: Test
         # MySQL        
         DB_ROOT_PASSWORD: .TeSLa-C3-password
-        DB_HOST: localhost
+        DB_HOST: 127.0.0.1
         DB_NAME: tesla
         DB_USER: tesla
         DB_PORT: 3306
