@@ -18,23 +18,19 @@ jobs:
       - uses: actions/checkout@v2
       - name: Get version values
         id: vars
-        run: |
-          cat src/tesla_ce/lib/data/VERSION
-          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)          
-          echo ::set-output name=version2::$(echo 'test')
-          echo ${GITHUB_REF#refs/*/}          
+        run: |          
+          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)                              
           echo ::set-output name=tag::${GITHUB_REF#refs/*/}                
       - name: Show captured versions
         run: |
           echo 'Version in source code: ${{ steps.vars.outputs.version }}'
-          echo 'Release version: ${{ steps.vars.outputs.tag }}'          
-          echo 'Version2 in source code: ${{ steps.vars.outputs.version2 }}'
+          echo 'Release version: ${{ steps.vars.outputs.tag }}'                    
       - name: Check version tag
         uses: nick-invision/assert-action@v1.1.0
         if: github.event_name == 'release'
         with:
-          expected: ${{ steps.vars.outputs.version }}
-          actual: ${{ steps.vars.outputs.tag }}
+          expected: ${{ steps.vars.outputs.tag }}
+          actual: ${{ steps.vars.outputs.version }}
           comparison: exact  
   build:
     needs: check
