@@ -14,7 +14,7 @@ with open("requirements.txt", "r") as fh:
                 'mysqlclient') and not req.strip().startswith('psycopg2'):
             requirements.append(req)
 
-with open(os.path.join("src", "lib", "data", "VERSION"), "r") as fh:
+with open(os.path.join("src", "tesla_ce", "lib", "data", "VERSION"), "r") as fh:
     version = fh.read()
             
 setuptools.setup(
