@@ -27,7 +27,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/tesla-ce/core",
     project_urls = {
-        'Documentation': 'https://tesla-ce.github.io/core/',
+        'Documentation': 'https://tesla-ce.github.io',
         'Source': 'https://github.com/tesla-ce/core',
     },
     packages=setuptools.find_packages('src', exclude='__pycache__'),
