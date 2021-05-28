@@ -18,12 +18,14 @@ jobs:
       - name: Get Tag Version
         id: tag-data
         run: |
-          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)
-          echo 'Version in source code: ${{ steps.source-data.outputs.version }}'
+          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)          
       - name: Get Source Code Version
         id: source-data
         run: |
-          echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+          echo ::set-output name=tag::${GITHUB_REF#refs/*/}          
+      - name: Show captured versions
+        run: |
+          echo 'Version in source code: ${{ steps.source-data.outputs.version }}'
           echo 'Release version: ${{ steps.tag-data.outputs.tag }}'
       - name: Check version tag
         uses: nick-invision/assert-action@v1.1.0
