@@ -12,8 +12,23 @@ on:
     types: 
       - created
 jobs:
+  check:
+    runs-on: ubuntu-latest    
+    steps: 
+      - name: Get Tag Version
+        id: tag-data
+        run: echo ::set-output name=version::$(cat src/tesla_ce/lib/data)
+      - name: Get Source Code Version
+        id: source-data
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - uses: nick-invision@assert-action@v1
+        if: github.event_name == 'release'
+        with:
+          expected: ${{ steps.source-data.outputs.version }}
+          actual: ${{ steps.tag-data.outputs.tag }}
+          comparison: exact  
   build:
-
+    needs: check
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -168,7 +183,7 @@ jobs:
           python -m pip install pip-tools twine
           pip-compile
           # Set the version
-          echo '${{ steps.vars.outputs.tag }}' > src/lib/data/VERSION
+          echo '${{ steps.vars.outputs.tag }}' > src/tesla_ce/lib/data/VERSION
           # Build wheel
           python setup.py sdist bdist_wheel
           # Publish the package
