@@ -19,6 +19,7 @@ jobs:
       - name: Get Tag Version
         id: tag-data
         run: |
+          cat src/tesla_ce/lib/data/VERSION
           echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)          
       - name: Get Source Code Version
         id: source-data
