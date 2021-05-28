@@ -16,29 +16,25 @@ jobs:
     runs-on: ubuntu-latest    
     steps: 
       - uses: actions/checkout@v2
-      - name: Get Tag Version
-        id: tag-data
+      - name: Get version values
+        id: vars
         run: |
           cat src/tesla_ce/lib/data/VERSION
           echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)          
-          echo ::set-output name=version2::'test'
-      - name: Get Source Code Version
-        id: source-data
-        run: |
+          echo ::set-output name=version2::$(echo 'test')
           echo ${GITHUB_REF#refs/*/}          
-          echo ::set-output name=tag::${GITHUB_REF#refs/*/}          
+          echo ::set-output name=tag::${GITHUB_REF#refs/*/}                
       - name: Show captured versions
         run: |
-          echo 'Version in source code: ${{ steps.source-data.outputs.version }}'
-          echo 'Release version: ${{ steps.tag-data.outputs.tag }}'
-          
-          echo 'Version2 in source code: ${{ steps.source-data.outputs.version2 }}'
+          echo 'Version in source code: ${{ steps.vars.outputs.version }}'
+          echo 'Release version: ${{ steps.vars.outputs.tag }}'          
+          echo 'Version2 in source code: ${{ steps.vars.outputs.version2 }}'
       - name: Check version tag
         uses: nick-invision/assert-action@v1.1.0
         if: github.event_name == 'release'
         with:
-          expected: ${{ steps.source-data.outputs.version }}
-          actual: ${{ steps.tag-data.outputs.tag }}
+          expected: ${{ steps.vars.outputs.version }}
+          actual: ${{ steps.vars.outputs.tag }}
           comparison: exact  
   build:
     needs: check
