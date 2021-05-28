@@ -158,12 +158,17 @@ jobs:
     if: github.event_name == 'release'
     steps: 
       - uses: actions/checkout@v2
+      - name: Store version
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
       - name: Build package
         run: |
           # Build requirements
           python -m pip install --upgrade pip
           python -m pip install pip-tools twine
           pip-compile
+          # Set the version
+          echo '${{ steps.vars.outputs.tag }}' > src/lib/data/VERSION
           # Build wheel
           python setup.py sdist bdist_wheel
           # Publish the package
