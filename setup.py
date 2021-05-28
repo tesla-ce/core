@@ -1,3 +1,4 @@
+import os
 import setuptools
 
 with open("README.md", "r") as fh:
@@ -13,8 +14,11 @@ with open("requirements.txt", "r") as fh:
                 'mysqlclient') and not req.strip().startswith('psycopg2'):
             requirements.append(req)
 
+with open(os.path.join("src", "lib", "data", "VERSION"), "r") as fh:
+    version = fh.read()
+            
 setuptools.setup(
-    version="0.0.1",
+    version=version,
     name="tesla-ce",
     author="Xavier Baro",
     author_email="xbaro@uoc.edu",
