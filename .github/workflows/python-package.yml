@@ -250,7 +250,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build package
+      - name: Build and push edge image
         run: |
           # Build requirements
           python -m pip install --upgrade pip
@@ -260,14 +260,7 @@ jobs:
           echo '${{ steps.vars.outputs.version }}' > src/tesla_ce/lib/data/VERSION
           # Build wheel
           python setup.py bdist_wheel
-      - name: Build and push edge
-        id: docker_build_edge
-        uses: docker/build-push-action@v2.5.0
-        with:
-          push: true
-          tags: tesla-ce/core:edge
-          file: docker/Dockerfile.edge
-          build-args: TESLA_CE_VERSION=${{ steps.vars.outputs.version }}
-      - name: Image digest
-        if: github.event_name != 'release'
-        run: echo ${{ steps.docker_build_edge.outputs.digest }}
+          # Build and publish
+          docker build -t tesla-ce/core:edge -f docker/Dockerfile.edge --build-arg TESLA_CE_VERSION=${{ steps.vars.outputs.version }} .
+          docker push tesla-ce/core:edge
+
