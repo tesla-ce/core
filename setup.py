@@ -43,5 +43,11 @@ setuptools.setup(
     extras_require={
         'mysql': ["mysqlclient"],
         'psql': ["psycopg2"]
-    }
+    },
+    entry_points = {
+        'console_scripts': [
+            'tesla_ce=tesla_ce.manage:main',
+            'manage.py=tesla_ce.manage:main'
+        ],
+    }    
 )
