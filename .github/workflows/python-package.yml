@@ -202,9 +202,10 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-  docker:
+  docker_tag:
     needs: publish
     runs-on: ubuntu-latest
+    if: github.event_name == 'release'
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -212,6 +213,34 @@ jobs:
         id: vars
         run: |
           echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2.5.0
+        with:
+          push: true
+          tags: tesla-ce/core:${{ steps.vars.outputs.tag }}, tesla-ce/core:latest
+          file: docker/Dockerfile
+          build-args: TESLA_CE_VERSION=${{ steps.vars.outputs.tag }}
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
+
+  docker_edge:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'release'
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Store version
+        id: vars
+        run: |
           echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -220,20 +249,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push tagged
-        id: docker_build
-        if: github.event_name == 'release'
-        uses: docker/build-push-action@v2.5.0
-        with:
-          push: true
-          tags: tesla-ce/core:${{ steps.vars.outputs.tag }}, tesla-ce/core:latest
-          file: docker/Dockerfile
-          build-args: TESLA_CE_VERSION=${{ steps.vars.outputs.tag }}
-      - name: Image digest
-        if: github.event_name == 'release'
-        run: echo ${{ steps.docker_build.outputs.digest }}
       - name: Build package
-        if: github.event_name != 'release'
         run: |
           # Build requirements
           python -m pip install --upgrade pip
@@ -245,7 +261,6 @@ jobs:
           python setup.py bdist_wheel
       - name: Build and push edge
         id: docker_build_edge
-        if: github.event_name != 'release'
         uses: docker/build-push-action@v2.5.0
         with:
           push: true
