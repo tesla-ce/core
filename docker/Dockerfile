@@ -4,7 +4,7 @@ FROM python:3.7-alpine
 ARG TESLA_CE_VERSION
 
 # Define the TeSLA CE package to install
-ARG TESLA_CE_PACKAGE="tesla_ce[all]==$VERSION"
+ARG TESLA_CE_PACKAGE="tesla_ce[all]==$TESLA_CE_VERSION"
 
 # Install build deps, then run `pip install`, then remove unneeded build deps all in a single step.
 RUN set -ex \
