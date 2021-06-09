@@ -41,7 +41,7 @@ setuptools.setup(
     include_package_data=True,
     install_requires=requirements,
     extras_require={
-        None: ["mysqlclient"],
+        '': ["mysqlclient"],
         'all': ["mysqlclient", "psycopg2"],
         'mysql': ["mysqlclient"],
         'psql': ["psycopg2"]
