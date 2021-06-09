@@ -225,7 +225,7 @@ jobs:
         uses: docker/build-push-action@v2.5.0
         with:
           push: true
-          tags: tesla-ce/core:${{ steps.vars.outputs.tag }}, tesla-ce/core:latest
+          tags: teslace/core:${{ steps.vars.outputs.tag }}, teslace/core:latest
           file: docker/Dockerfile
           build-args: TESLA_CE_VERSION=${{ steps.vars.outputs.tag }}
       - name: Image digest
@@ -261,6 +261,6 @@ jobs:
           # Build wheel
           python setup.py bdist_wheel
           # Build and publish
-          docker build -t tesla-ce/core:edge -f docker/Dockerfile.edge --build-arg TESLA_CE_VERSION=${{ steps.vars.outputs.version }} .
-          docker push tesla-ce/core:edge
+          docker build -t teslace/core:edge -f docker/Dockerfile.edge --build-arg TESLA_CE_VERSION=${{ steps.vars.outputs.version }} .
+          docker push teslace/core:edge
 
