@@ -42,7 +42,7 @@ RUN set -ex \
     && apk del .build-deps
 
 # Remove wheel
-RUN rm /tmp/tesla_ce-${TESLA_CE_VERSION}-py3-none-any.whl[all]
+RUN rm /tmp/tesla_ce-${TESLA_CE_VERSION}-py3-none-any.whl
 
 # Install production dependencies
 RUN set -ex \
