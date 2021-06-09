@@ -4,7 +4,7 @@ FROM python:3.7-alpine
 ARG TESLA_CE_VERSION
 
 # ADD wheel
-ADD dist/tesla_ce-${TESLA_CE_VERSION}-py3-none-any.whl /tmp/tesla_ce-${TESLA_CE_VERSION}-py3-none-any.whl
+ADD dist/tesla_ce-${TESLA_CE_VERSION}-py3-none-any.whl /tmp
 
 # Define the TeSLA CE package to install
 ENV TESLA_CE_PACKAGE="/tmp/tesla_ce-${TESLA_CE_VERSION}-py3-none-any.whl[all]"
