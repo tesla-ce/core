@@ -115,7 +115,7 @@ class Config:
             ('services', 'Deploy external services', 'bool', False, None, True),
             ('lb', 'Load balancer', 'enum', 'traefik', ['traefik', ], True),
             ('image', 'Docker image used for deployment', 'str',
-             'registry.sunai.uoc.edu/tesla-ce/tesla-ce', None, True),
+             'teslace/core', None, True),
             ('version', 'Docker image version used for deployment', 'str', 'latest', None, True),
             ('secrets_path', 'Folder where secrets will be mounted', 'str', '/run/secrets', None, True),
             ('data_path', 'Folder where volumes will be persisted', 'str', '/var/tesla', None, True),
