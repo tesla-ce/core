@@ -46,5 +46,5 @@ class InstitutionCourseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet
         # involved as instructor or learner
         qs = Course.objects
         if not self.request.user.is_staff and not self.request.user.inst_admin and not self.request.user.data_admin:
-            qs = qs.filter(Q(instructors__id=self.request.user.id) | Q(learners__id=self.request.user.id))
+            qs = qs.filter(Q(instructors__id=self.request.user.id) | Q(learners__id=self.request.user.id)).distinct()
         return qs
