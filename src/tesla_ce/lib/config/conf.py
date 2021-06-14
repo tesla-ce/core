@@ -73,7 +73,7 @@ class Config:
         ('storage', 'Storage configuration (S3 or Minio)', (
             ('url', 'Storage url', 'str', 'http://localhost:9000', None, True),
             ('bucket_name', 'Storage default private bucket', 'str', 'tesla', None, True),
-            ('public_bucket_name', 'Storage default prublic bucket', 'str', 'tesla-public', None, True),
+            ('public_bucket_name', 'Storage default public bucket', 'str', 'tesla-public', None, True),
             ('region', 'Storage region', 'str', 'eu-west-1', None, True),
             ('access_key', 'Storage access key id', 'str', None, None, True),
             ('secret_key', 'Storage secret access key', 'str', None, None, True),

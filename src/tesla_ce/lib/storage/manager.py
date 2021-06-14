@@ -15,7 +15,7 @@
 #
 """ Storage Manager Module"""
 from botocore import exceptions
-
+from django.core.management import call_command
 from ..config import ConfigManager
 from ..exception import TeslaStorageException
 
@@ -67,6 +67,9 @@ class StorageManager:
         if self._config.config.get('STORAGE_PUBLIC_BUCKET_NAME') not in buckets:
             self.create_public_bucket()
 
+        # Export static files
+        call_command('collectstatic', verbosity=0, interactive=False)
+
     def create_default_bucket(self):
         """
             Create the default bucket in the configuration
@@ -94,9 +97,9 @@ class StorageManager:
         # Create bucket
         try:
             if region is None:
-                self._client.connection.create_bucket(Bucket=bucket, ACL='public-read')
+                self._client.connection.create_bucket(Bucket=bucket, ACL='download')
             else:
-                self._client.connection.create_bucket(Bucket=bucket, ACL='public-read',
+                self._client.connection.create_bucket(Bucket=bucket, ACL='download',
                                                       CreateBucketConfiguration={'LocationConstraint': region})
         except exceptions.ClientError as e:
             raise TeslaStorageException('Cannot create bucket {} at region {}: {}'.format(bucket, region, str(e)))

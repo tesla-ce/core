@@ -21,8 +21,8 @@ class PublicS3Boto3Storage(S3Boto3Storage):
     """
         Storage Bucket for public data (static files)
     """
-    bucket_acl = 'public-read'
-    default_acl = 'public-read'
+    bucket_acl = 'download'
+    default_acl = 'download'
     bucket_name = settings.AWS_S3_STORAGE_PUBLIC_BUCKET_NAME
     auto_create_bucket = True
 
