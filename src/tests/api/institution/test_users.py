@@ -1,4 +1,4 @@
-#  Copyright (c) 2020 Xavier Baró
+#  Copyright (c) 2021 Mireia Bellot
 #
 #      This program is free software: you can redistribute it and/or modify
 #      it under the terms of the GNU Affero General Public License as
@@ -12,27 +12,17 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+""" Test module for institution users management """
+import logging
+
 import pytest
 
+import tests.utils
 
-@pytest.mark.django_db
-def test_api(rest_api_client):
-    pass
+from tests.utils import getting_variables
 
 
-def backup_test_api(rest_api_client):
-
-    # Get the list of Institutions
-    inst_response = rest_api_client.get('/api/v2/institution/')
-    assert inst_response.status_code == 200
-
-    institutions = inst_response.json()
-
-    # Get the list of VLEs
-    vle_response = rest_api_client.get('/api/v2/vle/')
-    assert vle_response.status_code == 200
-
-    # Get the list of Providers
-    provider_response = rest_api_client.get('/api/v2/provider/')
-    assert provider_response.status_code == 200
-
+def test_api_institution_users(rest_api_client, user_global_admin, institution_course_test_case):
+    # TODO Institution Users
+    # TODO --> TO BE DONE!
+    pytest.skip('TODO')

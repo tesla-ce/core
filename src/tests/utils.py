@@ -145,4 +145,21 @@ def check_pagination(rest_api_client, body):
     assert offset == body['count']
 
 
+@pytest.mark.django_db
+def getting_variables(body, institution_id) -> object:
+    institution_empty = True
+    id_non_existing_institution = 1000000
+    n_institution = body['count']
 
+    if n_institution > 0:
+        institution_empty = False
+        id_first_institution = body['results'][0]['id']
+    else:
+        id_first_institution = -1
+
+    return {
+            'institution_empty': institution_empty,
+            'n_institution': n_institution,
+            'id_first_institution': id_first_institution,
+            'id_non_existing_institution': id_non_existing_institution
+        }

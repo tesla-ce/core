@@ -1,4 +1,4 @@
-#  Copyright (c) 2020 Xavier Baró
+#  Copyright (c) 2021 Mireia Bellot
 #
 #      This program is free software: you can redistribute it and/or modify
 #      it under the terms of the GNU Affero General Public License as
@@ -12,4 +12,21 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Test package for API """
+""" Test module for institution VLEs management """
+import logging
+
+import pytest
+
+import tests.utils
+
+from tests.utils import getting_variables
+
+
+def test_api_institution_vle(rest_api_client, user_global_admin, institution_course_test_case):
+    # TODO VLE
+    # TODO List VLEs
+    # TODO Create a new VLE
+    # TODO Read VLE information
+    # TODO Update VLE information
+    # TODO Delete a VLE
+    pytest.skip('TODO')

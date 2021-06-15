@@ -12,4 +12,18 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Test package for API """
+""" Test package for provider API """
+import pytest
+
+
+@pytest.mark.django_db
+def test_api_provider(rest_api_client):
+    #666 plantilla codi: CANVIAR PROVIDER A el que toqui
+    provider_response = rest_api_client.get('/api/v2/provider/')
+    assert provider_response.status_code == 200
+
+    providers = provider_response.json()
+    print('\n**************** ADMIN ***********')
+    print(providers)
+
+    pytest.skip("TODO")

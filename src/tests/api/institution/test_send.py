@@ -1,4 +1,4 @@
-#  Copyright (c) 2020 Xavier Baró
+#  Copyright (c) 2021 Mireia Bellot
 #
 #      This program is free software: you can redistribute it and/or modify
 #      it under the terms of the GNU Affero General Public License as
@@ -12,23 +12,21 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+""" Test module for institution SEND data management """
+import logging
 
-#      PROVIDERS TEST
 import pytest
 
+import tests.utils
 
-@pytest.mark.django_db
-
-def test_api_vle(rest_api_client):
-    #666 plantilla codi: CANVIAR PROVIDER A el que toqui
-    provider_response = rest_api_client.get('/api/v2/provider/')
-    assert provider_response.status_code == 200
-
-    providers = provider_response.json()
-    print('\n**************** ADMIN ***********')
-    print(providers)
+from tests.utils import getting_variables
 
 
-
-
-
+def test_api_institution_send(rest_api_client, user_global_admin, institution_course_test_case):
+    # TODO SEND
+    # TODO List SEND Categories
+    # TODO Create a new SEND Category
+    # TODO Read SEND Category information
+    # TODO Update SEND Category
+    # TODO Delete SEND Category
+    pytest.skip('TODO')
