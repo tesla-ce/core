@@ -49,29 +49,6 @@ def is_global_admin(user):
         return user.is_staff
 
 
-def is_learner(user, course):
-    """
-        Check if provided user is learner from provided course.
-        :param user: The user object
-        :param institution: The institution
-        :return: True if the user if from an institution or False otherwise
-    """
-    user_inst = None
-    if isinstance(user, InstitutionUser):
-        user_inst = user.institution
-    elif isinstance(user, User):
-        try:
-            user_inst = user.institutionuser.institution
-        except Exception:
-            # If user has no institution this will fail
-            pass
-
-    if user_inst is None or (institution is not None and user_inst != institution):
-        return False
-
-    return True
-
-
 class GlobalAdminPermission(permissions.BasePermission):
     """
         Global admins have read only permissions
