@@ -12,23 +12,15 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Public Bucket definition module """
-from django.conf import settings
-from storages.backends.s3boto3 import S3Boto3Storage
+""" DJango command to show TeSLA system version """
+from ..base import TeslaCommand
 
 
-class PublicS3Boto3Storage(S3Boto3Storage):
-    """
-        Storage Bucket for public data (static files)
-    """
-    bucket_acl = 'download'
-    default_acl = 'download'
-    bucket_name = settings.AWS_S3_STORAGE_PUBLIC_BUCKET_NAME
-    auto_create_bucket = True
+class Command(TeslaCommand):
+    """ Command to show TeSLA CE Version """
+    help = 'Show TeSLA CE system version'
+    requires_system_checks = False
 
-    def __init__(self, acl=None, bucket=None, **settings):
-        if acl is not None:
-            self.bucket_acl = acl
-        if bucket is not None:
-            self.bucket_name = bucket
-        super().__init__(**settings)
+    def handle(self, *args, **options):
+        # Print current version
+        self.print_version()

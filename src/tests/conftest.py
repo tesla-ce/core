@@ -98,7 +98,8 @@ def admin_client(django_db_blocker):
         client.initialize()
 
         # Remove Vault Token from environment if present
-        del os.environ['VAULT_TOKEN']
+        if 'VAULT_TOKEN' in os.environ:
+            del os.environ['VAULT_TOKEN']
 
         # Generate credentials for API and LAPI
         credentials_api = client.vault.get_module_credentials('api')

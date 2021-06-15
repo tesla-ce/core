@@ -22,11 +22,6 @@ def is_authenticated(request, instituton_id, learner_id, data):
     if data['learner_id'] != str(learner_id):
         return False
     try:
-        if settings.AUTHENTICATION_DISABLED and (
-                settings.AUTHENTICATION_DISABLED_ROLES == "__all__" or
-                "LEARNER" in settings.AUTHENTICATION_DISABLED_ROLES
-        ):
-            return True
         if not request.user.is_authenticated:
             return False
         if isinstance(request.user, AuthenticatedUser):
