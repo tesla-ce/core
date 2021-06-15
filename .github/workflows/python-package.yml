@@ -236,7 +236,7 @@ jobs:
   docker_edge:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name != 'release'
+    if: github.event_name != 'release' && github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v2
       - name: Set up QEMU
