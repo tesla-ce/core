@@ -46,6 +46,7 @@ def test_api_institution_course_list(rest_api_client, user_global_admin, institu
     # Get the list of courses for a normal Institution User not belonging to any course
     institution_user = institution_course_test_case['user'].institutionuser
     institution_user.inst_admin = False
+    institution_user.data_admin = False
     institution_user.save()
     rest_api_client.force_authenticate(user=institution_user)
     inst_admin_resp = tests.utils.get_rest_api_client(rest_api_client, courses_url,
