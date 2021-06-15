@@ -19,6 +19,59 @@ from tesla_ce.models import InstitutionUser
 from tesla_ce.models import User
 
 
+def get_institution_user(user):
+    """
+        Return a InstitutionUser object if user belongs to an institution or None otherwise
+        :param user: User object
+        :return: The InstitutionUser object or None
+    """
+    if isinstance(user, InstitutionUser):
+        return user
+
+    if isinstance(user, User):
+        try:
+            return user.institutionuser
+        except Exception:
+            # If user has no institution this will fail
+            return None
+
+
+def is_global_admin(user):
+    """
+        Check if provided user is a Global Admin
+        :param user: User object
+        :return: True if it is a global admin or False otherwise
+    """
+    if isinstance(user, InstitutionUser):
+        return user.user_ptr.is_staff
+
+    if isinstance(user, User):
+        return user.is_staff
+
+
+def is_learner(user, course):
+    """
+        Check if provided user is learner from provided course.
+        :param user: The user object
+        :param institution: The institution
+        :return: True if the user if from an institution or False otherwise
+    """
+    user_inst = None
+    if isinstance(user, InstitutionUser):
+        user_inst = user.institution
+    elif isinstance(user, User):
+        try:
+            user_inst = user.institutionuser.institution
+        except Exception:
+            # If user has no institution this will fail
+            pass
+
+    if user_inst is None or (institution is not None and user_inst != institution):
+        return False
+
+    return True
+
+
 class GlobalAdminPermission(permissions.BasePermission):
     """
         Global admins have read only permissions
