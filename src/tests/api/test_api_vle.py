@@ -28,6 +28,11 @@ def test_api_vle(rest_api_client):
     print('\n**************** ADMIN ***********')
     print(providers)
 
+    # Get the list of VLEs
+    vle_response = rest_api_client.get('/api/v2/vle/')
+    assert vle_response.status_code == 200
+    print(vle_response.json())
+
 #TODO VLE
 #TODO Read VLE information
 #TODO List Courses in a VLE

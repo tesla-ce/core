@@ -39,6 +39,21 @@ def check_403(rest_api_client, str_path, users=None):
         assert response_403.status_code == 403
 
 
+def print_log(args):
+    """
+
+    @param args: list of messages for logging. First item on list is the current testing module name.
+    """
+    module = ''
+    if len(args) > 0:
+        module = '[' + args[0][0] + '] '
+    for i in range(1, len(args)):
+        aux = module
+        for j in args[i]:
+            aux += str(j) + ' '
+        logging.info(aux)
+
+
 @pytest.mark.django_db
 def get_rest_api_client(rest_api_client, str_path, module, message, status):
     """
@@ -52,9 +67,9 @@ def get_rest_api_client(rest_api_client, str_path, module, message, status):
     """
     response = rest_api_client.get(str_path)
     body = response.json()
-    assert response.status_code == status
     str_log = [[module], ['Status:', status], [message, body]]
     print_log(str_log)
+    assert response.status_code == status
     return body
 
 
@@ -117,21 +132,6 @@ def delete_rest_api_client(rest_api_client, str_path, module, message, status):
     str_log = [[module], ['Status:', status], [message]]
     print_log(str_log)
     assert response.status_code == status
-
-
-def print_log(args):
-    """
-
-    @param args: list of messages for logging. First item on list is the current testing module name.
-    """
-    module = ''
-    if len(args) > 0:
-        module = '[' + args[0][0] + '] '
-    for i in range(1, len(args)):
-        aux = module
-        for j in args[i]:
-            aux += str(j) + ' '
-        logging.info(aux)
 
 
 def check_pagination(rest_api_client, body):
