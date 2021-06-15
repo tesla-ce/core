@@ -1,4 +1,4 @@
-#  Copyright (c) 2020 Xavier Baró
+#  Copyright (c) 2021 Mireia Bellot
 #
 #      This program is free software: you can redistribute it and/or modify
 #      it under the terms of the GNU Affero General Public License as
@@ -12,4 +12,17 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Test package for API """
+""" Test module for institution course instructors management """
+import logging
+
+import pytest
+
+import tests.utils
+
+from tests.utils import getting_variables
+
+
+def test_api_institution_instructors(rest_api_client, user_global_admin, institution_course_test_case):
+    # TODO Instructors
+    # TODO --> TO BE DONE!
+    pytest.skip('TODO')

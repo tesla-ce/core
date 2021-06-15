@@ -1,4 +1,4 @@
-#  Copyright (c) 2020 Xavier Baró
+#  Copyright (c) 2021 Xavier Baró
 #
 #      This program is free software: you can redistribute it and/or modify
 #      it under the terms of the GNU Affero General Public License as
@@ -12,7 +12,7 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Authentication API test """
+""" Module for Authentication API profile """
 import pytest
 
 
@@ -55,118 +55,6 @@ def get_profile(rest_api_client, token):
     rest_api_client.credentials()
 
     return profile_resp
-
-
-@pytest.mark.django_db
-def test_api_authentication_approle(rest_api_client, api_client, institution_course_test_case, providers):
-
-    # Generate a approle for a VLE
-    vle_creds = api_client.vault.register_vle(institution_course_test_case['vle'])
-
-    # Generate a approle for a Provider
-    provider_creds = api_client.vault.register_provider(providers['fr'])
-
-    # Authenticate using vle credentials
-    resp_vle = rest_api_client.post('/api/v2/auth/approle', data=vle_creds)
-
-    assert resp_vle is not None
-    assert resp_vle.status_code == 200
-    assert resp_vle.data['pk'] == institution_course_test_case['vle'].id
-    assert resp_vle.data['module'].startswith('vle_')
-    assert resp_vle.data['type'] == 'vle'
-
-    validation_jwt_vle = api_client.validate_token(resp_vle.data['token']['access_token'])
-    assert validation_jwt_vle is not None
-    assert isinstance(validation_jwt_vle, dict)
-    assert validation_jwt_vle['group'].startswith('module_')
-    assert validation_jwt_vle['pk'] == institution_course_test_case['vle'].id
-    assert validation_jwt_vle['type'] == 'vle'
-
-    # Authenticate using provider credentials
-    resp_provider = rest_api_client.post('/api/v2/auth/approle', data=provider_creds)
-
-    assert resp_provider is not None
-    assert resp_provider.status_code == 200
-    assert 'pk' in resp_provider.data
-    assert resp_provider.data['module'].startswith('provider_')
-    assert resp_provider.data['type'] == 'provider'
-
-    validation_jwt_provider = api_client.validate_token(resp_provider.data['token']['access_token'])
-    assert validation_jwt_provider is not None
-    assert isinstance(validation_jwt_provider, dict)
-    assert validation_jwt_provider['group'].startswith('module_')
-    assert 'pk' in validation_jwt_provider
-    assert validation_jwt_provider['type'] == 'provider'
-
-
-@pytest.mark.django_db
-def test_api_authentication_launchertoken(rest_api_client, api_client, lapi_client, institution_course_test_case):
-
-    # Generate a token for dashboards
-    dash_token = api_client.get_launcher_token('DASHBOARD', institution_course_test_case['user'].institutionuser)
-
-    assert dash_token is not None
-    assert 'id' in dash_token
-    assert 'token' in dash_token
-
-    # Authenticate using the token
-    resp_dash_token = rest_api_client.post('/api/v2/auth/token', data=dash_token)
-
-    assert resp_dash_token is not None
-    assert resp_dash_token.status_code == 200
-    assert 'access_token' in resp_dash_token.data
-    assert 'refresh_token' in resp_dash_token.data
-
-    # Authenticate using the token
-    validation_jwt_dash = api_client.validate_token(resp_dash_token.data['access_token'])
-
-    assert validation_jwt_dash is not None
-    assert validation_jwt_dash['pk'] == institution_course_test_case['user'].institutionuser.id
-
-    # Generate a token for LAPI
-    try:
-        api_client.get_launcher_token('LAPI', institution_course_test_case['user'].institutionuser)
-        pytest.fail('No learner users are able to request token for LAPI')
-    except Exception:
-        pass
-
-    lapi_token = api_client.get_launcher_token('LAPI', institution_course_test_case['learner'].institutionuser)
-
-    assert lapi_token is not None
-    assert 'id' in lapi_token
-    assert 'token' in lapi_token
-
-    # Authenticate using the token
-    resp_lapi_token = rest_api_client.post('/api/v2/auth/token', data=lapi_token)
-
-    assert resp_lapi_token is not None
-    assert resp_lapi_token.status_code == 200
-    assert 'access_token' in resp_lapi_token.data
-    assert 'refresh_token' in resp_lapi_token.data
-
-    # Authenticate using the token for LAPI
-    validation_jwt_lapi = lapi_client.validate_token(resp_lapi_token.data['access_token'])
-
-    assert validation_jwt_lapi is not None
-    assert validation_jwt_lapi['pk'] == institution_course_test_case['learner'].institutionuser.id
-
-    # Authenticate using the token for API
-    validation_jwt_api = api_client.validate_token(resp_lapi_token.data['access_token'])
-
-    assert validation_jwt_api is not None
-    assert validation_jwt_api['pk'] == institution_course_test_case['learner'].institutionuser.id
-
-    # Request token for API
-    try:
-        api_client.get_launcher_token('API', institution_course_test_case['user'].institutionuser)
-        pytest.fail('Launcher token for API should not be allowed')
-    except Exception:
-        pass
-
-
-@pytest.mark.django_db
-def test_api_authentication_userpass(rest_api_client, api_client, institution_test_case):
-    pass
 
 
 @pytest.mark.django_db

@@ -1,4 +1,4 @@
-#  Copyright (c) 2020 Xavier Baró
+#  Copyright (c) 2021 Xavier Baró
 #
 #      This program is free software: you can redistribute it and/or modify
 #      it under the terms of the GNU Affero General Public License as
@@ -12,21 +12,26 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-#      VLE TEST
+""" Test package for VLE API """
 import pytest
 
 
 @pytest.mark.django_db
-
 def test_api_vle(rest_api_client):
     #666 plantilla codi: CANVIAR PROVIDER A VLE
-    provider_response = rest_api_client.get('/api/v2/provider/')
+    provider_response = rest_api_client.get('/api/v2/vle/')
     assert provider_response.status_code == 200
 
     providers = provider_response.json()
     print('\n**************** ADMIN ***********')
     print(providers)
+
+    # Get the list of VLEs
+    vle_response = rest_api_client.get('/api/v2/vle/')
+    assert vle_response.status_code == 200
+    print(vle_response.json())
+
+    pytest.skip("TODO")
 
 #TODO VLE
 #TODO Read VLE information

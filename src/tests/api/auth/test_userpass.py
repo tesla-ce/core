@@ -12,4 +12,10 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Test package for API """
+""" Test module for user/password authentication """
+import pytest
+
+
+@pytest.mark.django_db
+def test_api_authentication_userpass(rest_api_client, api_client, institution_test_case):
+    pass

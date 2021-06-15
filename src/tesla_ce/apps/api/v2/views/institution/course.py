@@ -44,7 +44,11 @@ class InstitutionCourseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet
     def get_queryset(self):
         # Except for global admins, and institution admins and data admins, returns only the courses where the user is
         # involved as instructor or learner
-        qs = Course.objects
-        if not self.request.user.is_staff and not self.request.user.inst_admin and not self.request.user.data_admin:
-            qs = qs.filter(Q(instructors__id=self.request.user.id) | Q(learners__id=self.request.user.id)).distinct()
-        return qs
+        qs = super().filter_queryset_by_parents_lookups(Course.objects)
+        if not permissions.is_global_admin(self.request.user):
+            inst_user = permissions.get_institution_user(self.request.user)
+            if not inst_user.inst_admin and not inst_user.data_admin:
+                qs = qs.filter(
+                    Q(instructors__id=inst_user.id) | Q(learners__id=inst_user.id)
+                ).distinct()
+        return qs.all()
