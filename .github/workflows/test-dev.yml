@@ -6,7 +6,8 @@ name: Testing Dev
 on:
   push:
     branches:
-      - '!master'   # excludes master ]
+      - '*'
+      - '!master'
 jobs:
   build:
     runs-on: ubuntu-latest
