@@ -23,6 +23,8 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionCourseSerializer
 from tesla_ce.models import Course
+from tesla_ce.models.user import is_global_admin
+from tesla_ce.models.user import get_institution_user
 
 
 # pylint: disable=too-many-ancestors
@@ -45,8 +47,8 @@ class InstitutionCourseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet
         # Except for global admins, and institution admins and data admins, returns only the courses where the user is
         # involved as instructor or learner
         qs = super().filter_queryset_by_parents_lookups(Course.objects)
-        if not permissions.is_global_admin(self.request.user):
-            inst_user = permissions.get_institution_user(self.request.user)
+        if not is_global_admin(self.request.user):
+            inst_user = get_institution_user(self.request.user)
             if not inst_user.inst_admin and not inst_user.data_admin:
                 qs = qs.filter(
                     Q(instructors__id=inst_user.id) | Q(learners__id=inst_user.id)

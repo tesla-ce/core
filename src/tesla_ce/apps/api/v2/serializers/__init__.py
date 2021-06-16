@@ -16,6 +16,7 @@
 from .admin import InstitutionAdminSerializer
 from .admin import InstrumentSerializer
 from .admin import ProviderSerializer
+from .admin import UIOptionSerializer
 from .admin import UserSerializer
 from .institution import InstitutionCourseActivityInstrumentSerializer
 from .institution import InstitutionCourseActivityReportDetailSerializer
@@ -35,6 +36,7 @@ from .institution import InstitutionLearnerSerializer
 from .institution import InstitutionSENDCategorySerializer
 from .institution import InstitutionSENDLearnerSerializer
 from .institution import InstitutionSerializer
+from .institution import InstitutionUIOptionSerializer
 from .institution import InstitutionUserSerializer
 from .institution import InstitutionVLESerializer
 from .provider import ProviderEnrolmentSampleSerializer
@@ -63,6 +65,7 @@ __all__ = [
     "InstitutionAdminSerializer",
     "InstrumentSerializer",
     "ProviderSerializer",
+    "UIOptionSerializer",
     "UserSerializer",
     # VLE nested serializers
     "VLESerializer",
@@ -101,6 +104,7 @@ __all__ = [
     "InstitutionSENDCategorySerializer",
     "InstitutionSENDLearnerSerializer",
     "InstitutionVLESerializer",
+    "InstitutionUIOptionSerializer",
     "InstitutionUserSerializer",
     # Provider nested serializers
     "ProviderEnrolmentSerializer",

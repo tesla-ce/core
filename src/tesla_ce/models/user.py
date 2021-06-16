@@ -22,6 +22,76 @@ from .base_model import BaseModel
 from .institution import Institution
 
 
+def get_roles():
+    return [
+        "INSTRUCTOR",
+        "LEARNER",
+        "ADMIN",
+        "SEND",
+        "LEGAL",
+        "DATA",
+        "GLOBAL_ADMIN"
+    ]
+
+
+def get_institution_user(user):
+    """
+        Return a InstitutionUser object if user belongs to an institution or None otherwise
+        :param user: User object
+        :return: The InstitutionUser object or None
+    """
+    if isinstance(user, InstitutionUser):
+        return user
+
+    if isinstance(user, User):
+        try:
+            return user.institutionuser
+        except User.institutionuser.RelatedObjectDoesNotExist:
+            # If user has no institution this will fail
+            return None
+    return None
+
+
+def is_global_admin(user):
+    """
+        Check if provided user is a Global Admin
+        :param user: User object
+        :return: True if it is a global admin or False otherwise
+    """
+    if isinstance(user, InstitutionUser):
+        return user.user_ptr.is_staff
+
+    if isinstance(user, User):
+        return user.is_staff
+
+    return False
+
+
+def get_institution_roles(user):
+    """
+        Get the list of institution related roles for a user
+        :param user: User object
+        :return: list of roles
+    """
+    instance = get_institution_user(user)
+    roles = []
+    if instance is not None:
+        if hasattr(instance, "instructor"):
+            roles.append("INSTRUCTOR")
+        if hasattr(instance, "learner"):
+            roles.append("LEARNER")
+        if instance.inst_admin:
+            roles.append("ADMIN")
+        if instance.send_admin:
+            roles.append("SEND")
+        if instance.legal_admin:
+            roles.append("LEGAL")
+        if instance.data_admin:
+            roles.append("DATA")
+
+    return roles
+
+
 class BaseUser(BaseModel, User):
     """
         Base user for TeSLA CE.

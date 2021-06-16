@@ -17,11 +17,13 @@
 from .institution import InstitutionAdminSerializer
 from .instrument import InstrumentSerializer
 from .provider import ProviderSerializer
+from .ui_option import UIOptionSerializer
 from .user import UserSerializer
 
 __all__ = [
     "InstitutionAdminSerializer",
     "InstrumentSerializer",
     "ProviderSerializer",
+    "UIOptionSerializer",
     "UserSerializer",
 ]
