@@ -101,16 +101,19 @@ def tesla_ce_system(django_db_blocker):
         if 'VAULT_TOKEN' in os.environ:
             del os.environ['VAULT_TOKEN']
 
+        return client
+
 
 @pytest.fixture(scope="session", )
-def admin_client(django_db_blocker):
+def admin_client(django_db_blocker, tesla_ce_system):
     """
         Initialize the TeSLA client.
 
         :return: TeSLA Client with Administration credentials
     """
     with django_db_blocker.unblock():
-        client = Client(enable_management=True)
+        client = tesla_ce_system
+        # client = Client(enable_management=True)
         # report = client.check_configuration()
         # print(json.dumps(report))
         # assert report['valid']
