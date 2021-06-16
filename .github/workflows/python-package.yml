@@ -143,8 +143,8 @@ jobs:
           STORAGE_REGION: eu-west-1
           STORAGE_URL: http://localhost:9000
           # RabbitMQ
-          RABBITMQ_USER: rabbitmq
-          RABBITMQ_GROUP: rabbitmq
+          RABBITMQ_ADMIN_USER: rabbitmq
+          RABBITMQ_ADMIN_PASSWORD: rabbitmq
           # TEST ENVIRONMENT #        
           TESLA_DOMAIN: tesla-ce
           TESLA_ADMIN_MAIL: test@tesla-ce.org
