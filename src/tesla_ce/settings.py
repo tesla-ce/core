@@ -13,7 +13,6 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ DJango settings module """
-import json
 import os
 
 from configurations import Configuration
@@ -28,6 +27,7 @@ os.environ.setdefault('DJANGO_CONFIGURATION', 'Production')
 
 
 class BaseConfiguration(Configuration):
+    """ Base configuration transversal to all options """
     # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

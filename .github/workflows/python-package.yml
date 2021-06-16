@@ -143,8 +143,8 @@ jobs:
           STORAGE_REGION: eu-west-1
           STORAGE_URL: http://localhost:9000
           # RabbitMQ
-          RABBITMQ_USER: rabbitmq
-          RABBITMQ_GROUP: rabbitmq
+          RABBITMQ_ADMIN_USER: rabbitmq
+          RABBITMQ_ADMIN_PASSWORD: rabbitmq
           # TEST ENVIRONMENT #        
           TESLA_DOMAIN: tesla-ce
           TESLA_ADMIN_MAIL: test@tesla-ce.org
@@ -266,3 +266,10 @@ jobs:
           docker build -t teslace/core:edge -f docker/Dockerfile.edge --build-arg TESLA_CE_VERSION=${{ steps.vars.outputs.version }} .
           docker push teslace/core:edge
 
+  deploy_demo:
+    needs: docker_edge
+    runs-on: [self-hosted, tesla-ce-demo]
+    steps:
+      - name: Update core images
+        run: |
+          sudo /opt/tesla-ce/upgrade_core_images.sh

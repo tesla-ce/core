@@ -26,9 +26,14 @@ VLE_TYPE = (
 
 
 def get_type_id(name):
-    for type in VLE_TYPE:
-        if type[1].upper() == name.upper():
-            return type[0]
+    """
+        Get the vle type ID from vle name
+        :param name: VLE type name
+        :return: Vle type ID
+    """
+    for vle_type in VLE_TYPE:
+        if vle_type[1].upper() == name.upper():
+            return vle_type[0]
     return None
 
 
