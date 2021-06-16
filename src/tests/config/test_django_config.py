@@ -99,8 +99,8 @@ def test_dev_config_multiple(admin_client):
         "VAULT_URL": admin_client.config.config.get('VAULT_URL'),
         "VAULT_TOKEN": token,
         "TESLA_RUN_AS_MODULE": 'api,lapi',
-        "RABBITMQ_ADMIN_USER": admin_client.config.config.get('VAULT_URL'),
-        "RABBITMQ_ADMIN_PASSWORD": admin_client.config.config.get('VAULT_URL')
+        "RABBITMQ_ADMIN_USER": admin_client.config.config.get('RABBITMQ_USER'),
+        "RABBITMQ_ADMIN_PASSWORD": admin_client.config.config.get('RABBITMQ_PASSWORD')
     }):
         Dev.TESLA_CONFIG = ConfigManager()
         Dev.pre_setup()
