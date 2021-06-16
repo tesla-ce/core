@@ -83,8 +83,8 @@ def providers(api_client, django_db_blocker):
         }
 
 
-@pytest.fixture(scope="session", )
-def admin_client(django_db_blocker):
+@pytest.fixture(scope="session", autouse=True)
+def tesla_ce_system(django_db_blocker):
     """
         Initialize the TeSLA client.
 
@@ -100,6 +100,25 @@ def admin_client(django_db_blocker):
         # Remove Vault Token from environment if present
         if 'VAULT_TOKEN' in os.environ:
             del os.environ['VAULT_TOKEN']
+
+
+@pytest.fixture(scope="session", )
+def admin_client(django_db_blocker):
+    """
+        Initialize the TeSLA client.
+
+        :return: TeSLA Client with Administration credentials
+    """
+    with django_db_blocker.unblock():
+        client = Client(enable_management=True)
+        # report = client.check_configuration()
+        # print(json.dumps(report))
+        # assert report['valid']
+        # client.initialize()
+
+        # Remove Vault Token from environment if present
+        # if 'VAULT_TOKEN' in os.environ:
+        #    del os.environ['VAULT_TOKEN']
 
         # Generate credentials for API and LAPI
         credentials_api = client.vault.get_module_credentials('api')
