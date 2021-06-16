@@ -83,8 +83,8 @@ def providers(api_client, django_db_blocker):
         }
 
 
-@pytest.fixture(scope="session", )
-def admin_client(django_db_blocker):
+@pytest.fixture(scope="session", autouse=True)
+def tesla_ce_system(django_db_blocker):
     """
         Initialize the TeSLA client.
 
@@ -101,24 +101,35 @@ def admin_client(django_db_blocker):
         if 'VAULT_TOKEN' in os.environ:
             del os.environ['VAULT_TOKEN']
 
+        return client
+
+
+@pytest.fixture(scope="session", )
+def admin_client(django_db_blocker, tesla_ce_system):
+    """
+        Initialize the TeSLA client.
+
+        :return: TeSLA Client with Administration credentials
+    """
+    with django_db_blocker.unblock():
         # Generate credentials for API and LAPI
-        credentials_api = client.vault.get_module_credentials('api')
-        credentials_lapi = client.vault.get_module_credentials('lapi')
+        credentials_api = tesla_ce_system.vault.get_module_credentials('api')
+        credentials_lapi = tesla_ce_system.vault.get_module_credentials('lapi')
         role_id = [credentials_api['role_id'], credentials_lapi['role_id']]
         secret_id = [credentials_api['secret_id'], credentials_lapi['secret_id']]
 
         config = ConfigManager(load_config=False)
-        config.config.set('VAULT_SSL_VERIFY', client.config.config.get('VAULT_SSL_VERIFY'))
-        config.load_vault(vault_url=client.config.config.get('VAULT_URL'),
+        config.config.set('VAULT_SSL_VERIFY', tesla_ce_system.config.config.get('VAULT_SSL_VERIFY'))
+        config.load_vault(vault_url=tesla_ce_system.config.config.get('VAULT_URL'),
                           role_id=role_id,
                           secret_id=secret_id,
-                          approle_path=client.config.config.get('VAULT_MOUNT_PATH_APPROLE'),
-                          kv_path=client.config.config.get('VAULT_MOUNT_PATH_KV')
+                          approle_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_APPROLE'),
+                          kv_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_KV')
                           )
         settings.TESLA_CONFIG=config
         settings.TESLA_MODULES=config.enabled_modules
 
-        return client
+        return tesla_ce_system
 
 
 @pytest.fixture(scope="session")
@@ -269,3 +280,13 @@ def institution_course_test_case(django_db_blocker, admin_client, institution_te
         institution_test_case['learner'] = test_learner.user_ptr
 
         return institution_test_case
+
+
+@pytest.fixture()
+def config_mode_settings(settings):
+    """
+        Initialize the TeSLA client.
+
+        :return: TeSLA Client with Administration credentials
+    """
+    settings.TESLA_CONFIG.config.set('TESLA_MODE', 'config')

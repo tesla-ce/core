@@ -30,7 +30,7 @@ import tests.utils
 #
 ##############################################################################
 @pytest.mark.django_db
-def test_api_admin_institutions(admin_client, rest_api_client, user_global_admin):
+def test_api_admin_institutions(rest_api_client, user_global_admin):
     # TODO: add list of not allowed users as 3rd parameter to check_403 function
     # Check that unauthenticated calls are not allowed
     user_global_admin.is_staff = False
