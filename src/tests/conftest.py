@@ -112,35 +112,24 @@ def admin_client(django_db_blocker, tesla_ce_system):
         :return: TeSLA Client with Administration credentials
     """
     with django_db_blocker.unblock():
-        client = tesla_ce_system
-        # client = Client(enable_management=True)
-        # report = client.check_configuration()
-        # print(json.dumps(report))
-        # assert report['valid']
-        # client.initialize()
-
-        # Remove Vault Token from environment if present
-        # if 'VAULT_TOKEN' in os.environ:
-        #    del os.environ['VAULT_TOKEN']
-
         # Generate credentials for API and LAPI
-        credentials_api = client.vault.get_module_credentials('api')
-        credentials_lapi = client.vault.get_module_credentials('lapi')
+        credentials_api = tesla_ce_system.vault.get_module_credentials('api')
+        credentials_lapi = tesla_ce_system.vault.get_module_credentials('lapi')
         role_id = [credentials_api['role_id'], credentials_lapi['role_id']]
         secret_id = [credentials_api['secret_id'], credentials_lapi['secret_id']]
 
         config = ConfigManager(load_config=False)
-        config.config.set('VAULT_SSL_VERIFY', client.config.config.get('VAULT_SSL_VERIFY'))
-        config.load_vault(vault_url=client.config.config.get('VAULT_URL'),
+        config.config.set('VAULT_SSL_VERIFY', tesla_ce_system.config.config.get('VAULT_SSL_VERIFY'))
+        config.load_vault(vault_url=tesla_ce_system.config.config.get('VAULT_URL'),
                           role_id=role_id,
                           secret_id=secret_id,
-                          approle_path=client.config.config.get('VAULT_MOUNT_PATH_APPROLE'),
-                          kv_path=client.config.config.get('VAULT_MOUNT_PATH_KV')
+                          approle_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_APPROLE'),
+                          kv_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_KV')
                           )
         settings.TESLA_CONFIG=config
         settings.TESLA_MODULES=config.enabled_modules
 
-        return client
+        return tesla_ce_system
 
 
 @pytest.fixture(scope="session")
