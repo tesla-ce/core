@@ -96,10 +96,9 @@ def test_dev_config(admin_client):
 def test_dev_config_multiple(admin_client):
     token = admin_client.config.config.get('VAULT_TOKEN')
     with mock.patch.dict(os.environ, {
-        "VAULT_URL": admin_client.config.config.get('VAULT_URL'),
         "VAULT_TOKEN": token,
         "TESLA_RUN_AS_MODULE": 'api,lapi'
-    }, clear=True):
+    }):
         Dev.TESLA_CONFIG = ConfigManager()
         Dev.pre_setup()
         Dev.post_setup()
