@@ -290,3 +290,44 @@ def config_mode_settings(settings):
         :return: TeSLA Client with Administration credentials
     """
     settings.TESLA_CONFIG.config.set('TESLA_MODE', 'config')
+
+
+@pytest.fixture(scope="session")
+def empty_ui_routes(django_db_blocker):
+    """
+        Remove all UI Options routes
+    """
+    with django_db_blocker.unblock():
+        from tesla_ce.models import UIOption
+        UIOption.objects.all().delete()
+    return []
+
+
+@pytest.fixture(scope="session")
+def base_ui_routes(django_db_blocker, empty_ui_routes):
+    """
+        Get a test institution with one user, one course and users
+
+        :return: Dictionary with institution and user
+    """
+    with django_db_blocker.unblock():
+        from tesla_ce.models import UIOption
+        routes = []
+        # Administration route
+        routes.append('/admin')
+        UIOption.objects.create(route='/admin', enabled=True, roles='GLOBAL_ADMIN')
+        # Dashboard route
+        routes.append('/dashboard')
+        UIOption.objects.create(route='/dashboard', enabled=True)
+        # MyCourses route
+        routes.append('/mycourses')
+        UIOption.objects.create(route='/mycourses', enabled=True, roles='INSTRUCTOR,LEARNER')
+        # Institution admin
+        routes.append('/inst_admin')
+        UIOption.objects.create(route='/inst_admin', enabled=True, roles='ADMIN')
+
+        # Invalidate the cache
+        from tesla_ce.models.ui_option import get_role_base_ui_routes
+        get_role_base_ui_routes.invalidate()
+
+    return routes

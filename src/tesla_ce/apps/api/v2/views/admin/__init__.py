@@ -16,6 +16,7 @@
 from .institution import InstitutionAdminViewSet
 from .instrument import InstrumentViewSet
 from .provider import AdminProviderViewSet
+from .ui_option import UIOptionViewSet
 from .user import AdminUserViewSet
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "InstrumentViewSet",
     "AdminProviderViewSet",
     "AdminUserViewSet",
+    "UIOptionViewSet",
 ]

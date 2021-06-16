@@ -27,6 +27,7 @@ from .instrument import InstitutionInstrumentViewSet
 from .learner import InstitutionLearnerViewSet
 from .send_category import InstitutionSENDCategoryViewSet
 from .send_learner import InstitutionSENDLearnerViewSet
+from .ui_option import InstitutionUIOptionViewSet
 from .user import InstitutionUserViewSet
 from .vle import InstitutionVLEViewSet
 
@@ -45,6 +46,7 @@ __all__ = [
     "InstitutionSENDCategoryViewSet",
     "InstitutionSENDLearnerViewSet",
     "InstitutionVLEViewSet",
+    "InstitutionUIOptionViewSet",
     "InstitutionUserViewSet",
     "InstitutionInstrumentViewSet",
 ]

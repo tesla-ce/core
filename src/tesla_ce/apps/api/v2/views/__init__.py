@@ -17,6 +17,7 @@ from .admin import AdminProviderViewSet
 from .admin import AdminUserViewSet
 from .admin import InstitutionAdminViewSet
 from .admin import InstrumentViewSet
+from .admin import UIOptionViewSet
 from .institution import InstitutionCourseActivityInstrumentViewSet
 from .institution import InstitutionCourseActivityReportViewSet
 from .institution import InstitutionCourseActivityViewSet
@@ -30,6 +31,7 @@ from .institution import InstitutionInstrumentViewSet
 from .institution import InstitutionLearnerViewSet
 from .institution import InstitutionSENDCategoryViewSet
 from .institution import InstitutionSENDLearnerViewSet
+from .institution import InstitutionUIOptionViewSet
 from .institution import InstitutionUserViewSet
 from .institution import InstitutionVLEViewSet
 from .institution import InstitutionViewSet
@@ -56,6 +58,7 @@ __all__ = [
     "InstrumentViewSet",
     "AdminProviderViewSet",
     "AdminUserViewSet",
+    "UIOptionViewSet",
     # VLE nested views
     "VLEViewSet",
     "VLECourseViewSet",
@@ -82,6 +85,7 @@ __all__ = [
     "InstitutionSENDCategoryViewSet",
     "InstitutionSENDLearnerViewSet",
     "InstitutionVLEViewSet",
+    "InstitutionUIOptionViewSet",
     "InstitutionUserViewSet",
     # Provider nested views
     "ProviderViewSet",

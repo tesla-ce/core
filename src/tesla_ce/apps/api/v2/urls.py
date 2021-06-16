@@ -130,6 +130,13 @@ institution_instrument_router = institution_router.register(r'instrument',
                                                             parents_query_lookups=['institution_id']
                                                             )
 
+# User Interface router
+institution_ui_router = institution_router.register(r'ui',
+                                                    views.InstitutionUIOptionViewSet,
+                                                    basename='institution-ui',
+                                                    parents_query_lookups=['institution_id']
+                                                    )
+
 # Course router
 institution_course_router = institution_router.register(r'course',
                                                         views.InstitutionCourseViewSet,
@@ -200,6 +207,10 @@ instrument_provider_router = admin_instrument_router.register(r'provider',
 # Institution router
 admin_institution_router = router.register(r'admin/institution', views.InstitutionAdminViewSet,
                                            basename='admin-institution')
+
+# UI Option router
+admin_ui_router = router.register(r'admin/ui', views.UIOptionViewSet,
+                                  basename='admin-ui')
 
 
 # Providers API

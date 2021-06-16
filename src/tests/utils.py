@@ -163,3 +163,18 @@ def getting_variables(body, institution_id) -> object:
             'id_first_institution': id_first_institution,
             'id_non_existing_institution': id_non_existing_institution
         }
+
+
+@pytest.mark.django_db
+def get_profile(rest_api_client, token):
+    """
+        Get authenticated user profile
+        :param rest_api_client: API client
+        :param token: Access token
+        :return: Returned profile
+    """
+    rest_api_client.credentials(HTTP_AUTHORIZATION='JWT ' + token)
+    profile_resp = rest_api_client.get('/api/v2/auth/profile')
+    rest_api_client.credentials()
+
+    return profile_resp
