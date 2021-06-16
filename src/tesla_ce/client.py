@@ -54,6 +54,7 @@ def get_version():
     version_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'lib', 'data', 'VERSION'))
     with open(version_file, 'r') as v_file:
         version = v_file.read()
+    version = version.strip()
     return version
 
 

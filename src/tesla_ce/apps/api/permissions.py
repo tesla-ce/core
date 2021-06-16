@@ -31,9 +31,10 @@ def get_institution_user(user):
     if isinstance(user, User):
         try:
             return user.institutionuser
-        except Exception:
+        except User.institutionuser.RelatedObjectDoesNotExist:
             # If user has no institution this will fail
             return None
+    return None
 
 
 def is_global_admin(user):
@@ -47,6 +48,8 @@ def is_global_admin(user):
 
     if isinstance(user, User):
         return user.is_staff
+
+    return False
 
 
 class GlobalAdminPermission(permissions.BasePermission):
@@ -84,7 +87,7 @@ class InstitutionMemberPermission(permissions.BasePermission):
         if isinstance(request.user, User):
             try:
                 return request.user.institutionuser.institution
-            except Exception:
+            except User.institutionuser.RelatedObjectDoesNotExist:
                 return None
 
     def has_permission(self, request, view):
