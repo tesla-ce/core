@@ -280,3 +280,13 @@ def institution_course_test_case(django_db_blocker, admin_client, institution_te
         institution_test_case['learner'] = test_learner.user_ptr
 
         return institution_test_case
+
+
+@pytest.fixture()
+def config_mode_settings(settings):
+    """
+        Initialize the TeSLA client.
+
+        :return: TeSLA Client with Administration credentials
+    """
+    settings.TESLA_CONFIG.config.set('TESLA_MODE', 'config')

@@ -302,7 +302,7 @@ class Client():
             config.set('CELERY_BROKER_PASSWORD', config.get('RABBITMQ_ADMIN_PASSWORD'))
 
         # If Moodle is included, generate credentials and configuration
-        if deploy_external_services:
+        if deploy_moodle:
             # Enable the moodle flag
             config.set('MOODLE_DEPLOY', True)
 
@@ -312,7 +312,6 @@ class Client():
 
             # Generate Moodle administrator password
             config.set('MOODLE_ADMIN_PASSWORD', uuid.uuid4().__str__())
-
 
         # Write the configuration file to disk
         with open(output_file, 'w') as out_fh:
