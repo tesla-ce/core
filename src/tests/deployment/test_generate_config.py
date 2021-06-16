@@ -39,17 +39,6 @@ def test_generate_configuration(tesla_ce_system, config_mode_settings):
         assert conf.config.get('DJANGO_SECRET_KEY') is not None
         assert 'test_domain' in conf.config.get('DJANGO_ALLOWED_HOSTS')
 
-        # Check services
-        assert conf.config.get('DB_USER', None) is None
-        assert conf.config.get('DB_PASSWORD', None) is None
-        assert conf.config.get('VAULT_DB_HOST') is None
-        assert conf.config.get('VAULT_DB_USER') is None
-        assert conf.config.get('RABBITMQ_ERLANG_COOKIE') is None
-        assert conf.config.get('RABBITMQ_ADMIN_USER') is None
-        assert conf.config.get('RABBITMQ_ADMIN_PASSWORD') is None
-        assert conf.config.get('STORAGE_ACCESS_KEY') is None
-        assert conf.config.get('STORAGE_SECRET_KEY') is None
-
         # Check Moodle
         assert not conf.config.get('MOODLE_DEPLOY')
         assert conf.config.get('MOODLE_ADMIN_PASSWORD') is None
@@ -114,17 +103,6 @@ def test_generate_configuration_with_moodle(tesla_ce_system, config_mode_setting
         assert conf.config.get('TESLA_DOMAIN') == 'test_domain3'
         assert conf.config.get('DJANGO_SECRET_KEY') is not None
         assert 'test_domain3' in conf.config.get('DJANGO_ALLOWED_HOSTS')
-
-        # Check services
-        assert conf.config.get('DB_USER', None) is None
-        assert conf.config.get('DB_PASSWORD', None) is None
-        assert conf.config.get('VAULT_DB_HOST') is None
-        assert conf.config.get('VAULT_DB_USER') is None
-        assert conf.config.get('RABBITMQ_ERLANG_COOKIE') is None
-        assert conf.config.get('RABBITMQ_ADMIN_USER') is None
-        assert conf.config.get('RABBITMQ_ADMIN_PASSWORD') is None
-        assert conf.config.get('STORAGE_ACCESS_KEY') is None
-        assert conf.config.get('STORAGE_SECRET_KEY') is None
 
         # Check Moodle
         assert conf.config.get('MOODLE_DEPLOY')
