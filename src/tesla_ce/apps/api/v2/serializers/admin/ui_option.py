@@ -13,13 +13,8 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """UI Option serialize module."""
-from rest_framework import exceptions
 from rest_framework import serializers
-from rest_framework import validators
 
-from tesla_ce import get_default_client
-from tesla_ce.apps.api.utils import JSONField
-from tesla_ce.lib.exception import TeslaVaultException
 from tesla_ce.models import UIOption
 from tesla_ce.models.user import get_roles
 
@@ -34,6 +29,11 @@ class UIOptionSerializer(serializers.ModelSerializer):
         fields = ['id', 'route', 'enabled', 'roles']
 
     def validate_route(self, value):
+        """
+            Check that provided route is valid
+            :param value: New UI Option route
+            :return: Route
+        """
         if value is None:
             raise serializers.ValidationError(detail="Route cannot be empty")
         qs = UIOption.objects.filter(route=value)
@@ -45,7 +45,11 @@ class UIOptionSerializer(serializers.ModelSerializer):
         return value
 
     def validate_roles(self, value):
-
+        """
+            Check that provided roles are valid
+            :param value: New UI Option route
+            :return: Route
+        """
         if value is None or len(value.strip()) == 0:
             return None
 
