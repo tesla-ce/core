@@ -20,10 +20,30 @@ help: ## Show this help information
 	@printf "\e[32m====================\n  TeSLA CE v%s\n====================\n" $(VERSION)
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-package: ## Build Python package wheel
+
+python_venv: ## Create a Python virtual environment and install required packages
+	if [ ! -d ".venv"]; then
+		python3 -m venv .venv
+		source .venv/bin/activate
+		rm -f requirements.txt
+		python -m pip install pip --upgrade
+		pip install pip-tools
+		pip-compile
+		pip install -r requirements.txt
+	else
+		source .venv/bin/activate
+	fi
+
+
+package: python_venv ## Build Python package wheel
 	@echo "build package"
 docker: package ## Build Docker image
 	@echo "build docker"
 build: package docker ## Build all targets
 	@echo "build all"
+
+clean:  ## Clean all environment
+	rm -f .venv
+	rm -f requirements.txt
+
 
