@@ -232,7 +232,8 @@ def institution_course_test_case(django_db_blocker, admin_client, institution_te
         test_course = Course.objects.create(
             code=get_random_string(10),
             description="PyTest test course",
-            vle=test_vle
+            vle=test_vle,
+            vle_course_id=get_random_string(5)
         )
 
         # Create an instructor
