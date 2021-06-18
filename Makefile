@@ -38,6 +38,8 @@ ifdef DATABASE
   DB_REQUIREMENTS = psycopg2
 endif
 
+.DEFAULT_GOAL := help
+
 .DELETE_ON_ERROR: .venv
 
 db_check:
