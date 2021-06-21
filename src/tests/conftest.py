@@ -101,7 +101,7 @@ def tesla_ce_system(django_db_blocker):
         if 'VAULT_TOKEN' in os.environ:
             del os.environ['VAULT_TOKEN']
 
-        return client
+    return client
 
 
 @pytest.fixture(scope="session", )

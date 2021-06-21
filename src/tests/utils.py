@@ -12,9 +12,8 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import os
 import logging
-
 import pytest
 
 
@@ -181,3 +180,13 @@ def get_profile(rest_api_client, token):
     rest_api_client.credentials()
 
     return profile_resp
+
+
+def get_provider_desc_file(provider):
+    """
+        Get the path to the file with the provider description
+        :param provider: Provider name
+        :return: Path to the file
+    """
+    return os.path.abspath(os.path.join(os.path.dirname(__file__),
+                           '..', '..', 'providers', '{}.json'.format(provider)))
