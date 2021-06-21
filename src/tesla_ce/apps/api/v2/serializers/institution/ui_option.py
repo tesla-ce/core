@@ -13,13 +13,8 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """UI Option serialize module."""
-from rest_framework import exceptions
 from rest_framework import serializers
-from rest_framework import validators
 
-from tesla_ce import get_default_client
-from tesla_ce.apps.api.utils import JSONField
-from tesla_ce.lib.exception import TeslaVaultException
 from tesla_ce.models import UIOption
 
 

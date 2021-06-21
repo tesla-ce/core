@@ -14,35 +14,37 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Provider api serialize module."""
 import jsonschema
+
+from rest_framework import exceptions
 from rest_framework import serializers
 
+from tesla_ce import get_default_client
+from tesla_ce.apps.api.utils import decode_json
 from tesla_ce.apps.api.utils import JSONField
 from tesla_ce.apps.api.utils import JSONFormField
-from tesla_ce.apps.api.utils import decode_json
+from tesla_ce.lib.exception import TeslaVaultException
+from tesla_ce.models import Instrument
 from tesla_ce.models import Provider
 from .instrument import InstrumentSerializer
 
 
 class ProviderSerializer(serializers.ModelSerializer):
     """Provider serialize model module."""
+    _credentials = None
+
+    id = serializers.ReadOnlyField()
     instrument = InstrumentSerializer(read_only=True)
-    name = serializers.CharField(read_only=True)
-    description = serializers.CharField(read_only=True)
-    url = serializers.URLField(read_only=True)
-    version = serializers.CharField(read_only=True)
-    acronym = serializers.CharField(read_only=True)
-    allow_validation = serializers.BooleanField(read_only=True)
-    inverted_polarity = serializers.BooleanField(read_only=True)
-    image = serializers.CharField(read_only=True)
-    has_service = serializers.BooleanField(read_only=True)
-    service_port = serializers.IntegerField(read_only=True)
-    options_schema = JSONField(read_only=True)
-    #options = JSONField(allow_null=True, default=None)
+    instrument_id = serializers.HiddenField(default=None, allow_null=True)
+    options_schema = JSONField(allow_null=True, default=None)
     options = JSONFormField(allow_null=True, default=None, schema='options_schema')
+
+    credentials = serializers.SerializerMethodField(default=None, read_only=True)
 
     class Meta:
         model = Provider
-        fields = "__all__"
+        fields = ['id', 'instrument_id', 'instrument', 'name', 'queue', 'description', 'url', 'version', 'acronym',
+                  'allow_validation', 'inverted_polarity', 'image', 'has_service', 'service_port', 'options_schema',
+                  'options', 'credentials']
 
     def validate(self, attrs):
         """
@@ -54,20 +56,40 @@ class ProviderSerializer(serializers.ModelSerializer):
         """
         # Add predefined fields
         attrs['instrument_id'] = self.context['view'].kwargs['parent_lookup_instrument_id']
+        attrs['instrument'] = Instrument.objects.get(id=attrs['instrument_id'])
+
+        # Check options and schema
+        if 'options' in attrs or 'options_schema' in attrs:
+            options_schema = attrs.get('options_schema')
+            if options_schema is None and self.instance is not None:
+                options_schema = decode_json(self.instance.options_schema)
+            options = attrs.get('options')
+            if options is None and self.instance is not None:
+                options = decode_json(self.instance.options)
+            if options_schema is None and options is not None:
+                raise serializers.ValidationError(detail="Options are not compatible with the NULL provided schema")
+            try:
+                jsonschema.validate(instance=options, schema=options_schema)
+            except jsonschema.exceptions.ValidationError as val_err:
+                raise serializers.ValidationError(detail=val_err) from val_err
 
         # Apply validators
         for validator in self.get_validators():
             validator(attrs, self)
         return super().validate(attrs)
 
-    def validate_options(self, value):
-        if value is not None:
-            schema = decode_json(self.instance.options_schema)
-            try:
-                jsonschema.validate(instance=value, schema=schema)
-            except jsonschema.exceptions.ValidationError as error:
-                raise serializers.ValidationError(detail=error.message)
-            else:
-                return value
-        return None
+    def create(self, validated_data):
+        provider = super().create(validated_data)
 
+        try:
+            provider_info = get_default_client().register_provider(validated_data, force_update=True)
+        except TeslaVaultException:
+            provider.delete()
+            raise exceptions.PermissionDenied('Cannot register Provider')
+
+        self._credentials = provider_info
+
+        return provider
+
+    def get_credentials(self, object):
+        return self._credentials

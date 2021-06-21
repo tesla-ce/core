@@ -12,9 +12,8 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import os
 import logging
-
 import pytest
 
 
@@ -80,22 +79,24 @@ def post_rest_api_client(rest_api_client, str_path, str_data, module, message, s
     @param rest_api_client:
     @param str_path:
     @param str_data:
-    @param module:
-    @param message:
-    @param status:
+    @param module: Testing module name
+    @param message: Logging info message
+    @param status: Testing status (example: 200, 404...)
     @return:
     """
     response = rest_api_client.post(str_path, data=str_data)
     body = response.json()
-    str_log = [[module], ['POST data:', str_data], ['Status:', status], [message, body]]
+    str_log = [[module], ['POST data:', str_data], ['Expected Status:', status],
+               ['Received Status:', response.status_code], [message, body]]
+    print_log(str_log)
     assert response.status_code == status
     if status == 201:
-        new_instrument_id = response.json()['id']
-        str_log.append(['NEW INSTRUMENT ID:', new_instrument_id])
+        new_item_id = response.json()['id']
+        str_log.append(['NEW INSTRUMENT ID:', new_item_id])
     else:
-        new_instrument_id = -1
+        new_item_id = -1
     print_log(str_log)
-    return new_instrument_id
+    return new_item_id
 
 
 @pytest.mark.django_db
@@ -105,9 +106,9 @@ def put_rest_api_client(rest_api_client, str_path, str_data, module, message, st
     @param rest_api_client:
     @param str_path:
     @param str_data:
-    @param module:
-    @param message:
-    @param status:
+    @param module: Testing module name
+    @param message: Logging info message
+    @param status: Testing status (example: 200, 404...)
     """
     response = rest_api_client.put(str_path, data=str_data)
     body = response.json()
@@ -124,12 +125,13 @@ def delete_rest_api_client(rest_api_client, str_path, module, message, status):
 
     @param rest_api_client:
     @param str_path:
-    @param module:
-    @param message:
-    @param status:
+    @param module: Testing module name
+    @param message: Logging info message
+    @param status: Testing status (example: 200, 404...)
     """
     response = rest_api_client.delete(str_path)
-    str_log = [[module], ['Status:', status], [message]]
+    str_log = [[module], ['Status:', status], [message, response],
+               ['response.status_code', response.status_code]]
     print_log(str_log)
     assert response.status_code == status
 
@@ -178,3 +180,13 @@ def get_profile(rest_api_client, token):
     rest_api_client.credentials()
 
     return profile_resp
+
+
+def get_provider_desc_file(provider):
+    """
+        Get the path to the file with the provider description
+        :param provider: Provider name
+        :return: Path to the file
+    """
+    return os.path.abspath(os.path.join(os.path.dirname(__file__),
+                           '..', '..', 'providers', '{}.json'.format(provider)))

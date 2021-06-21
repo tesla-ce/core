@@ -19,13 +19,15 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 
+from rest_framework_extensions.mixins import NestedViewSetMixin
+
 from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import ProviderSerializer
 from tesla_ce.models import Provider
 
 
 # pylint: disable=too-many-ancestors
-class AdminProviderViewSet(viewsets.ModelViewSet):
+class AdminProviderViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows instrument provider to be viewed or edited.
     """
@@ -33,15 +35,9 @@ class AdminProviderViewSet(viewsets.ModelViewSet):
     serializer_class = ProviderSerializer
     permission_classes = [permissions.GlobalAdminPermission]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    '''
-    filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    '''
+    filterset_fields = ['acronym', 'instrument_id']
+    search_fields = ['acronym', 'instrument_id']
 
     def get_queryset(self):
-        queryset = Provider.objects
-        if 'parent_lookup_instrument_id' in self.kwargs:
-            queryset = queryset.filter(
-                instrument_id=self.kwargs['parent_lookup_instrument_id']
-            )
-        return queryset.all().order_by('id')
+        qs = super().filter_queryset_by_parents_lookups(Provider.objects)
+        return qs.all().order_by('id')

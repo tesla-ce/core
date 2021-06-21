@@ -48,7 +48,7 @@ class InstitutionCourseGroupViewSet(viewsets.ModelViewSet, NestedViewSetMixin):
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionCourseGroupCourseViewSet(viewsets.ModelViewSet, NestedViewSetMixin):
+class InstitutionCourseGroupCourseViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows courses in course groups to be added or deleted.
     """
@@ -66,4 +66,4 @@ class InstitutionCourseGroupCourseViewSet(viewsets.ModelViewSet, NestedViewSetMi
             queryset = queryset.filter(
                 institution_id=self.kwargs['parent_lookup_institution_id']
             )
-        return queryset.all().order_by('id')
+        return queryset.get().courses.all().order_by('id')
