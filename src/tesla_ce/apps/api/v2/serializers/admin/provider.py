@@ -61,10 +61,10 @@ class ProviderSerializer(serializers.ModelSerializer):
         # Check options and schema
         if 'options' in attrs or 'options_schema' in attrs:
             options_schema = attrs.get('options_schema')
-            if options_schema is None and self.instance is not None:
+            if options_schema is None and 'options_schema' not in attrs and self.instance is not None:
                 options_schema = decode_json(self.instance.options_schema)
             options = attrs.get('options')
-            if options is None and self.instance is not None:
+            if options is None and 'options' not in attrs and self.instance is not None:
                 options = decode_json(self.instance.options)
             if options_schema is None and options is not None:
                 raise serializers.ValidationError(detail="Options are not compatible with the NULL provided schema")

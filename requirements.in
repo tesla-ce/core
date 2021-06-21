@@ -55,7 +55,7 @@ sphinx
 sphinxcontrib-httpdomain
 recommonmark
 # m2r
-pyyaml
+pyyaml>=5.4.1
 uritemplate
 drf_yasg
 
