@@ -18,14 +18,10 @@ import logging
 import pytest
 
 import tests.utils
-from tesla_ce.models import CourseGroup, Course
-
-from tests.utils import getting_variables
 
 
 @pytest.mark.django_db
 def test_api_institution_course_groups(rest_api_client, user_global_admin, institution_course_test_case):
-    # TODO Course Groups
     institution_user = institution_course_test_case['user'].institutionuser
     institution = institution_course_test_case['institution']
     institution_id = institution.id
@@ -51,10 +47,10 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     Request Headers: Authorization - JWT with Institution Admin privileges
      """
     logging.info('\n1) LIST GROUPS --------------------------------------')
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/'
-    str_response = 'RESPONSE id=' + str(institution_id) + ':'
+    str_path = '/api/v2/institution/{}/group/'.format(institution_id)
+    str_response = 'RESPONSE id={}:'.format(institution_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
-                                           'List Groups', 'RESPONSE:', 200)
+                                           'List Groups', str_response, 200)
 
     # Ensure that no group exists
     assert body['count'] == 0
@@ -116,10 +112,10 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     Request Headers: Authorization - JWT with Institution Admin privileges
      """
     logging.info('\n3) READ GROUP INFORMATION --------------------------------------')
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/'
-    str_response = 'RESPONSE group id=' + str(new_group_id) + ':'
-    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
-                                           'Read Group Information', 'RESPONSE:', 200)
+    str_path = '/api/v2/institution/{}/group/{}/'.format(institution_id, new_group_id)
+    str_response = 'RESPONSE group id={}:'.format(new_group_id)
+    tests.utils.get_rest_api_client(rest_api_client, str_path,
+                                    'Read Group Information', str_response, 200)
 
     # TODO? Read group information errors: status 404 institution and/or group not found
 
@@ -135,7 +131,6 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     Request Headers: Authorization - JWT with Institution Admin privileges
     """
     logging.info('\n4) UDPATE GROUP INFORMATION --------------------------------------')
-    # str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/'
     str_data = {'name': 'CHANGED_TEST_GROUP', 'description': 'This is a CHANGED TEXT FOR THE test group'}
 
     tests.utils.put_rest_api_client(rest_api_client, str_path, str_data,
@@ -154,7 +149,7 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     Request Headers: Authorization - JWT with Institution Admin privileges
     """
     logging.info('\n5) DELETE GROUP --------------------------------------')
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/'
+    str_path = '/api/v2/institution/{}/group/{}/'.format(institution_id, new_group_id)
     # 666 check source https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.7
     # A successful response SHOULD be 200 (OK) if the response includes an entity describing the status,
     # 202 (Accepted) if the action has not yet been enacted, or 204 (No Content) if the action has been enacted
@@ -162,7 +157,7 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     # 666 ADD THOSE STATUS TO DOC?
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
                                        'Delete group', "RESPONSE: ", 204)
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/'
+    str_path = '/api/v2/institution/{}/group/'.format(institution_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List Groups', 'RESPONSE:', 200)
     logging.info(body)
@@ -172,6 +167,11 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     # TODO? Read group information errors: status 400 and 404
 
     pytest.skip("TODO")
+    # 666: Delete Group should be moved at the end of this test group,
+    # 666 after testing courses features in this new group
+    # 666 List Groups --> Create Group --> Read & update new group -->
+    # 666 --> Add course to a new group --> Read & Update new course in new group -->
+    # 666 --> Delete new course in new group --> Delete new group
 
     # List courses in a group
     """ ---------------------------------------------------------------------
@@ -184,10 +184,15 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     Request Headers: Authorization - JWT with Institution Admin privileges
     """
     logging.info('\n6) LIST COURSES IN A GROUP --------------------------------------')
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/course/'
+    # str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/course/'
+    # str_path = '/api/v2/institution/%r/group/%r/course/' % (institution_id, new_group_id)
+    str_path = '/api/v2/institution/{}/group/{}/course/'.format(institution_id, new_group_id)
+
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List Courses in a Group', 'RESPONSE:', 200)
-    n_courses = body['count']
+
+    # Ensure no courses in a new group by default
+    assert body['count'] == 0
 
     # TODO? Read group information errors: status 400 and 404
 
@@ -206,7 +211,7 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     Request Headers: Authorization - JWT with Institution Admin privileges
     """
     logging.info('\n7) ADD A COURSE TO A GROUP --------------------------------------')
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/course/'
+    str_path = '/api/v2/institution/{}/group/{}/course/'.format(institution_id, new_group_id)
     course_code = institution_course_test_case['course'].code
     course_vle = institution_course_test_case['course'].vle.name
     course_vle_course_id = institution_course_test_case['course'].vle_course_id
@@ -228,6 +233,11 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     new_course_id = tests.utils.post_rest_api_client(rest_api_client, str_path, new_course,
                                                      'Add a Course to a Group', 'RESPONSE: ', 200)
 
+    # List and check number of courses in a group has increased.
+    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
+                                           'List Courses in a Group', 'RESPONSE:', 200)
+    n_courses = body['count']
+
     # TODO Delete a course from a group
     """ ---------------------------------------------------------------------
     DELETE A COURSE FROM A GROUP:
@@ -240,14 +250,12 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     Request Headers: Authorization - JWT with Institution Admin privileges
     """
     logging.info('\n8) DELETE A COURSE FROM A GROUP --------------------------------------')
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/course/'
+    str_path = '/api/v2/institution/{}/group/{}/course/'.format(institution_id, new_group_id)
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
                                        'Delete a Course from a Group', "RESPONSE: ", 200)
-    # str_path = '/api/v2/institution/' + str(institution_id) + '/group/'
-    str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/course/'
+
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List Courses in a Group', 'RESPONSE:', 200)
     logging.info(body)
     # Ensure number of groups has decreased
-    assert body['count'] == (n_groups - 1)
-
+    assert body['count'] == (n_courses - 1)
