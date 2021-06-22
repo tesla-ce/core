@@ -2,7 +2,8 @@
 [![codecov](https://codecov.io/gh/tesla-ce/core/branch/main/graph/badge.svg?token=PJJQMW981P)](https://codecov.io/gh/tesla-ce/core)
 [![Vulnerability scan](https://github.com/tesla-ce/core/actions/workflows/debricked.yml/badge.svg)](https://github.com/tesla-ce/core/actions/workflows/debricked.yml)
 [![CodeQL](https://github.com/tesla-ce/core/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/tesla-ce/core/actions/workflows/codeql-analysis.yml)
-[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0)  
+[![AGPL License](https://img.shields.io/badge/license-AGPL-blue.svg)](http://www.gnu.org/licenses/agpl-3.0) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftesla-ce%2Fcore.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftesla-ce%2Fcore?ref=badge_shield)
+ 
 [![Quality gate](https://sonar.sunai.uoc.edu/api/project_badges/quality_gate?project=tesla-ce_core)](https://sonar.sunai.uoc.edu/dashboard?id=tesla-ce_core)
 # TeSLA CE Core System
 
@@ -26,3 +27,6 @@ Credits: Include a section for credits in order to highlight and link to the aut
 
 ## License
 This project is licensed under [AGPL v3 licence](http://www.gnu.org/licenses/agpl-3.0).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftesla-ce%2Fcore.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftesla-ce%2Fcore?ref=badge_large)
