@@ -13,10 +13,3 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Reporting related tasks """
-
-__all__ = [
-    "update_learner_activity_instrument_report",
-    "update_learner_activity_report",
-    "update_activity_report",
-    "update_course_report",
-]
