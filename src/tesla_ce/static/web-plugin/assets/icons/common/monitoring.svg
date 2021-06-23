@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 415.88 374.45">
+  <defs>
+    <style>
+
+    .tesla-common-monitoring-3, .tesla-common-monitoring-5 {
+      fill: none;
+      stroke-miterlimit: 10;
+    }
+
+    .tesla-common-monitoring-3 {
+      stroke-linecap: round;
+      stroke-width: 9px;
+    }
+
+    .tesla-common-monitoring-5 {
+      stroke-width: 4.69px;
+    }</style>
+  </defs>
+  <g class="tesla_common tesla_common_monitoring">
+    <rect class="tesla-tertiary-color" x="14" y="14" width="387.88" height="271.21" rx="17.9"/>
+    <path class="tesla-primary-color"
+          d="M426,89.76a3.91,3.91,0,0,1,3.9,3.9V329.07A3.91,3.91,0,0,1,426,333H74a3.91,3.91,0,0,1-3.9-3.9V93.66a3.91,3.91,0,0,1,3.9-3.9H426m0-28H74a31.9,31.9,0,0,0-31.9,31.9V329.07A31.9,31.9,0,0,0,74,361H426a31.9,31.9,0,0,0,31.9-31.9V93.66A31.9,31.9,0,0,0,426,61.76Z"
+          transform="translate(-42.06 -61.76)"/>
+    <path class="tesla-primary-color"
+          d="M341.13,426.82H313.76l-15-49.77H201.84l-15.51,49.77H158.87a4.7,4.7,0,0,0,0,9.39H341.13a4.7,4.7,0,1,0,0-9.39Z"
+          transform="translate(-42.06 -61.76)"/>
+    <g>
+      <path class="tesla-primary-color"
+            d="M148.24,106.09v41.52L113.49,123.7a55.21,55.21,0,0,1,34.75-17.61m3.59-3.85a58.65,58.65,0,0,0-43.65,22.16l43.65,30V102.24Z"
+            transform="translate(-42.06 -61.76)"/>
+      <path class="tesla-primary-color" d="M204.86,131.07a58.83,58.83,0,0,0-45.08-28.63l-.51,53.2S189.65,139.45,204.86,131.07Z"
+            transform="translate(-42.06 -61.76)"/>
+      <path class="tesla-primary-color"
+            d="M103.47,139.14,140.27,166l-22,37A55.54,55.54,0,0,1,99,161a54.7,54.7,0,0,1,4.51-21.88m-1.37-5.44a58.82,58.82,0,0,0,17.18,74.66L145,165,102.1,133.7Z"
+            transform="translate(-42.06 -61.76)"/>
+      <path class="tesla-primary-color"
+            d="M213.06,161a58.57,58.57,0,0,0-4.56-22.74l-52.36,28.89-28.27,46.46A58.84,58.84,0,0,0,213.06,161Z"
+            transform="translate(-42.06 -61.76)"/>
+      <line class="tesla-common-monitoring-3 tesla-primary-stroke" x1="80.83" y1="189.61" x2="169.27" y2="189.61"/>
+      <circle class="tesla-primary-color" cx="59.47" cy="189.61" r="8.34"/>
+      <line class="tesla-common-monitoring-3 tesla-primary-stroke" x1="80.83" y1="217.81" x2="169.27" y2="217.81"/>
+      <circle class="tesla-primary-color" cx="59.47" cy="217.81" r="8.34"/>
+      <line class="tesla-common-monitoring-3 tesla-primary-stroke" x1="80.83" y1="246.02" x2="169.27" y2="246.02"/>
+      <circle class="tesla-primary-color" cx="59.47" cy="246.02" r="8.34"/>
+      <rect class="tesla-secondary-color" x="276.35" y="56.91" width="34.85" height="79.6" rx="7.06"/>
+      <rect class="tesla-secondary-color" x="222.63" y="102.15" width="34.85" height="34.37" rx="7.53"/>
+      <rect class="tesla-secondary-color" x="330.07" y="67.78" width="34.85" height="68.73" rx="7.06"/>
+      <polyline class="tesla-common-monitoring-3 tesla-primary-stroke" points="369.06 133.36 205.78 133.36 205.78 63.26"/>
+      <g>
+        <polyline class="tesla-common-monitoring-3 tesla-primary-stroke" points="369.06 247.47 205.78 247.47 205.78 177.37"/>
+        <polyline class="tesla-common-monitoring-5 tesla-primary-stroke" points="205.78 247.32 267.03 199.06 311.09 211.42 360.74 177.37"/>
+        <path class="tesla-primary-color" d="M405.4,242.91a4.59,4.59,0,1,0-6.38-1.19A4.59,4.59,0,0,0,405.4,242.91Z"
+              transform="translate(-42.06 -61.76)"/>
+      </g>
+    </g>
+  </g>
+</svg>

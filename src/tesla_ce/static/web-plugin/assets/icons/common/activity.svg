@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 370.68 420.07">
+  <defs>
+    <style>
+    .common-activity-2 {
+      stroke-width: 2.03px;
+    }
+
+    .common-activity-2, .common-activity-3, .common-activity-4 {
+      stroke-linejoin: round;
+    }
+
+    .common-activity-3 {
+      stroke-width: 7.11px;
+    }
+
+    .common-activity-4 {
+      stroke-width: 8.13px;
+    }
+
+    .common-activity-5 {
+      stroke-miterlimit: 10;
+      stroke-width: 8px;
+    }
+    </style>
+  </defs>
+  <g class="tesla_common tesla_common_activity">
+    <path class="tesla-primary-color"
+          d="M428.23,109.5V312.26a4.65,4.65,0,0,1-4.58,4.71h-.14l-142-4.48c-20.72,0-33,31.24-33,31.24s-12.31-31.24-33-31.24L73.38,317a4.64,4.64,0,0,1-4.72-4.57V109.11a9,9,0,0,0-5.56,8.3V318.64a9,9,0,0,0,8.6,9L216.09,334a9,9,0,0,1,7.62,4.9c3.64,7.12,11.92,19.81,24.54,20.07h0c12.86,0,21.26-12.53,24.94-19.69a9,9,0,0,1,7.6-4.89L425.19,328a9,9,0,0,0,8.6-9V117.8A9,9,0,0,0,428.23,109.5Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="common-activity-2 tesla-tertiary-stroke tesla-tertiary-color"
+          d="M73.38,317l142-4.48c20.73,0,33,31.24,33,31.24V128.46l-61.09-19.65a9.06,9.06,0,0,0-2.74-.42H72.09a9,9,0,0,0-3.43.68V312.26A4.64,4.64,0,0,0,73.23,317Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="common-activity-2 tesla-tertiary-stroke tesla-tertiary-color"
+          d="M312.28,108.81a9.18,9.18,0,0,0-2.75.43l-60.89,19.55v-.27l-.2-.06V343.73s12.32-31.24,33-31.24l142,4.48a4.64,4.64,0,0,0,4.72-4.57V109.5a9,9,0,0,0-3.43-.69Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="common-activity-3 tesla-primary-stroke tesla-tertiary-color" d="M248.44,174.53s-54.21-55.55-172.2-57V302.54s95.47-11.49,172.2,41.19Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="common-activity-3 tesla-primary-stroke tesla-tertiary-color" d="M248.44,174.53s54.16-55.59,172.15-57V302.54s-95.42-11.49-172.15,41.19Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="common-activity-4 tesla-primary-stroke tesla-tertiary-color" d="M248.44,128.12S198.4,59.77,89.38,58V285.51s88.17-7,159.06,57.78Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="common-activity-4 tesla-primary-stroke tesla-tertiary-color" d="M248.44,343.29V128.12S298.49,59.77,407.5,58V285.51" transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color" d="M226,153.53c-35.22-28.55-63.43-40-109.59-47.13V95.89Q177.62,103.3,226,140.23Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color" d="M226,185.68c-35.22-28.54-63.43-40-109.59-47.14V128.12q61.26,7.44,109.59,44.36Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color" d="M226,214.51c-35.22-28.54-63.43-40-109.59-47.13V156.89q61.26,7.4,109.59,44.34Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color" d="M226,246.31c-35.22-28.54-63.43-40-109.59-47.13V188.73q61.26,7.41,109.59,44.34Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color" d="M226,278.54c-35.22-28.56-63.43-40.05-109.63-47.16V220.92q61.27,7.44,109.6,44.34Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color" d="M270.93,153.53c35.23-28.55,63.44-40,109.6-47.13V95.89q-61.27,7.41-109.6,44.34Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color" d="M270.93,185.68c35.23-28.54,63.44-40,109.6-47.14V128.12q-61.27,7.44-109.6,44.36Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color"
+          d="M277.85,209.06c15.15-11.59,29.25-20,44.45-26.43,17-7.16,35.45-11.74,58.23-15.25V156.89a226.4,226.4,0,0,0-59.26,15.28,220.15,220.15,0,0,0-43,23.66C275.81,197.58,275.57,210.8,277.85,209.06Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color"
+          d="M281.85,237.86c30.44-22.45,57.38-32.31,98.68-38.68V188.73q-55.21,6.68-99.92,37.33C277.34,228.3,278.27,240.5,281.85,237.86Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="tesla-primary-color"
+          d="M281.43,270.38c30.62-22.68,57.61-32.61,99.13-39V220.92q-55.37,6.72-100.17,37.51C277.21,260.61,278,272.93,281.43,270.38Z"
+          transform="translate(-63.1 -53.93)"/>
+    <path class="common-activity-5 tesla-primary-stroke tesla-tertiary-color"
+          d="M332.4,470c-50.41,0-67.09-4-96.12-70.64S190.88,294.41,207,285c22.77-13.3,54.79,58,60,58,0,0,1.31-124.75,1.31-131.85s3.43-17.53,17.15-17.53,17.72,10.8,17.72,17.57,1.36,109.51,1.36,109.51S304.93,267,324,267c20.91,0,20.56,53.51,20.56,53.51S347.12,274,364,274c20.35,0,22.28,46.51,22.28,46.51S387.85,285,405.4,285c20.69,0,22.6,45.94,22.6,56.37s.9,20.56-3,55.63C420,442,401.93,470,332.4,470Z"
+          transform="translate(-63.1 -53.93)"/>
+  </g>
+
+</svg>
