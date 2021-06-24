@@ -59,5 +59,5 @@ class UIOptionSerializer(serializers.ModelSerializer):
         for role in list_roles:
             if role.upper() not in valid_roles:
                 raise serializers.ValidationError(detail="Role {} is not valid".format(role))
-            roles.append(role.upper)
+            roles.append(role.upper())
         return ','.join(roles)
