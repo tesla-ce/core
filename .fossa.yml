@@ -1,0 +1,8 @@
+analyze:
+  modules:
+    - name: tesla-ce/core
+      type: requirements.txt
+      target: github.com/tesla-ce/core
+      path:  src
+      options:
+        strategy: requirements
