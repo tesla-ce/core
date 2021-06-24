@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 374.57 417.37">
+  <g class="tesla_common tesla_common_integrity">
+    <path class="tesla-primary-color"
+          d="M433.3,86.86c-107.77,0-182.89-46.23-182.89-46.23S174.11,86.86,66.35,86.86C50.47,100.29,78.75,401.24,249,457.72l.82.28h0C420.09,401.52,449.17,100.29,433.3,86.86Z"
+          transform="translate(-62.51 -40.63)"/>
+    <path class="tesla-secondary-color"
+          d="M413.05,103.61c-95.44,0-162.64-41.42-162.64-41.42V437C397.17,378.14,427.11,115.64,413.05,103.61Z"
+          transform="translate(-62.51 -40.63)"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 374.48 374.48">
+  <defs>
+    <style>
+      .tesla-common-edit-1 {
+      stroke-linejoin: round;
+      stroke-width: 10.63px;
+    }
+
+    </style>
+  </defs>
+  <g class="tesla_common tesla_common_edit">
+  <path class="tesla-common-edit-1 tesla-primary-color tesla-tertiary-stroke"
+        d="M154.68,397c-4,4-79.89,27.51-79.89,27.51s22.76-75.13,27.51-79.89L385.17,61.71S405.22,55,424.72,74.53s12.82,39.56,12.82,39.56Z"
+        transform="translate(-69.48 -55.29)"/>
+  <polygon class="tesla-secondary-color" points="42.26 297.67 24.11 350.37 76.82 332.22 42.26 297.67"/>
+  <path class="tesla-common-edit-1 tesla-primary-color tesla-tertiary-stroke" d="M398.58,100.74c19.5,19.5,12.81,39.56,12.81,39.56" transform="translate(-69.48 -55.29)"/>
+  <path class="tesla-common-edit-1 tesla-primary-color tesla-tertiary-stroke" d="M359,87.92s20.05-6.69,39.56,12.82" transform="translate(-69.48 -55.29)"/>
+  </g>
+</svg>

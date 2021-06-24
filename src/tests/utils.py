@@ -45,7 +45,8 @@ def print_log(args):
     """
     module = ''
     if len(args) > 0:
-        module = '[' + args[0][0] + '] '
+        module = '[{}] '.format(args[0][0])
+        # module = '[' + args[0][0] + '] '
     for i in range(1, len(args)):
         aux = module
         for j in args[i]:
@@ -82,7 +83,7 @@ def post_rest_api_client(rest_api_client, str_path, str_data, module, message, s
     @param module: Testing module name
     @param message: Logging info message
     @param status: Testing status (example: 200, 404...)
-    @return:
+    @return: New item ID (-1 if creation failed)
     """
     response = rest_api_client.post(str_path, data=str_data)
     body = response.json()
@@ -92,7 +93,7 @@ def post_rest_api_client(rest_api_client, str_path, str_data, module, message, s
     assert response.status_code == status
     if status == 201:
         new_item_id = response.json()['id']
-        str_log.append(['NEW INSTRUMENT ID:', new_item_id])
+        str_log.append(['NEW ITEM ID:', new_item_id])
     else:
         new_item_id = -1
     print_log(str_log)

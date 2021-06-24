@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 391.08 391.17">
+  <defs>
+    <style>
+    .tesla-common-moreinfo-3 {
+
+      stroke-miterlimit: 10;
+      stroke-width: 22.71px;
+    }</style>
+  </defs>
+  <g class="tesla_common tesla_common_moreinfo">
+    <path class="tesla-primary-color"
+          d="M425.55,388,316.67,288.41,288.19,317l99.75,108.61a25.25,25.25,0,0,0,35.71,0l1.9-1.9A25.25,25.25,0,0,0,425.55,388Z"
+          transform="translate(-41.87 -41.81)"/>
+    <polygon class="tesla-tertiary-color" points="238.01 212.51 212.76 237.77 246.33 275.16 274.81 246.6 238.01 212.51"/>
+    <circle class="tesla-common-moreinfo-3 tesla-tertiary-color tesla-primary-stroke" cx="138.69" cy="138.69" r="127.34"/>
+    <path id="i" class="tesla-primary-color"
+          d="M152.49,245v-7.44c13.34-1.56,14.82-2.57,14.82-18.9V172.23c0-15.23-1-16.17-13-17.89v-7a216.26,216.26,0,0,0,39.06-8.73v80c0,15.87,1.18,17.34,15.29,18.9V245Zm26.25-123.6c-8.05,0-15.25-6.9-15.25-15.11A15.28,15.28,0,0,1,179,91a14.91,14.91,0,0,1,15.09,15.26A15.22,15.22,0,0,1,178.74,121.38Z"
+          transform="translate(-41.87 -41.81)"/>
+  </g>
+</svg>
