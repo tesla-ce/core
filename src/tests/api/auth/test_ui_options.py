@@ -41,7 +41,7 @@ def test_api_authentication_profile_routes(rest_api_client, api_client, institut
     assert inst_user_profile_resp.status_code == 200
     assert 'institution' in inst_user_profile_resp.data
     assert 'routes' in inst_user_profile_resp.data
-    assert len(inst_user_profile_resp.data['routes']) == 0
+    assert len(inst_user_profile_resp.data['routes']) == 1
 
     # Get institution admin token
     admin_user = institution_course_test_case['user'].institutionuser
