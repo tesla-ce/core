@@ -185,7 +185,7 @@ jobs:
         continue-on-error: true
         run: |
           curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
-          fossa init
+          # fossa init
           FOSSA_API_KEY=${{ secrets.FOSSA_API_KEY}} fossa analyze
   publish:    
     needs: build
