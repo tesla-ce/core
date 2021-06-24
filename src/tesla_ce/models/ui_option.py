@@ -38,7 +38,9 @@ def get_role_base_ui_routes():
                                           roles=None
                                           ).values_list('route', flat=True)
     # Group each route by role
-    routes = {}
+    routes = {
+        '__all__': set(base_routes)
+    }
     role_required_routes = UIOption.objects.filter(enabled=True,
                                                    institution=None,
                                                    roles__isnull=False
@@ -47,7 +49,7 @@ def get_role_base_ui_routes():
         role_list = roles.split(',')
         for route_role in role_list:
             if route_role not in routes:
-                routes[route_role] = set(base_routes)
+                routes[route_role] = set()
             routes[route_role].add(route)
 
     # Convert sets to lists to allow serialization
@@ -72,8 +74,8 @@ def get_user_ui_routes(user):
     if inst_user is None and not is_global_admin(user):
         return []
 
-    routes = set()
     role_routes = get_role_base_ui_routes()
+    routes = set(role_routes['__all__'])
 
     # Add routes for Global Admins
     if is_global_admin(user) and 'GLOBAL_ADMIN' in role_routes:
