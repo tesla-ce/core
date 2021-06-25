@@ -38,39 +38,15 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     rest_api_client.force_authenticate(user=institution_user)
 
     # List Groups
-    """ ---------------------------------------------------------------------
-     LIST GROUPS:
-        GET /api/v2/institution/(int: institution_id)/group/
-        Status Codes:
-            200 OK – Ok
-            404 Not Found – Institution not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-     """
     logging.info('\n1) LIST GROUPS --------------------------------------')
     str_path = '/api/v2/institution/{}/group/'.format(institution_id)
     str_response = 'RESPONSE id={}:'.format(institution_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List Groups', str_response, 200)
-
     # Ensure that no group exists
     assert body['count'] == 0
 
-    # TODO? List group errors: status 404 institution not found
-
     # Create a new Group
-    """ ---------------------------------------------------------------------
-    CREATE A NEW GROUP:
-        POST /api/v2/institution/(int: institution_id)/group/
-        Request JSON Object
-            parent (int) – Id of the parent group. Null if this group is not in another group.
-            name (string) – Name of the group.
-            description (string) – Description of the group.
-        Status Codes:
-            201 Created – Created
-            400 Bad Request – Invalid information provided. The response contains the description of the errors.
-            404 Not Found – Institution not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-    """
     logging.info('\n2) CREATE A NEW GROUP --------------------------------------')
     str_data = {'parent': '', 'name': 'TEST_GROUP', 'description': 'This is a test group'}
     new_group_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
@@ -82,110 +58,93 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
 
     # Ensure group exists
     n_groups = body['count']
-    assert n_groups > 0
+    assert n_groups == 1
 
-    # Testing groups hierarchy (nested object)
-    # 666: fails
-    ''' 666
-    hierarchy_test_group = CourseGroup.objects.create(
-        institution=institution,
-        name='NEW_LEVEL_TEST_GROUP',
-        description='This is a NEW LEVEL group.',
-        parent=test_group_course
-    )
-    '''
-    # str_data = {'parent': new_group_id, 'name': 'TEST_GROUP', 'description': 'This is a test group'}
-    # new_second_group_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
-    #                                                        'Create a new level group',
-    #                                                        'RESPONSE: ', 201)
+    # Create a new nested Group
+    logging.info('\n2) CREATE A NEW NESTED GROUP --------------------------------------')
+    str_data = {'parent': new_group_id , 'name': 'TEST_GROUP', 'description': 'This is a test group'}
+    new_subgroup_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
+                                                       'Create a new nested group', 'RESPONSE: ', 201)
 
-    # TODO? Create a new group errors: status 400 and 404
+    # List groups
+    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
+                                           'List Groups', 'RESPONSE:', 200)
+
+    # Ensure group exists
+    n_groups = body['count']
+    assert n_groups == 2
+
+    # Filter root groups (parent is None)
+    body = tests.utils.get_rest_api_client(rest_api_client, '{}?parent={}'.format(str_path, -1),
+                                           'List Root Groups', 'RESPONSE:', 200)
+    assert body['count'] == 1
+    assert body['results'][0]['id'] == new_group_id
+
+    # Filter child groups
+    body = tests.utils.get_rest_api_client(rest_api_client, '{}?parent={}'.format(str_path, new_group_id),
+                                           'List Child Groups', 'RESPONSE:', 200)
+    assert body['count'] == 1
+    assert body['results'][0]['id'] == new_subgroup_id
+
 
     # Read group information
-    """ ---------------------------------------------------------------------
-     READ GROUP INFORMATION:
-        GET /api/v2/institution/(int: institution_id)/group/(int: group_id)/
-        Status Codes:
-            200 OK – Ok
-            404 Not Found – Institution not found
-            404 Not Found – Group not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-     """
     logging.info('\n3) READ GROUP INFORMATION --------------------------------------')
     str_path = '/api/v2/institution/{}/group/{}/'.format(institution_id, new_group_id)
     str_response = 'RESPONSE group id={}:'.format(new_group_id)
     tests.utils.get_rest_api_client(rest_api_client, str_path,
                                     'Read Group Information', str_response, 200)
 
-    # TODO? Read group information errors: status 404 institution and/or group not found
-
-    # Update group
-    """ ---------------------------------------------------------------------
-    UPDATE GROUP:
-        PUT /api/v2/institution/(int: institution_id)/group/(int: group_id)/
-        Status Codes:
-            200 OK – Ok
-            400 Bad Request – Invalid information provided. The response contains the description of the errors.
-            404 Not Found – Institution not found
-            404 Not Found – Group not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-    """
+    # Update group data
     logging.info('\n4) UDPATE GROUP INFORMATION --------------------------------------')
     str_data = {'name': 'CHANGED_TEST_GROUP', 'description': 'This is a CHANGED TEXT FOR THE test group'}
 
     tests.utils.put_rest_api_client(rest_api_client, str_path, str_data,
                                     'Update group', 'RESPONSE: ', 200)
 
-    # TODO? Read group information errors: status 400 and 404
-
-    # Delete group
-    """ ---------------------------------------------------------------------
-    DELETE GROUP:
-        DELETE /api/v2/institution/(int: institution_id)/group/(int: group_id)/
-        Status Codes:
-            200 OK – Ok
-            404 Not Found – Institution not found
-            404 Not Found – Group not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-    """
-    logging.info('\n5) DELETE GROUP --------------------------------------')
+    # Delete root group
+    logging.info('\n5) DELETE ROOT GROUP --------------------------------------')
     str_path = '/api/v2/institution/{}/group/{}/'.format(institution_id, new_group_id)
-    # 666 check source https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.7
-    # A successful response SHOULD be 200 (OK) if the response includes an entity describing the status,
-    # 202 (Accepted) if the action has not yet been enacted, or 204 (No Content) if the action has been enacted
-    # but the response does not include an entity.
-    # 666 ADD THOSE STATUS TO DOC?
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
                                        'Delete group', "RESPONSE: ", 204)
     str_path = '/api/v2/institution/{}/group/'.format(institution_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List Groups', 'RESPONSE:', 200)
     logging.info(body)
-    # Ensure number of groups has decreased
-    assert body['count'] == (n_groups - 1)
 
-    # TODO? Read group information errors: status 400 and 404
+    # Ensure that the root group and child group are removed
+    assert body['count'] == 0
 
-    pytest.skip("TODO")
-    # 666: Delete Group should be moved at the end of this test group,
-    # 666 after testing courses features in this new group
-    # 666 List Groups --> Create Group --> Read & update new group -->
-    # 666 --> Add course to a new group --> Read & Update new course in new group -->
-    # 666 --> Delete new course in new group --> Delete new group
+
+@pytest.mark.django_db
+def test_api_institution_course_group_courses(rest_api_client, user_global_admin, institution_course_test_case):
+    institution_user = institution_course_test_case['user'].institutionuser
+    institution = institution_course_test_case['institution']
+    institution_id = institution.id
+
+    user_global_admin.is_staff = True
+    user_global_admin.save()
+
+    # Set global admin user.
+    rest_api_client.force_authenticate(user=user_global_admin)
+
+    # Institution Admin privileges
+    institution_user.inst_admin = True
+    institution_user.save()
+    rest_api_client.force_authenticate(user=institution_user)
+
+    # Create a new Group
+    logging.info('\n2) CREATE A NEW GROUP --------------------------------------')
+    str_path = '/api/v2/institution/{}/group/'.format(institution_id)
+    str_data = {'parent': '', 'name': 'TEST_GROUP', 'description': 'This is a test group'}
+    new_group_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
+                                                    'Create a new group', 'RESPONSE: ', 201)
+
+    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
+                                           'List Groups', 'RESPONSE:', 200)
+    assert body['count'] == 1
 
     # List courses in a group
-    """ ---------------------------------------------------------------------
-    LIST COURSES IN A GROUP:
-        GET /api/v2/institution/(int: institution_id)/group/(int: group_id)/course/
-        Status Codes:
-            200 OK – Ok
-            404 Not Found – Institution not found
-            404 Not Found – Group not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-    """
     logging.info('\n6) LIST COURSES IN A GROUP --------------------------------------')
-    # str_path = '/api/v2/institution/' + str(institution_id) + '/group/' + str(new_group_id) + '/course/'
-    # str_path = '/api/v2/institution/%r/group/%r/course/' % (institution_id, new_group_id)
     str_path = '/api/v2/institution/{}/group/{}/course/'.format(institution_id, new_group_id)
 
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
@@ -194,68 +153,27 @@ def test_api_institution_course_groups(rest_api_client, user_global_admin, insti
     # Ensure no courses in a new group by default
     assert body['count'] == 0
 
-    # TODO? Read group information errors: status 400 and 404
-
-    # Add a course to a group: XEVI 666
-    """ ---------------------------------------------------------------------
-    ADD A COURSE TO A GROUP:
-        POST /api/v2/institution/(int: institution_id)/group/(int: group_id)/course/
-        Request JSON Object:
-            id (int) – Course ID.
-        Status Codes:
-            200 OK – Ok
-            400 Bad Request – Invalid information provided. The response contains the description of the errors.
-            404 Not Found – Institution not found
-            404 Not Found – Group not found
-            404 Not Found – Course not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-    """
+    # Add a new course
     logging.info('\n7) ADD A COURSE TO A GROUP --------------------------------------')
     str_path = '/api/v2/institution/{}/group/{}/course/'.format(institution_id, new_group_id)
-    course_code = institution_course_test_case['course'].code
-    course_vle = institution_course_test_case['course'].vle.name
-    course_vle_course_id = institution_course_test_case['course'].vle_course_id
-    '''
-    new_course = Course.objects.create(
-        model='Course VLE',
-        code="Course code.",
-        vle_course_id='Course id on the VLE')
-    '''
-
-    logging.info(course_code)
-    logging.info(course_vle)
-    logging.info(course_vle_course_id)
-
-    # new_course = {'model':'Course VLE TEST', 'code': 'Course code TEST', 'vle_course_id': 'Course id TEST on the VLE'}
-    # new_course = {'model': course_vle, 'code': course_code, 'vle_course_id': course_vle_course_id}
-    new_course = {'model': course_vle, 'code': course_code, 'vle_course_id': course_vle_course_id}
-
-    new_course_id = tests.utils.post_rest_api_client(rest_api_client, str_path, new_course,
-                                                     'Add a Course to a Group', 'RESPONSE: ', 200)
+    course_id = institution_course_test_case['course'].id
+    tests.utils.post_rest_api_client(rest_api_client, str_path, {'id': course_id},
+                                     'Add a Course to a Group', 'RESPONSE: ', 201)
 
     # List and check number of courses in a group has increased.
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List Courses in a Group', 'RESPONSE:', 200)
-    n_courses = body['count']
+    assert body['count'] == 1
+    assert body['results'][0]['id'] == course_id
 
-    # TODO Delete a course from a group
-    """ ---------------------------------------------------------------------
-    DELETE A COURSE FROM A GROUP:
-        DELETE /api/v2/institution/(int: institution_id)/group/(int: group_id)/course/(int: course_id)/
-        Status Codes:
-            200 OK – Ok
-            404 Not Found – Institution not found
-            404 Not Found – Group not found
-            404 Not Found – Course not found
-    Request Headers: Authorization - JWT with Institution Admin privileges
-    """
+    # Delete a course from a group
     logging.info('\n8) DELETE A COURSE FROM A GROUP --------------------------------------')
-    str_path = '/api/v2/institution/{}/group/{}/course/'.format(institution_id, new_group_id)
-    tests.utils.delete_rest_api_client(rest_api_client, str_path,
-                                       'Delete a Course from a Group', "RESPONSE: ", 200)
+    str_path_course = '/api/v2/institution/{}/group/{}/course/{}/'.format(institution_id, new_group_id, course_id)
+    tests.utils.delete_rest_api_client(rest_api_client, str_path_course,
+                                       'Delete a Course from a Group', "RESPONSE: ", 204)
+    tests.utils.get_rest_api_client(rest_api_client, str_path_course,
+                                    'Show removed course', 'RESPONSE:', 404)
 
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List Courses in a Group', 'RESPONSE:', 200)
-    logging.info(body)
-    # Ensure number of groups has decreased
-    assert body['count'] == (n_courses - 1)
+    assert body['count'] == 0
