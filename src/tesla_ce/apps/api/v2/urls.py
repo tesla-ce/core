@@ -100,7 +100,7 @@ institution_course_group_course_router = institution_course_group_router.registe
     r'course',
     views.InstitutionCourseGroupCourseViewSet,
     basename='institution-group-course',
-    parents_query_lookups=['institution_id', 'group_id']
+    parents_query_lookups=['institution_id', 'id']
 )
 # Institution => SEND router
 institution_send_router = institution_router.register(r'send',

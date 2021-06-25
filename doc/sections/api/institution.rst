@@ -462,7 +462,7 @@ from learners.
 
 List learners
 --------------
-.. http:get:: /api/v2/institution/(int:institution_id)/learner
+.. http:get:: /api/v2/institution/(int:institution_id)/learner/
 
    :reqheader Authorization: JWT with Institution Admin/Instructor privileges
 
@@ -475,7 +475,7 @@ List learners
 
 Create a new Learner
 ---------------------
-.. http:post:: /api/v2/institution/(int:institution_id)/learner
+.. http:post:: /api/v2/institution/(int:institution_id)/learner/
 
    :reqheader Authorization: JWT with Institution Admin privileges
 
