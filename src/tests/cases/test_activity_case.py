@@ -22,6 +22,7 @@ from rest_framework.test import APIClient
 from tests.conftest import get_random_string
 from tests import auth_utils
 
+
 def api_create_institution(global_admin):
     """
         A global admin creates a new institution

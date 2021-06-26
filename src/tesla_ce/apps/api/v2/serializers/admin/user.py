@@ -64,6 +64,13 @@ class UserSerializer(serializers.ModelSerializer):
         if 'password2' in attrs:
             del attrs['password2']
 
+        if 'institution_id' in attrs and attrs['institution_id'] == -1:
+            attrs['institution_id'] = None
+
+        if (self.instance is None or self.get_institution(self.instance) is None) and \
+                attrs.get('institution_id') is not None and attrs.get('uid') is None:
+            raise ValueError('uid value is required when assigning an institution')
+
         return super().validate(attrs)
 
     def get_institution(self, object):
@@ -144,5 +151,50 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        has_inst = self.get_institution(instance) is not None
+        new_inst = False
+
+        # Check if we are adding a new institution
+        if 'institution_id' in validated_data:
+            if not has_inst and validated_data['institution_id'] is not None:
+                # Create the related institution user
+                instance.institutionuser = InstitutionUser(institution_id=validated_data['institution_id'],
+                                                           uid=None,
+                                                           login_allowed=False,
+                                                           inst_admin=False)
+                new_inst = True
+            elif has_inst and validated_data['institution_id'] is None:
+                # Removing the institution
+                has_inst = False
+                instance.institutionuser.delete(keep_parents=True)
+                instance.refresh_from_db()
+
+        # Apply institution allowed fields modifications
+        if has_inst or new_inst:
+            modified = False
+            if 'inst_admin' in validated_data:
+                instance.institutionuser.inst_admin = validated_data['inst_admin']
+                modified = True
+            if 'uid' in validated_data:
+                instance.institutionuser.uid = validated_data['uid']
+                modified = True
+            if 'login_allowed' in validated_data:
+                instance.institutionuser.login_allowed = validated_data['login_allowed']
+                modified = True
+            if 'institution_id' in validated_data:
+                if validated_data['institution_id'] is None:
+                    modified = False
+                else:
+                    instance.institutionuser.institution_id = validated_data['institution_id']
+                modified = True
+
+            if modified or new_inst:
+                instance.institutionuser.save()
+
+        # If a new institution has been added, refresh objects to avoid data loose
+        if new_inst:
+            instance.save()
+            instance.institutionuser.refresh_from_db()
+
         return super().update(instance, validated_data)
 
