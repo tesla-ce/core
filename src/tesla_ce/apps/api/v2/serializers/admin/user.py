@@ -182,10 +182,7 @@ class UserSerializer(serializers.ModelSerializer):
                 instance.institutionuser.login_allowed = validated_data['login_allowed']
                 modified = True
             if 'institution_id' in validated_data:
-                if validated_data['institution_id'] is None:
-                    modified = False
-                else:
-                    instance.institutionuser.institution_id = validated_data['institution_id']
+                instance.institutionuser.institution_id = validated_data['institution_id']
                 modified = True
 
             if modified or new_inst:
