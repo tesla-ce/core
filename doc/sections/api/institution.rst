@@ -490,7 +490,7 @@ Create a new Learner
 
 Read learner information
 ---------------------------------
-.. http:get:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)
+.. http:get:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)/
 
    :reqheader Authorization: JWT with Institution Admin/Instructor privileges
 
@@ -506,7 +506,7 @@ Read learner information
 
 Update learner
 ---------------
-.. http:put:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)
+.. http:put:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)/
 
    :reqheader Authorization: JWT with Institution Admin privileges
 
@@ -524,7 +524,7 @@ Update learner
 
 Delete learner
 ---------------
-.. http:delete:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)
+.. http:delete:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)/
 
    :reqheader Authorization: JWT with Institution Admin/Legal privileges
 
@@ -542,7 +542,7 @@ Delete learner
 
 Accept an Informed Consent for a learner
 ------------------------------------------
-.. http:post:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)/ic
+.. http:post:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)/ic/
 
    :reqheader Authorization: JWT with Institution Admin privileges
 
@@ -561,7 +561,7 @@ Accept an Informed Consent for a learner
 
 Reject current Informed Consent of a learner
 ---------------------------------------------
-.. http:delete:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)/ic
+.. http:delete:: /api/v2/institution/(int:institution_id)/learner/(int:learner_id)/ic/
 
    :reqheader Authorization: JWT with Institution Admin privileges
 

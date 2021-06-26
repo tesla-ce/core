@@ -67,20 +67,22 @@ def get_provider_object(api_client, desc_file):
     return provider
 
 
-@pytest.fixture(scope="session", )
-def providers(api_client, django_db_blocker):
+@pytest.fixture
+def providers(api_client, db):
     tfr_file = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                             '..', '..', 'providers', 'fr_tfr.json'))
     tfa_file = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                             '..', '..', 'providers', 'fa_tfa.json'))
     tpt_file = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                             '..', '..', 'providers', 'pt_tpt.json'))
-    with django_db_blocker.unblock():
-        return {
-            'fr': get_provider_object(api_client, tfr_file),
-            'fa': get_provider_object(api_client, tfa_file),
-            'plag': get_provider_object(api_client, tpt_file),
-        }
+
+    provider_obj = {
+        'fr': get_provider_object(api_client, tfr_file),
+        'fa': get_provider_object(api_client, tfa_file),
+        'plag': get_provider_object(api_client, tpt_file),
+    }
+
+    return provider_obj
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -101,48 +103,47 @@ def tesla_ce_system(django_db_blocker):
         if 'VAULT_TOKEN' in os.environ:
             del os.environ['VAULT_TOKEN']
 
-    return client
+        yield client
 
 
-@pytest.fixture(scope="session", )
-def admin_client(django_db_blocker, tesla_ce_system):
+@pytest.fixture
+def admin_client(tesla_ce_system):
     """
         Initialize the TeSLA client.
 
         :return: TeSLA Client with Administration credentials
     """
-    with django_db_blocker.unblock():
-        # Generate credentials for API and LAPI
-        credentials_api = tesla_ce_system.vault.get_module_credentials('api')
-        credentials_lapi = tesla_ce_system.vault.get_module_credentials('lapi')
-        role_id = [credentials_api['role_id'], credentials_lapi['role_id']]
-        secret_id = [credentials_api['secret_id'], credentials_lapi['secret_id']]
+    # Generate credentials for API and LAPI
+    credentials_api = tesla_ce_system.vault.get_module_credentials('api')
+    credentials_lapi = tesla_ce_system.vault.get_module_credentials('lapi')
+    role_id = [credentials_api['role_id'], credentials_lapi['role_id']]
+    secret_id = [credentials_api['secret_id'], credentials_lapi['secret_id']]
 
-        config = ConfigManager(load_config=False)
-        config.config.set('VAULT_SSL_VERIFY', tesla_ce_system.config.config.get('VAULT_SSL_VERIFY'))
-        config.load_vault(vault_url=tesla_ce_system.config.config.get('VAULT_URL'),
-                          role_id=role_id,
-                          secret_id=secret_id,
-                          approle_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_APPROLE'),
-                          kv_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_KV')
-                          )
-        settings.TESLA_CONFIG=config
-        settings.TESLA_MODULES=config.enabled_modules
+    config = ConfigManager(load_config=False)
+    config.config.set('VAULT_SSL_VERIFY', tesla_ce_system.config.config.get('VAULT_SSL_VERIFY'))
+    config.load_vault(vault_url=tesla_ce_system.config.config.get('VAULT_URL'),
+                      role_id=role_id,
+                      secret_id=secret_id,
+                      approle_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_APPROLE'),
+                      kv_path=tesla_ce_system.config.config.get('VAULT_MOUNT_PATH_KV')
+                      )
+    settings.TESLA_CONFIG=config
+    settings.TESLA_MODULES=config.enabled_modules
 
-        return tesla_ce_system
+    yield tesla_ce_system
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def api_client(admin_client):
     return create_module_client(admin_client, 'api')
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def lapi_client(admin_client):
     return create_module_client(admin_client, 'lapi')
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def dashboards_client(admin_client):
     return create_module_client(admin_client, 'dashboards')
 
@@ -154,133 +155,130 @@ def rest_api_client(admin_client, monkeypatch):
     return client
 
 
-@pytest.fixture(scope="session")
-def user_global_admin(django_db_blocker):
+@pytest.fixture
+def user_global_admin(db):
     """
         Get a user with Global Administration privileges
 
         :return: User with Global Admin privileges
     """
-    with django_db_blocker.unblock():
-        from tesla_ce.models import User
+    from tesla_ce.models import User
 
-        admin = User.objects.filter(is_staff=True).all()
-        if len(admin) == 0:
-            admin = User.objects.create_user('test_admin', 'test_admin@tesla-ce.eu', is_staff=True, is_active=True)
-        else:
-            admin = admin[0]
+    admin = User.objects.filter(is_staff=True).all()
+    if len(admin) == 0:
+        admin = User.objects.create_user('test_admin', 'test_admin@tesla-ce.eu', is_staff=True, is_active=True)
+    else:
+        admin = admin[0]
 
-    return admin
+    yield admin
 
 
-@pytest.fixture(scope="session")
-def institution_test_case(django_db_blocker):
+@pytest.fixture
+def institution_test_case(db):
     """
         Get a test institution with one user
 
         :return: Dictionary with institution and user
     """
-    with django_db_blocker.unblock():
-        from tesla_ce.models import Institution, InstitutionUser
+    from tesla_ce.models import Institution, InstitutionUser
 
-        # Create a test institution
-        test_inst = Institution.objects.create(
-            name="PyTest Test institution",
-            acronym=get_random_string(10)
-        )
+    # Create a test institution
+    test_inst = Institution.objects.create(
+        name="PyTest Test institution",
+        acronym=get_random_string(10)
+    )
 
-        # Create a user for this institution
-        user_name = get_random_string(10)
-        test_user = InstitutionUser.objects.create(
-            username=user_name,
-            uid=user_name,
-            email='{}@tesla-ce.eu'.format(user_name),
-            first_name=user_name[:5],
-            last_name=user_name[5:],
-            institution=test_inst,
-            login_allowed=False,
-        )
+    # Create a user for this institution
+    user_name = get_random_string(10)
+    test_user = InstitutionUser.objects.create(
+        username=user_name,
+        uid=user_name,
+        email='{}@tesla-ce.eu'.format(user_name),
+        first_name=user_name[:5],
+        last_name=user_name[5:],
+        institution=test_inst,
+        login_allowed=False,
+    )
 
-        return {
-            'institution': test_inst,
-            'user': test_user.user_ptr
-        }
+    yield {
+        'institution': test_inst,
+        'user': test_user.user_ptr
+    }
 
 
-@pytest.fixture(scope="session")
-def institution_course_test_case(django_db_blocker, admin_client, institution_test_case):
+@pytest.fixture
+def institution_course_test_case(db, admin_client, institution_test_case):
     """
         Get a test institution with one user, one course and users
 
         :return: Dictionary with institution and user
     """
-    with django_db_blocker.unblock():
-        from tesla_ce.models import Course, InstitutionUser, Instructor, Learner, VLE
+    from tesla_ce.models import Course, InstitutionUser, Instructor, Learner, VLE
 
-        # Create a VLE
-        vle_name = get_random_string(10)
-        admin_client.register_vle(
-            type='moodle',
-            name=vle_name,
-            url='{}.tesla-ce-eu'.format(vle_name),
-            institution_acronym=institution_test_case['institution'].acronym,
-            client_id=get_random_string(15)
-        )
-        test_vle = VLE.objects.get(name=vle_name)
+    # Create a VLE
+    vle_name = get_random_string(10)
+    admin_client.register_vle(
+        type='moodle',
+        name=vle_name,
+        url='{}.tesla-ce-eu'.format(vle_name),
+        institution_acronym=institution_test_case['institution'].acronym,
+        client_id=get_random_string(15)
+    )
+    test_vle = VLE.objects.get(name=vle_name)
 
-        # Create a test course
-        test_course = Course.objects.create(
-            code=get_random_string(10),
-            description="PyTest test course",
-            vle=test_vle,
-            vle_course_id=get_random_string(5)
-        )
+    # Create a test course
+    test_course = Course.objects.create(
+        code=get_random_string(10),
+        description="PyTest test course",
+        vle=test_vle,
+        vle_course_id=get_random_string(5)
+    )
 
-        # Create an instructor
-        instructor_user_name = get_random_string(10)
-        test_instructor_usr = InstitutionUser.objects.create(
-            username=instructor_user_name,
-            uid=instructor_user_name,
-            email='{}@tesla-ce.eu'.format(instructor_user_name),
-            first_name=instructor_user_name[:5],
-            last_name=instructor_user_name[5:],
-            institution=institution_test_case['institution'],
-            login_allowed=False,
-        )
-        test_instructor = Instructor(
-            institutionuser_ptr=test_instructor_usr,
-            institution=institution_test_case['institution']
-        )
-        test_instructor.save_base(raw=True)
-        test_instructor = Instructor.objects.get(id=test_instructor_usr.id)
-        test_course.instructors.add(test_instructor)
+    # Create an instructor
+    instructor_user_name = get_random_string(10)
+    test_instructor_usr = InstitutionUser.objects.create(
+        username=instructor_user_name,
+        uid=instructor_user_name,
+        email='{}@tesla-ce.eu'.format(instructor_user_name),
+        first_name=instructor_user_name[:5],
+        last_name=instructor_user_name[5:],
+        institution=institution_test_case['institution'],
+        login_allowed=False,
+    )
+    test_instructor = Instructor(
+        institutionuser_ptr=test_instructor_usr,
+        institution=institution_test_case['institution']
+    )
+    test_instructor.save_base(raw=True)
+    test_instructor = Instructor.objects.get(id=test_instructor_usr.id)
+    test_course.instructors.add(test_instructor)
 
-        # Create a learner
-        learner_user_name = get_random_string(10)
-        test_learner_usr = InstitutionUser.objects.create(
-            username=learner_user_name,
-            uid=learner_user_name,
-            email='{}@tesla-ce.eu'.format(learner_user_name),
-            first_name=learner_user_name[:5],
-            last_name=learner_user_name[5:],
-            institution=institution_test_case['institution'],
-            login_allowed=False,
-        )
-        test_learner = Learner(
-            institutionuser_ptr=test_learner_usr,
-            institution=institution_test_case['institution'],
-            joined_at=timezone.now()
-        )
-        test_learner.save_base(raw=True)
-        test_learner = Learner.objects.get(id=test_learner_usr.id)
-        test_course.learners.add(test_learner)
+    # Create a learner
+    learner_user_name = get_random_string(10)
+    test_learner_usr = InstitutionUser.objects.create(
+        username=learner_user_name,
+        uid=learner_user_name,
+        email='{}@tesla-ce.eu'.format(learner_user_name),
+        first_name=learner_user_name[:5],
+        last_name=learner_user_name[5:],
+        institution=institution_test_case['institution'],
+        login_allowed=False,
+    )
+    test_learner = Learner(
+        institutionuser_ptr=test_learner_usr,
+        institution=institution_test_case['institution'],
+        joined_at=timezone.now()
+    )
+    test_learner.save_base(raw=True)
+    test_learner = Learner.objects.get(id=test_learner_usr.id)
+    test_course.learners.add(test_learner)
 
-        institution_test_case['vle'] = test_vle
-        institution_test_case['course'] = test_course
-        institution_test_case['instructor'] = test_instructor.user_ptr
-        institution_test_case['learner'] = test_learner.user_ptr
+    institution_test_case['vle'] = test_vle
+    institution_test_case['course'] = test_course
+    institution_test_case['instructor'] = test_instructor.user_ptr
+    institution_test_case['learner'] = test_learner.user_ptr
 
-        return institution_test_case
+    yield institution_test_case
 
 
 @pytest.fixture()
@@ -293,42 +291,41 @@ def config_mode_settings(settings):
     settings.TESLA_CONFIG.config.set('TESLA_MODE', 'config')
 
 
-@pytest.fixture(scope="session")
-def empty_ui_routes(django_db_blocker):
+@pytest.fixture
+def empty_ui_routes(db):
     """
         Remove all UI Options routes
     """
-    with django_db_blocker.unblock():
-        from tesla_ce.models import UIOption
-        UIOption.objects.all().delete()
-    return []
+    from tesla_ce.models import UIOption
+    UIOption.objects.all().delete()
+
+    yield []
 
 
-@pytest.fixture(scope="session")
-def base_ui_routes(django_db_blocker, empty_ui_routes):
+@pytest.fixture
+def base_ui_routes(db, empty_ui_routes):
     """
         Get a test institution with one user, one course and users
 
         :return: Dictionary with institution and user
     """
-    with django_db_blocker.unblock():
-        from tesla_ce.models import UIOption
-        routes = []
-        # Administration route
-        routes.append('/admin')
-        UIOption.objects.create(route='/admin', enabled=True, roles='GLOBAL_ADMIN')
-        # Dashboard route
-        routes.append('/dashboard')
-        UIOption.objects.create(route='/dashboard', enabled=True)
-        # MyCourses route
-        routes.append('/mycourses')
-        UIOption.objects.create(route='/mycourses', enabled=True, roles='INSTRUCTOR,LEARNER')
-        # Institution admin
-        routes.append('/inst_admin')
-        UIOption.objects.create(route='/inst_admin', enabled=True, roles='ADMIN')
+    from tesla_ce.models import UIOption
+    routes = []
+    # Administration route
+    routes.append('/admin')
+    UIOption.objects.create(route='/admin', enabled=True, roles='GLOBAL_ADMIN')
+    # Dashboard route
+    routes.append('/dashboard')
+    UIOption.objects.create(route='/dashboard', enabled=True)
+    # MyCourses route
+    routes.append('/mycourses')
+    UIOption.objects.create(route='/mycourses', enabled=True, roles='INSTRUCTOR,LEARNER')
+    # Institution admin
+    routes.append('/inst_admin')
+    UIOption.objects.create(route='/inst_admin', enabled=True, roles='ADMIN')
 
-        # Invalidate the cache
-        from tesla_ce.models.ui_option import get_role_base_ui_routes
-        get_role_base_ui_routes.invalidate()
+    # Invalidate the cache
+    from tesla_ce.models.ui_option import get_role_base_ui_routes
+    get_role_base_ui_routes.invalidate()
 
-    return routes
+    yield routes

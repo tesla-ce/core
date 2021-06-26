@@ -43,9 +43,5 @@ class InstitutionVLEViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     '''
 
     def get_queryset(self):
-        queryset = VLE.objects.order_by('id')
-        return queryset
-
-    def perform_create(self, serializer):
-        super().perform_create(serializer)
-
+        queryset = super().filter_queryset_by_parents_lookups(VLE.objects)
+        return queryset.order_by('id').all()
