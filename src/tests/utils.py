@@ -67,7 +67,8 @@ def get_rest_api_client(rest_api_client, str_path, module, message, status):
     """
     response = rest_api_client.get(str_path)
     body = response.json()
-    str_log = [[module], ['Status:', status], [message, body]]
+    str_log = [[module], ['Expected Status:', status],
+               ['Received Status:', response.status_code], [message, body]]
     print_log(str_log)
     assert response.status_code == status
     return body
@@ -115,7 +116,8 @@ def put_rest_api_client(rest_api_client, str_path, str_data, module, message, st
     body = response.json()
 
     str_log = [[module], ['PUT item:', str_path], ['PUT data:', str_data],
-               ['Status:', status], [message, body]]
+               ['Expected Status:', status],
+               ['Received Status:', response.status_code], [message, body]]
     print_log(str_log)
     assert response.status_code == status
 
@@ -131,7 +133,8 @@ def delete_rest_api_client(rest_api_client, str_path, module, message, status):
     @param status: Testing status (example: 200, 404...)
     """
     response = rest_api_client.delete(str_path)
-    str_log = [[module], ['Status:', status], [message, response],
+    str_log = [[module], ['Expected Status:', status],
+               ['Received Status:', response.status_code], [message, response],
                ['response.status_code', response.status_code]]
     print_log(str_log)
     assert response.status_code == status
