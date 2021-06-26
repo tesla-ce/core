@@ -17,6 +17,7 @@ from rest_framework import serializers
 from rest_framework import validators
 
 from tesla_ce.models import User
+from tesla_ce.models import InstitutionUser
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,12 +38,33 @@ class UserSerializer(serializers.ModelSerializer):
                                    ]
                                    )
     password = serializers.CharField(write_only=True, default=None)
+    password2 = serializers.CharField(write_only=True, default=None)
     institution = serializers.SerializerMethodField(read_only=True)
     roles = serializers.SerializerMethodField(read_only=True)
+    institution_id = serializers.IntegerField(write_only=True, allow_null=True, default=None)
+    inst_admin = serializers.BooleanField(write_only=True, default=False, allow_null=True)
+    login_allowed = serializers.BooleanField(write_only=True, default=True, allow_null=True)
+    uid = serializers.CharField(write_only=True, default=None, allow_null=True)
 
     class Meta:
         model = User
         fields = '__all__'
+
+    def validate(self, attrs):
+        """
+            Validate the given attributes
+            :param attrs: Attributes parsed from request
+            :type attrs: dict
+            :return: Validated attributes
+            :rtype: dict
+        """
+        # Check passwords
+        if 'password' in attrs and attrs.get('password') != attrs.get('password2'):
+            raise serializers.ValidationError('Passwords does not match')
+        if 'password2' in attrs:
+            del attrs['password2']
+
+        return super().validate(attrs)
 
     def get_institution(self, object):
         if hasattr(object, "institutionuser"):
@@ -77,3 +99,50 @@ class UserSerializer(serializers.ModelSerializer):
             roles.append('GLOBAL_ADMIN')
 
         return roles
+
+    def create(self, validated_data):
+        inst_data = None
+        if 'institution_id' in validated_data and validated_data['institution_id'] is not None:
+            inst_data = {
+                'institution': validated_data['institution_id'],
+                'uid': None,
+                'inst_admin': False,
+                'login_allowed': False
+            }
+            if 'inst_admin' in validated_data and validated_data['inst_admin'] is not None:
+                inst_data['inst_admin'] = validated_data['inst_admin']
+            if 'uid' in validated_data and validated_data['uid'] is not None:
+                inst_data['uid'] = validated_data['uid']
+            if 'login_allowed' in validated_data and validated_data['login_allowed'] is not None:
+                inst_data['login_allowed'] = validated_data['login_allowed']
+        if 'institution_id' in validated_data:
+            del validated_data['institution_id']
+        if 'inst_admin' in validated_data:
+            del validated_data['inst_admin']
+        if 'uid' in validated_data:
+            del validated_data['uid']
+        if 'login_allowed' in validated_data:
+            del validated_data['login_allowed']
+
+        user = super().create(validated_data)
+
+        if inst_data is not None:
+            # Disable password if necessary
+            if not inst_data['login_allowed']:
+                user.set_unusable_password()
+                user.save()
+
+            # Create the related institution user
+            user.institutionuser = InstitutionUser(institution_id=inst_data['institution'],
+                                                   uid=inst_data['uid'],
+                                                   login_allowed=inst_data['login_allowed'],
+                                                   inst_admin=inst_data['inst_admin'])
+            user.institutionuser.save()
+            user.save()
+            user.institutionuser.refresh_from_db()
+
+        return user
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
