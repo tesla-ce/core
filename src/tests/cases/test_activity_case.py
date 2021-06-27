@@ -17,6 +17,7 @@ import pytest
 
 from . import case_methods
 
+
 @pytest.mark.django_db(transaction=False)
 def test_activity_case_complete(rest_api_client, user_global_admin):
     """
@@ -24,6 +25,9 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         :param rest_api_client: API client
         :param user_global_admin: Global administrator object
     """
+
+    # A global administrator register the providers
+    providers = case_methods.api_register_providers(user_global_admin)
 
     # A global administrator creates a new institution
     institution = case_methods.api_create_institution(user_global_admin)
@@ -34,8 +38,15 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # Institution administrator creates a new legal admin
     legal_admin = case_methods.api_create_institution_legal_admin(inst_admin)
 
+    # Institution administrator creates a new SEND admin
+    send_admin = case_methods.api_create_institution_send_admin(inst_admin)
+
     # A legal administrator of the institution creates the Informed Consent using the API
     case_methods.api_create_ic(legal_admin)
+
+    # A SEND administrator of the institution defines the SEND categories using the API
+    ks_id = providers['ks']['instrument']['id']
+    send_categories = case_methods.api_create_send_categories(send_admin, [ks_id])
 
     # Institution enables direct learners and instructors registration by VLE
     case_methods.api_enable_direct_registration_vle(inst_admin)

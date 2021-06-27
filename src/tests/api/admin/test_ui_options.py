@@ -29,14 +29,14 @@ def test_api_admin_ui_routes(rest_api_client, api_client, institution_course_tes
     assert options_list['count'] == 0
 
     # Add a basic route for all users
-    options_add = rest_api_client.post('/api/v2/admin/ui/', type='json', data={
+    options_add = rest_api_client.post('/api/v2/admin/ui/', format='json', data={
         'enabled': True,
         'route': '/dashboard'
     })
     assert options_add.status_code == 201
 
     # Add an option for admins
-    options_add_admin = rest_api_client.post('/api/v2/admin/ui/', type='json', data={
+    options_add_admin = rest_api_client.post('/api/v2/admin/ui/', format='json', data={
         'enabled': True,
         'route': '/admin',
         'roles': 'GLOBAL_ADMIN'
@@ -73,7 +73,7 @@ def test_api_admin_ui_routes(rest_api_client, api_client, institution_course_tes
     assert '/dashboard' in inst_user_profile_resp.data['routes']
 
     # Add learners and instructors routes
-    options_add_courses = rest_api_client.post('/api/v2/admin/ui/', type='json', data={
+    options_add_courses = rest_api_client.post('/api/v2/admin/ui/', format='json', data={
         'enabled': True,
         'route': '/mycourses',
         'roles': 'LEARNER,INSTRUCTOR'

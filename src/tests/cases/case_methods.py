@@ -13,14 +13,113 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ TeSLA CE Use Case tests methods """
-import pytest
+import json
 
 from django.utils import timezone
 
-from rest_framework.test import APIClient
-
-from tests.conftest import get_random_string
 from tests import auth_utils
+from tests.conftest import get_random_string
+from tests.utils import get_provider_desc_file
+
+
+def api_register_providers(global_admin):
+    """
+        A global administrator register the providers
+        :param global_admin: Global admin object
+        :return: Registered providers
+    """
+    # Set global admin user.
+    client = auth_utils.client_with_user_obj(global_admin)
+
+    # Get the list of instruments
+    instruments = []
+    stop = False
+    while not stop:
+        list_instruments_resp = client.get('/api/v2/admin/instrument/?offset={}'.format(len(instruments)))
+        assert list_instruments_resp.status_code == 200
+        instruments += list_instruments_resp.data['results']
+
+        if len(instruments) == list_instruments_resp.data['count']:
+            stop = True
+
+    # Get the instruments we want to register
+    fr_inst = None
+    ks_inst = None
+    plag_inst = None
+
+    # Remove any existing provider
+    for instrument in instruments:
+        if instrument['acronym'] == 'fr':
+            fr_inst = instrument['id']
+        if instrument['acronym'] == 'ks':
+            ks_inst = instrument['id']
+        if instrument['acronym'] == 'plag':
+            plag_inst = instrument['id']
+        stop = False
+        while not stop:
+            list_inst_providers_resp = client.get('/api/v2/admin/instrument/{}/provider/'.format(instrument['id']))
+            assert list_inst_providers_resp.status_code == 200
+            if list_inst_providers_resp.data['count'] > 0:
+                for inst_prov in list_inst_providers_resp.data['results']:
+                    del_providers_resp = client.delete(
+                        '/api/v2/admin/instrument/{}/provider/{}/'.format(instrument['id'], inst_prov['id'])
+                    )
+                    assert del_providers_resp.status_code == 204
+            else:
+                stop = True
+
+    providers = {}
+
+    # Register a FR provider
+    fr_desc = json.load(open(get_provider_desc_file('fr_tfr'), 'r'))
+    fr_desc['enabled'] = True
+    fr_desc['validation_active'] = True
+    if 'instrument' in fr_desc:
+        del fr_desc['instrument']
+    fr_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(fr_inst),
+                                        data=fr_desc,
+                                        format='json')
+    assert fr_prov_register_resp.status_code == 201
+    providers['fr'] = fr_prov_register_resp.data
+
+    # Register a KS provider
+    ks_desc = json.load(open(get_provider_desc_file('ks_tks'), 'r'))
+    ks_desc['enabled'] = True
+    ks_desc['validation_active'] = True
+    if 'instrument' in ks_desc:
+        del ks_desc['instrument']
+    ks_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(ks_inst),
+                                        data=ks_desc,
+                                        format='json')
+    assert ks_prov_register_resp.status_code == 201
+    providers['ks'] = ks_prov_register_resp.data
+
+    # Register a Plagiarism provider
+    pt_desc = json.load(open(get_provider_desc_file('pt_tpt'), 'r'))
+    pt_desc['enabled'] = True
+    if 'instrument' in pt_desc:
+        del pt_desc['instrument']
+    pt_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(plag_inst),
+                                        data=pt_desc,
+                                        format='json')
+    assert pt_prov_register_resp.status_code == 201
+    providers['plag'] = pt_prov_register_resp.data
+
+    # Enable the instruments
+    fr_inst_enable_resp = client.patch('/api/v2/admin/instrument/{}/'.format(fr_inst),
+                                       data={'enabled': True},
+                                       format='json')
+    assert fr_inst_enable_resp.status_code == 200
+    ks_inst_enable_resp = client.patch('/api/v2/admin/instrument/{}/'.format(ks_inst),
+                                       data={'enabled': True},
+                                       format='json')
+    assert ks_inst_enable_resp.status_code == 200
+    pt_inst_enable_resp = client.patch('/api/v2/admin/instrument/{}/'.format(plag_inst),
+                                       data={'enabled': True},
+                                       format='json')
+    assert pt_inst_enable_resp.status_code == 200
+
+    return providers
 
 
 def api_create_institution(global_admin):
@@ -37,7 +136,7 @@ def api_create_institution(global_admin):
         'name': "PyTest Test institution {}".format(get_random_string(5)),
         'acronym': get_random_string(10)
     }
-    inst_create_resp = client.post('/api/v2/admin/institution/', data=institution_data, type='json')
+    inst_create_resp = client.post('/api/v2/admin/institution/', data=institution_data, format='json')
     assert inst_create_resp.status_code == 201
 
     # Get institution object
@@ -74,7 +173,7 @@ def api_create_institution_admin(global_admin, institution):
         'password2': password,
         'inst_admin': True
     }
-    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, type='json')
+    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, format='json')
     assert user_create_resp.status_code == 201
 
     # Get institution admin object
@@ -120,7 +219,7 @@ def api_create_institution_legal_admin(inst_admin):
         'legal_admin': True
     }
     user_create_resp = client.post('/api/v2/institution/{}/user/'.format(institution_id),
-                                   data=user_data, type='json')
+                                   data=user_data, format='json')
     assert user_create_resp.status_code == 201
 
     # Get institution legal admin object
@@ -134,11 +233,55 @@ def api_create_institution_legal_admin(inst_admin):
     }
 
 
+def api_create_institution_send_admin(inst_admin):
+    """
+        An institution administrator creates a new SEND admin
+        :param inst_admin: Institution admin object
+        :return: New SEND administrator object
+    """
+    # Authenticate with admin credentials
+    client = auth_utils.client_with_user_credentials(inst_admin['email'], inst_admin['password'])
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+
+    # Create a new user
+    user_name = get_random_string(10)
+    password = get_random_string(10)
+    institution_id = profile['institution']['id']
+    email = '{}@tesla-ce.eu'.format(user_name)
+    user_data = {
+        'username': user_name,
+        'uid': user_name,
+        'email': email,
+        'first_name': user_name[:5],
+        'last_name': user_name[5:],
+        'institution': institution_id,
+        'login_allowed': True,
+        'password': password,
+        'password2': password,
+        'inst_admin': False,
+        'send_admin': True
+    }
+    user_create_resp = client.post('/api/v2/institution/{}/user/'.format(institution_id),
+                                   data=user_data, format='json')
+    assert user_create_resp.status_code == 201
+
+    # Get institution SEND admin object
+    send_admin_user = user_create_resp.data
+    assert send_admin_user['send_admin']
+
+    # Return credentials
+    return {
+        'email': email,
+        'password': password
+    }
+
+
 def api_create_ic(admin):
     """
         A legal administrator of the institution creates the Informed Consent using the API
         :param admin: Credentials for a user with legal administration rights
-        :param institution: Institution object
     """
     # Authenticate with admin credentials
     client = auth_utils.client_with_user_credentials(admin['email'], admin['password'])
@@ -153,7 +296,7 @@ def api_create_ic(admin):
         'valid_from': timezone.now() - timezone.timedelta(days=1),
     }
     ic_create_resp = client.post('/api/v2/institution/{}/ic/'.format(institution_id),
-                                 data=ic_data, type='json')
+                                 data=ic_data, format='json')
     assert ic_create_resp.status_code == 201
     new_ic = ic_create_resp.data
     assert new_ic['institution']['id'] == institution_id
@@ -167,13 +310,44 @@ def api_create_ic(admin):
     version_id = new_ic['id']
     ic_doc_create_resp = client.post(
         '/api/v2/institution/{}/ic/{}/document/'.format(institution_id, version_id),
-        data=ic_doc_data, type='json'
+        data=ic_doc_data, format='json'
     )
     assert ic_doc_create_resp.status_code == 201
     new_ic_doc = ic_doc_create_resp.data
 
     assert new_ic_doc['consent']['id'] == version_id
     assert new_ic_doc['language'] == 'en'
+
+
+def api_create_send_categories(admin, disabled_inst=[]):
+    """
+        A SEND administrator of the institution defines the SEND categories using the API
+        :param admin: Credentials for a user with SEND administration rights
+        :param disabled_inst: List of instruments to disable
+    """
+    # Authenticate with admin credentials
+    client = auth_utils.client_with_user_credentials(admin['email'], admin['password'])
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+
+    # Create an SEND category disabling KS
+    institution_id = profile['institution']['id']
+    send_cat_resp = client.post(
+        '/api/v2/institution/{}/send/'.format(institution_id),
+        data={
+            'description': 'Test SEND category disabling KS',
+            'data': {
+                'enabled_options': [],
+                'disabled_instruments': disabled_inst
+            }
+        },
+        format='json'
+    )
+    assert send_cat_resp.status_code == 201
+    send_categories = []
+
+    return send_categories
 
 
 def api_enable_direct_registration_vle(inst_admin):
@@ -197,7 +371,7 @@ def api_enable_direct_registration_vle(inst_admin):
             'disable_vle_learner_creation': False,
             'disable_vle_instructor_creation': False,
         },
-        type='json'
+        format='json'
     )
     assert inst_mod_resp.status_code == 200
     assert not inst_mod_resp.data['disable_vle_user_creation']
@@ -228,7 +402,7 @@ def api_register_vle(inst_admin):
     institution_id = profile['institution']['id']
     vle_create_resp = client.post(
         '/api/v2/institution/{}/vle/'.format(institution_id),
-        data=vle_data, type='json'
+        data=vle_data, format='json'
     )
     assert vle_create_resp.status_code == 201
     vle = vle_create_resp.data
@@ -263,7 +437,7 @@ def vle_create_course(vle):
     }
     course_create_resp = client.post(
         '/api/v2/vle/{}/course/'.format(vle_id),
-        data=course_data, type='json'
+        data=course_data, format='json'
     )
     assert course_create_resp.status_code == 201
     course = course_create_resp.data
@@ -299,7 +473,7 @@ def vle_enrol_users(vle, course):
         learner_create_resp = client.post(
             '/api/v2/vle/{}/course/{}/learner/'.format(vle_id, course['id']),
             data=learner_data,
-            type='json'
+            format='json'
         )
         assert learner_create_resp.status_code == 201
         learners.append(learner_create_resp.data)
@@ -319,7 +493,7 @@ def vle_enrol_users(vle, course):
         instructor_create_resp = client.post(
             '/api/v2/vle/{}/course/{}/instructor/'.format(vle_id, course['id']),
             data=learner_data,
-            type='json'
+            format='json'
         )
         assert instructor_create_resp.status_code == 201
         instructors.append(instructor_create_resp.data)
@@ -350,7 +524,7 @@ def vle_create_activity(vle, course):
             'vle_activity_type': 'quiz',
             'vle_activity_id': get_random_string(3)
         },
-        type='json'
+        format='json'
     )
     assert activity_create_resp.status_code == 201
 
