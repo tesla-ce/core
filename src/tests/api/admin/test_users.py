@@ -44,7 +44,7 @@ def test_api_admin_user(rest_api_client, user_global_admin):
         'password': password,
         'password2': password
     }
-    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, type='json')
+    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, format='json')
     assert user_create_resp.status_code == 201
 
     # Ensure that this user cannot authenticate, as is not in any institution and is not an GLOBAL_ADMIN
@@ -58,7 +58,7 @@ def test_api_admin_user(rest_api_client, user_global_admin):
     user_mod_resp = client.patch(
         '/api/v2/admin/user/{}/'.format(user_create_resp.data['id']),
         data={'is_staff': True},
-        type='json'
+        format='json'
     )
     assert user_mod_resp.status_code == 200
 
@@ -116,7 +116,7 @@ def test_api_admin_institution_user(rest_api_client, user_global_admin, institut
         'password': password,
         'password2': password
     }
-    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, type='json')
+    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, format='json')
     assert user_create_resp.status_code == 201
 
     # Get the user profile
@@ -139,7 +139,7 @@ def test_api_admin_institution_user(rest_api_client, user_global_admin, institut
 
     # Set administration rights on the institution
     mod_user_resp = client.patch('/api/v2/admin/user/{}/'.format(profile['id']),
-                                 data={'inst_admin': True}, type='json')
+                                 data={'inst_admin': True}, format='json')
     assert mod_user_resp.status_code == 200
 
     # Get user data
@@ -186,7 +186,7 @@ def test_api_admin_user_mix(rest_api_client, user_global_admin, institution_test
         'password': password,
         'password2': password
     }
-    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, type='json')
+    user_create_resp = client.post('/api/v2/admin/user/', data=user_data, format='json')
     assert user_create_resp.status_code == 201
     assert user_create_resp.data['institution'] is None
 
@@ -197,7 +197,7 @@ def test_api_admin_user_mix(rest_api_client, user_global_admin, institution_test
             'institution_id': institution_test_case['institution'].id,
             'uid': email
         },
-        type='json'
+        format='json'
     )
     assert user_mod_resp.status_code == 200
     assert user_mod_resp.data['institution'] is not None
@@ -210,14 +210,14 @@ def test_api_admin_user_mix(rest_api_client, user_global_admin, institution_test
     new_inst_resp = client.post('/api/v2/admin/institution/', data={
         'name': "PyTest Test institution",
         'acronym': get_random_string(10)
-    }, type='json')
+    }, format='json')
     assert new_inst_resp.status_code == 201
 
     # Assign the user to an institution
     user_mod2_resp = client.patch(
         '/api/v2/admin/user/{}/'.format(user_create_resp.data['id']),
         data={'institution_id': new_inst_resp.data['id']},
-        type='json'
+        format='json'
     )
     assert user_mod2_resp.status_code == 200
     assert user_mod2_resp.data['institution'] is not None
@@ -230,7 +230,7 @@ def test_api_admin_user_mix(rest_api_client, user_global_admin, institution_test
     user_mod3_resp = client.patch(
         '/api/v2/admin/user/{}/'.format(user_create_resp.data['id']),
         data={'institution_id': -1},
-        type='json'
+        format='json'
     )
     assert user_mod3_resp.status_code == 200
     assert user_mod3_resp.data['institution'] is None

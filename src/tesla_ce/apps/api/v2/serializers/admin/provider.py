@@ -68,10 +68,11 @@ class ProviderSerializer(serializers.ModelSerializer):
                 options = decode_json(self.instance.options)
             if options_schema is None and options is not None:
                 raise serializers.ValidationError(detail="Options are not compatible with the NULL provided schema")
-            try:
-                jsonschema.validate(instance=options, schema=options_schema)
-            except jsonschema.exceptions.ValidationError as val_err:
-                raise serializers.ValidationError(detail=val_err) from val_err
+            if options is not None:
+                try:
+                    jsonschema.validate(instance=options, schema=options_schema)
+                except jsonschema.exceptions.ValidationError as val_err:
+                    raise serializers.ValidationError(detail=val_err) from val_err
 
         # Apply validators
         for validator in self.get_validators():
