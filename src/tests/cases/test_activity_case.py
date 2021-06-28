@@ -63,35 +63,38 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # The VLE creates a new activity
     activity = case_methods.vle_create_activity(vle, course)
 
-    pytest.skip('TODO')
+    # The VLE creates a launcher for the instructor
+    instructor_launcher = case_methods.vle_create_launcher(vle, instructors[0])
 
     # An instructor configures the activity using the API
-    case_methods.api_configure_activity(instructors[0], activity)
+    case_methods.api_configure_activity(instructor_launcher, activity, providers)
 
     for learner in learners:
         # VLE check the status of the Informed Consent of the learner
-        case_methods.vle_check_learner_ic(vle, learner, missing=True)
+        case_methods.vle_check_learner_ic(vle, course, learner, missing=True)
 
         # The VLE creates a launcher for the learner to accept IC
         launcher_ic = case_methods.vle_create_launcher(vle, learner)
 
-        # The leaerner accepts the IC using the API
-        case_methods.api_learner_accept_ic(learners, launcher_ic)
+        # The learner accepts the IC using the API
+        case_methods.api_learner_accept_ic(launcher_ic)
 
         # VLE check the status of the Informed Consent of the learner
-        case_methods.vle_check_learner_ic(vle, learner, missing=False)
+        case_methods.vle_check_learner_ic(vle, course, learner, missing=False)
+
+    pytest.skip('TODO')
 
     # The VLE checks the enrolment status for the learner (missing is expected as is new learner)
-    missing = case_methods.vle_check_learner_enrolment(rest_api_client, vle, learners[0], activity, missing=True)
+    missing = case_methods.vle_check_learner_enrolment(vle, learners[0], activity, missing=True)
 
     # The VLE creates a launcher for the learner to perform the enrolment
-    launcher_enrol = case_methods.vle_create_launcher(rest_api_client, vle, learners[0])
+    launcher_enrol = case_methods.vle_create_launcher(vle, learners[0])
 
     # The learner perform enrolment for missing instruments, sending data using LAPI
-    case_methods.api_lapi_perform_enrolment(rest_api_client, learners[0], launcher_enrol, missing)
+    case_methods.api_lapi_perform_enrolment(learners[0], launcher_enrol, missing)
 
     # The VLE creates an assessment session for a learner for the activity
-    assessment_session = case_methods.vle_create_assessment_session(rest_api_client, vle, learners[0], activity)
+    assessment_session = case_methods.vle_create_assessment_session(vle, learners[0], activity)
 
     # The VLE creates a launcher for the learner and assessment session
     launcher = case_methods.vle_create_launcher(vle, learners[0], assessment_session)

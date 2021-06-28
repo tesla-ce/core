@@ -122,10 +122,11 @@ def api_register_providers(global_admin):
     return providers
 
 
-def api_create_institution(global_admin):
+def api_create_institution(global_admin, external_ic=False):
     """
         A global admin creates a new institution
         :param global_admin: Global admin object
+        :param external_ic: True if the IC is managed externally, and assumed accepted, False otherwise
         :return: New created institution
     """
     # Set global admin user.
@@ -134,7 +135,8 @@ def api_create_institution(global_admin):
     # Create a new institution
     institution_data = {
         'name': "PyTest Test institution {}".format(get_random_string(5)),
-        'acronym': get_random_string(10)
+        'acronym': get_random_string(10),
+        'external_ic': external_ic
     }
     inst_create_resp = client.post('/api/v2/admin/institution/', data=institution_data, format='json')
     assert inst_create_resp.status_code == 201
@@ -531,19 +533,77 @@ def vle_create_activity(vle, course):
     return activity_create_resp.data
 
 
-def api_configure_activity(instructor, activity):
+def api_configure_activity(launcher, activity, providers):
     """
         An instructor configures the activity using the API
-        :param instructor: Instructor credentials
+        :param launcher: Launcher object for an instructor
         :param activity: Activity object
+        :param providers: List of enabled providers
     """
-    pass
+    # Authenticate with instructor launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "INSTRUCTOR" in profile['roles']
+
+    # Get required data
+    institution_id = profile['institution']['id']
+    course_id = activity['course']['id']
+    activity_id = activity['id']
+
+    # Add KS as main instrument
+    instrument_id = providers['ks']['instrument']['id']
+    ks_data = {
+        'active': True,
+        'instrument_id': instrument_id
+    }
+    ks_add_response = client.post(
+        '/api/v2/institution/{}/course/{}/activity/{}/instrument/'.format(institution_id, course_id, activity_id),
+        data=ks_data,
+        format='json'
+    )
+    assert ks_add_response.status_code == 201
+    # Add FR as an alternative instrument to KS
+    instrument_id = providers['fr']['instrument']['id']
+    fr_data = {
+        'active': True,
+        'options': {'online': True},
+        'instrument_id': instrument_id,
+        'alternative_to_id': ks_add_response.data['id']
+    }
+    fr_add_response = client.post(
+        '/api/v2/institution/{}/course/{}/activity/{}/instrument/'.format(institution_id, course_id, activity_id),
+        data=fr_data,
+        format='json'
+    )
+    assert fr_add_response.status_code == 201
+    # Add plagiarism as main instrument
+    instrument_id = providers['plag']['instrument']['id']
+    plag_data = {
+        'active': True,
+        'instrument_id': instrument_id
+    }
+    plag_add_response = client.post(
+        '/api/v2/institution/{}/course/{}/activity/{}/instrument/'.format(institution_id, course_id, activity_id),
+        data=plag_data,
+        format='json'
+    )
+    assert plag_add_response.status_code == 201
+
+    # Check that activity has now 3 instruments
+    inst_list_response = client.get(
+        '/api/v2/institution/{}/course/{}/activity/{}/instrument/'.format(institution_id, course_id, activity_id)
+    )
+    assert inst_list_response.status_code == 200
+    assert inst_list_response.data['count'] == 3
 
 
-def vle_check_learner_ic(vle, learner, missing=True):
+def vle_check_learner_ic(vle, course, learner, missing=True):
     """
         VLE check the status of the Informed Consent of the learner
         :param vle: VLE credentials
+        :param course: Course object
         :param learner: Learner object
         :param missing: True if it is expected that IC is not still accepted or False otherwise
     """
@@ -553,26 +613,58 @@ def vle_check_learner_ic(vle, learner, missing=True):
     # Get the VLE ID from configuration
     vle_id = config['vle_id']
 
+    # Create an activity
+    learner_data_resp = client.get(
+        '/api/v2/vle/{}/course/{}/learner/{}/'.format(vle_id, course['id'], learner['id']),
+    )
+    assert learner_data_resp.status_code == 200
+    if missing:
+        assert learner_data_resp.data['ic_status'].startswith('NOT_VALID')
+    else:
+        assert learner_data_resp.data['ic_status'].startswith('VALID')
 
-def api_learner_accept_ic(learner, launcher):
+
+def api_learner_accept_ic(launcher):
     """
-        The leaerner accepts the IC using the API
-        :param learner: Learner object
+        The learner accepts the IC using the API
         :param launcher: Launcher object
     """
-    pass
+    # Authenticate with learner launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "LEARNER" in profile['roles']
+
+    # Get required data
+    institution_id = profile['institution']['id']
+
+    # Get the current IC
+    get_current_ic_resp = client.get('/api/v2/institution/{}/ic/current/'.format(institution_id))
+    assert get_current_ic_resp.status_code == 200
+
+    # Accept the informed consent
+    accept_ic_resp = client.post('/api/v2/institution/{}/user/{}/ic/'.format(institution_id, profile['id']),
+                                 data={'version': get_current_ic_resp.data['version']},
+                                 format='json')
+    assert accept_ic_resp.status_code == 200
 
 
-def vle_check_learner_enrolment(rest_api_client, vle, learner, activity, missing=True):
+def vle_check_learner_enrolment(vle, learner, activity, missing=True):
     """
         The VLE checks the enrolment status of the learner.
-        :param rest_api_client: API client
         :param vle: VLE object
         :param learner: Learner object
         :param activity: Activity object
         :param missing: True if missing enrolment is expected or False otherwise
         :return: List of missing instruments
     """
+    # Authenticate using VLE credentials
+    client, config = auth_utils.client_with_approle_credentials(vle['role_id'], vle['secret_id'])
+
+    # Get the VLE ID from configuration
+    vle_id = config['vle_id']
+
     instruments = []
 
     # Check missing instruments
@@ -584,10 +676,9 @@ def vle_check_learner_enrolment(rest_api_client, vle, learner, activity, missing
     return instruments
 
 
-def api_lapi_perform_enrolment(rest_api_client, learner, launcher, missing):
+def api_lapi_perform_enrolment(learner, launcher, missing):
     """
         The learner perform enrolment for missing instruments, sending data using LAPI and API
-        :param rest_api_client: API client
         :param learner: Learner object
         :param launcher: Launcher object
         :param missing: List of instruments with missing enrolment
@@ -595,10 +686,9 @@ def api_lapi_perform_enrolment(rest_api_client, learner, launcher, missing):
     pass
 
 
-def vle_create_assessment_session(rest_api_client, vle, learner, activity):
+def vle_create_assessment_session(vle, learner, activity):
     """
         The VLE creates an assessment session for a learner for the activity
-        :param rest_api_client: API client
         :param vle: VLE object
         :param learner: Learner object
         :param activity: Activity object
@@ -609,16 +699,34 @@ def vle_create_assessment_session(rest_api_client, vle, learner, activity):
     return assessment_session
 
 
-def vle_create_launcher(vle, learner, session=None):
+def vle_create_launcher(vle, user, session=None):
     """
-        The VLE creates a launcher for the learner
+        The VLE creates a launcher for the user
         :param vle: VLE object
-        :param learner: Learner object
+        :param user: User object
         :param session: Assessment session object
         :return: New launcher data
     """
-    launcher = None
+    # Authenticate using VLE credentials
+    client, config = auth_utils.client_with_approle_credentials(vle['role_id'], vle['secret_id'])
 
+    # Get the VLE ID from configuration
+    vle_id = config['vle_id']
+
+    # Get data for launcher
+    data = {
+        'vle_user_uid': user['uid']
+    }
+
+    if session is not None:
+        data['session_id'] = session['id']
+
+    # Create a launcher
+    launcher_create_resp = client.post('/api/v2/vle/{}/launcher/'.format(vle_id),
+                                       data=data)
+    assert launcher_create_resp.status_code == 200
+
+    launcher = launcher_create_resp.data
     return launcher
 
 
