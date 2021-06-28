@@ -29,4 +29,7 @@ urlpatterns = [
 
     # Alert messages
     path(r'v1/alert/<int:institution_id>/<uuid:learner_id>/', views.LearnerAlert.as_view()),
+
+    # Profile
+    path(r'v1/profile/<int:institution_id>/<uuid:learner_id>/', views.ProfileView.as_view()),
 ]

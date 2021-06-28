@@ -15,5 +15,6 @@
 """ API v1 serializers package """
 from .alert import AlertMessageSerializer
 from .enrolment import EnrolmentSampleSerializer
+from .profile import ProfileSerializer
 from .status import StatusSerializer
 from .verification import VerificationSampleSerializer
