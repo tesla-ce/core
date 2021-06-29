@@ -46,7 +46,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
 
     # A SEND administrator of the institution defines the SEND categories using the API
     ks_id = providers['ks']['instrument']['id']
-    send_categories = case_methods.api_create_send_categories(send_admin, [ks_id])
+    send_category = case_methods.api_create_send_categories(send_admin, [ks_id])
 
     # Institution enables direct learners and instructors registration by VLE
     case_methods.api_enable_direct_registration_vle(inst_admin)
@@ -81,6 +81,9 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
 
         # VLE check the status of the Informed Consent of the learner
         case_methods.vle_check_learner_ic(vle, course, learner, missing=False)
+
+    # The SEND admin assigns send category to the learner
+    case_methods.api_set_learner_send(send_admin, send_category, learners[1])
 
     pytest.skip('TODO')
 

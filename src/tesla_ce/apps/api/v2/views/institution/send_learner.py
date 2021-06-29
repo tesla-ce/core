@@ -19,28 +19,29 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionSENDLearnerSerializer
 from tesla_ce.models import SENDLearner
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionSENDLearnerViewSet(viewsets.ModelViewSet, NestedViewSetMixin):
+class InstitutionSENDLearnerViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows activity to be viewed or edited.
     """
     model = SENDLearner
     serializer_class = InstitutionSENDLearnerSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    permission_classes = [
+        permissions.GlobalAdminReadOnlyPermission |
+        permissions.InstitutionAdminPermission |
+        permissions.InstitutionSENDAdminPermission
+    ]
     '''
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     '''
 
     def get_queryset(self):
-        queryset = SENDLearner.objects
-        if 'parent_lookup_institution_id' in self.kwargs and 'parent_lookup_learner_id' in self.kwargs:
-            queryset = queryset.filter(
-                learner_id=self.kwargs['parent_lookup_learner_id'],
-                learner__institution__id=self.kwargs['parent_lookup_institution_id']
-            )
+        queryset = self.filter_queryset_by_parents_lookups(SENDLearner.objects)
         return queryset.all().order_by('id')

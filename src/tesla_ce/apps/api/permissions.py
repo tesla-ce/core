@@ -17,6 +17,7 @@ from rest_framework import permissions
 
 from tesla_ce.models import InstitutionUser
 from tesla_ce.models import User
+from tesla_ce.models import AuthenticatedModule
 
 
 class GlobalAdminPermission(permissions.BasePermission):
@@ -94,6 +95,107 @@ class InstitutionAdminPermission(InstitutionMemberPermission):
 class InstitutionAdminReadOnlyPermission(InstitutionAdminPermission):
     """
         Only admins of the institution can access to the view in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
+class InstitutionDataAdminPermission(InstitutionMemberPermission):
+    """
+        Only admins of the institution can access to the view
+    """
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            if isinstance(request.user, InstitutionUser):
+                return request.user.data_admin
+            else:
+                return request.user.institutionuser.data_admin
+
+        return False
+
+
+class InstitutionDataAdminReadOnlyPermission(InstitutionDataAdminPermission):
+    """
+        Only admins of the institution can access to the view in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
+class InstitutionLegalAdminPermission(InstitutionMemberPermission):
+    """
+        Only admins of the institution can access to the view
+    """
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            if isinstance(request.user, InstitutionUser):
+                return request.user.legal_admin
+            else:
+                return request.user.institutionuser.legal_admin
+
+        return False
+
+
+class InstitutionLegalAdminReadOnlyPermission(InstitutionLegalAdminPermission):
+    """
+        Only admins of the institution can access to the view in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
+class InstitutionSENDAdminPermission(InstitutionMemberPermission):
+    """
+        Only SEND admins of the institution can access to the view
+    """
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            if isinstance(request.user, InstitutionUser):
+                return request.user.send_admin
+            else:
+                return request.user.institutionuser.send_admin
+
+        return False
+
+
+class InstitutionSENDAdminReadOnlyPermission(InstitutionSENDAdminPermission):
+    """
+        Only SEND admins of the institution can access to the view in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
+class VLEPermission(permissions.BasePermission):
+    """
+        Only target VLE can access to the view
+    """
+
+    def has_permission(self, request, view):
+
+        if not isinstance(request.user, AuthenticatedModule):
+            return False
+
+        vle_id = None
+        if request.user.type == 'vle':
+            vle_id = request.user.pk
+
+        if vle_id is None or not request.path.startswith('/api/{}/vle/{}/'.format(request.version, vle_id)):
+            return False
+        return True
+
+
+class VLEReadOnlyPermission(VLEPermission):
+    """
+        Only the targeted VLE can access to the view in read only mode
     """
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:

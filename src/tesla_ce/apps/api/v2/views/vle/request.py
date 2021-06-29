@@ -18,6 +18,7 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import VLECourseActivityLearnerRequestSerializer
 from tesla_ce.models import Request
 
@@ -29,6 +30,9 @@ class VLECourseActivityLearnerRequestViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = VLECourseActivityLearnerRequestSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    permission_classes = [
+        permissions.VLEPermission
+    ]
     filterset_fields = ['instruments']
     search_fields = ['instruments']
 

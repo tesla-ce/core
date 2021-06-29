@@ -347,9 +347,9 @@ def api_create_send_categories(admin, disabled_inst=[]):
         format='json'
     )
     assert send_cat_resp.status_code == 201
-    send_categories = []
+    send_category = send_cat_resp.data
 
-    return send_categories
+    return send_category
 
 
 def api_enable_direct_registration_vle(inst_admin):
@@ -648,6 +648,31 @@ def api_learner_accept_ic(launcher):
                                  data={'version': get_current_ic_resp.data['version']},
                                  format='json')
     assert accept_ic_resp.status_code == 200
+
+
+def api_set_learner_send(admin, send_category, learner):
+    """
+        The SEND admin assigns send options to learner
+        :param admin: Credentials for a user with SEND administration rights
+        :param send_category: Send category object to be assigned to the learner
+        :param learner: Learner object
+    """
+    # Authenticate with admin credentials
+    client = auth_utils.client_with_user_credentials(admin['email'], admin['password'])
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+
+    # Assign provided SEND category
+    institution_id = profile['institution']['id']
+    send_cat_resp = client.post(
+        '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, learner['id']),
+        data={
+            'category': send_category['id']
+        },
+        format='json'
+    )
+    assert send_cat_resp.status_code == 201
 
 
 def vle_check_learner_enrolment(vle, learner, activity, missing=True):

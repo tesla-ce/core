@@ -194,3 +194,23 @@ def get_provider_desc_file(provider):
     """
     return os.path.abspath(os.path.join(os.path.dirname(__file__),
                            '..', '..', 'providers', '{}.json'.format(provider)))
+
+
+def get_module_auth_user(module):
+    """
+        Get a module authentication object from a object module instance
+        :param module: Module object
+        :return: Authentication object
+    """
+    from tesla_ce.models import VLE, Provider, AuthenticatedModule
+    auth_object = None
+    if isinstance(module, VLE) or isinstance(module, Provider):
+        auth_object = AuthenticatedModule()
+        auth_object.id = module.id
+        auth_object.pk = module.id
+        auth_object.module = module
+        if isinstance(module, VLE):
+            auth_object.type = 'vle'
+        else:
+            auth_object.type = 'provider'
+    return auth_object
