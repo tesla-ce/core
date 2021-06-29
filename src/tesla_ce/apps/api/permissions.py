@@ -147,3 +147,27 @@ class InstitutionLegalAdminReadOnlyPermission(InstitutionLegalAdminPermission):
         if request.method in permissions.SAFE_METHODS:
             return super().has_permission(request, view)
         return False
+
+
+class InstitutionSENDAdminPermission(InstitutionMemberPermission):
+    """
+        Only SEND admins of the institution can access to the view
+    """
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            if isinstance(request.user, InstitutionUser):
+                return request.user.send_admin
+            else:
+                return request.user.institutionuser.send_admin
+
+        return False
+
+
+class InstitutionSENDAdminReadOnlyPermission(InstitutionSENDAdminPermission):
+    """
+        Only SEND admins of the institution can access to the view in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
