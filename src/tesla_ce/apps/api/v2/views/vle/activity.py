@@ -22,6 +22,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.views import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import VLECourseActivityInstrumentSerializer
 from tesla_ce.apps.api.v2.serializers import VLECourseActivitySerializer
 from tesla_ce.models import Activity
@@ -34,6 +35,9 @@ class VLECourseActivityViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     model = Activity
     serializer_class = VLECourseActivitySerializer
+    permission_classes = [
+        permissions.VLEPermission
+    ]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']
     search_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']

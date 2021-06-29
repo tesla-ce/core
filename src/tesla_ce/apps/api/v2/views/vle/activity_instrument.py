@@ -18,6 +18,7 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import VLECourseActivityInstrumentSerializer
 from tesla_ce.models import ActivityInstrument
 
@@ -28,6 +29,9 @@ class VLECourseActivityInstrumentViewSet(viewsets.ModelViewSet):
         API endpoint that allows activity instruments to be viewed or edited.
     """
     serializer_class = VLECourseActivityInstrumentSerializer
+    permission_classes = [
+        permissions.VLEPermission
+    ]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['instrument_id']
     search_fields = ['instrument_id']

@@ -17,6 +17,7 @@ from rest_framework import permissions
 
 from tesla_ce.models import InstitutionUser
 from tesla_ce.models import User
+from tesla_ce.models import AuthenticatedModule
 
 
 class GlobalAdminPermission(permissions.BasePermission):
@@ -166,6 +167,35 @@ class InstitutionSENDAdminPermission(InstitutionMemberPermission):
 class InstitutionSENDAdminReadOnlyPermission(InstitutionSENDAdminPermission):
     """
         Only SEND admins of the institution can access to the view in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
+class VLEPermission(permissions.BasePermission):
+    """
+        Only target VLE can access to the view
+    """
+
+    def has_permission(self, request, view):
+
+        if not isinstance(request.user, AuthenticatedModule):
+            return False
+
+        vle_id = None
+        if request.user.type == 'vle':
+            vle_id = request.user.pk
+
+        if vle_id is None or not request.path.startswith('/api/{}/vle/{}/'.format(request.version, vle_id)):
+            return False
+        return True
+
+
+class VLEReadOnlyPermission(VLEPermission):
+    """
+        Only the targeted VLE can access to the view in read only mode
     """
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
