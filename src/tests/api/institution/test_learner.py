@@ -250,6 +250,8 @@ def test_api_institution_learner(rest_api_client, user_global_admin, institution
                                            'Read Learner Information', str_response, 200)
     assert body['consent_rejected'] is not None
 
+
+
     # 7) Read SEND categories assigned to a learner
     """ ---------------------------------------------------------------------
     Read SEND categories assigned to a learner:

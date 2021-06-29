@@ -89,3 +89,24 @@ def client_with_approle_credentials(role_id, secret_id):
 
     return client, auth_resp.data
 
+
+def client_with_launcher_credentials(launcher):
+    """
+        Get an API client instance authenticated with provided launcher
+        :param launcher: Launcher object
+        :return: User credentials from launcher
+    """
+    client = APIClient()
+
+    auth_resp = client.post('/api/v2/auth/token',
+        data={'id': launcher['id'], 'token': launcher['token']},
+        format='json'
+    )
+    assert auth_resp.status_code == 200
+    assert 'access_token' in auth_resp.data
+
+    # Assign credentials
+    token = auth_resp.data['access_token']
+    client.credentials(HTTP_AUTHORIZATION='JWT {}'.format(token))
+
+    return client

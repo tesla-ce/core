@@ -15,5 +15,6 @@
 """ Learner API views package """
 from .alert import LearnerAlert
 from .enrolment import LearnerEnrolment
+from .profile import ProfileView
 from .status import StatusView
 from .verification import LearnerVerification

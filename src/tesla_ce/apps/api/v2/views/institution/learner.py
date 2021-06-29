@@ -14,51 +14,24 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Institution Learner views module """
 from django.utils import timezone
+
 from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
-from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import Response
 from rest_framework.views import status
 from rest_framework_extensions.mixins import DetailSerializerMixin
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce.apps.api.v2.serializers import InstitutionLearnerDetailSerializer
-from tesla_ce.apps.api.v2.serializers import InstitutionLearnerICBodySerializer
 from tesla_ce.apps.api.v2.serializers import InstitutionLearnerSerializer
+from tesla_ce.apps.api.v2.serializers import InstitutionLearnerICBodySerializer
+
 from tesla_ce.models import InformedConsent
 from tesla_ce.models import Learner
-
-
-class InformedConsentActionSchema(AutoSchema):
-    """ Schema definition for learner Informed Consent action """
-    def get_operation(self, path, method):
-        print('SCHEMA')
-        default = super().get_operation(path, method)
-        if path.endswith('user'):
-            default['requestBody'] = {
-                'content': {
-                    'application/json': {
-                        'schema': {
-                            'type': 'object',
-                            'required': ['email', 'password'],
-                            'properties': {
-                                'email': {
-                                    'type': 'string',
-                                },
-                                'password': {
-                                    'type': 'string',
-                                },
-                                'realm': {
-                                    'type': 'string',
-                                },
-                            }
-                        }
-                    }
-                }
-            }
 
 
 def is_newer_versions(current, new):
@@ -104,15 +77,15 @@ class InstitutionLearnerViewSet(DetailSerializerMixin, viewsets.ModelViewSet, Ne
             )
         return queryset.all().order_by('id')
 
-    @action(detail=True, methods=['POST', 'DELETE'], schema=InformedConsentActionSchema())
+    @action(detail=True, methods=['POST', 'DELETE'])
     def ic(self, request, *args, **kwargs):
         """
             Manage learner informed consent
         """
-        try:
-            learner = Learner.objects.get(pk=kwargs['pk'], institution_id=kwargs['parent_lookup_institution_id'])
-        except Learner.DoesNotExist:
-            return Response('Invalid learner', status=status.HTTP_404_NOT_FOUND)
+        learner = Learner.objects.get(
+            pk=kwargs['pk'],
+            institution_id=kwargs['parent_lookup_institution_id']
+        )
 
         if request.method == 'POST':
             # Accept informed consent
