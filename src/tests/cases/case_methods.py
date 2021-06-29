@@ -644,7 +644,7 @@ def api_learner_accept_ic(launcher):
     assert get_current_ic_resp.status_code == 200
 
     # Accept the informed consent
-    accept_ic_resp = client.post('/api/v2/institution/{}/user/{}/ic/'.format(institution_id, profile['id']),
+    accept_ic_resp = client.post('/api/v2/institution/{}/learner/{}/ic/'.format(institution_id, profile['id']),
                                  data={'version': get_current_ic_resp.data['version']},
                                  format='json')
     assert accept_ic_resp.status_code == 200
