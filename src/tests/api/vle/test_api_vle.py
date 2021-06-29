@@ -14,24 +14,26 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Test package for VLE API """
 import pytest
-
+from tests.utils import get_module_auth_user
 
 @pytest.mark.django_db
-def test_api_vle(rest_api_client):
-    #666 plantilla codi: CANVIAR PROVIDER A VLE
-    provider_response = rest_api_client.get('/api/v2/vle/')
-    assert provider_response.status_code == 200
+def test_api_vle(rest_api_client, institution_course_test_case):
+    # Ensure VLE permissions are required to access the VLE list
+    vle_list_no_auth_response = rest_api_client.get('/api/v2/vle/')
+    assert vle_list_no_auth_response.status_code == 403
 
-    providers = provider_response.json()
-    print('\n**************** ADMIN ***********')
-    print(providers)
+    # Authenticate with VLE object
+    rest_api_client.force_authenticate(user=get_module_auth_user(institution_course_test_case['vle']))
 
-    # Get the list of VLEs
-    vle_response = rest_api_client.get('/api/v2/vle/')
-    assert vle_response.status_code == 200
-    print(vle_response.json())
+    # Check that is not possible to list the VLEs
+    vle_list_auth_response = rest_api_client.get('/api/v2/vle/')
+    assert vle_list_auth_response.status_code == 403
 
-    pytest.skip("TODO")
+    # Get VLE information
+    vle_id = institution_course_test_case['vle'].id
+    vle_info_auth_response = rest_api_client.get('/api/v2/vle/{}/'.format(vle_id))
+    assert vle_info_auth_response.status_code == 200
+    assert vle_info_auth_response.data['id'] == vle_id
 
 #TODO VLE
 #TODO Read VLE information
