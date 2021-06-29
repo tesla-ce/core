@@ -19,13 +19,13 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
-from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import Response
 from rest_framework.views import status
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce import get_default_client
 from tesla_ce.apps.api import status as tesla_status
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import VLELauncherBodySerializer
 from tesla_ce.apps.api.v2.serializers import VLELauncherDataSerializer
 from tesla_ce.apps.api.v2.serializers import VLENewAssessmentSessionBodySerializer
@@ -41,42 +41,6 @@ from tesla_ce.models import Learner
 from tesla_ce.models import VLE
 
 
-class NewAssessmentSchema(AutoSchema):
-
-    def get_operation(self, path, method):
-        default = super().get_operation(path, method)
-        default['requestBody'] = {
-            'content': {
-                'application/json': {
-                    'schema': {
-                        'type': 'object',
-                        'required': ['vle_activity_type', 'vle_activity_id', 'vle_learner_uid'],
-                        'properties': {
-                            'vle_course_id': {
-                                'type': 'string',
-                                'description': 'Course unique ID in the VLE'
-                            },
-                            'vle_activity_type': {
-                                'type': 'string',
-                                'description': 'Activity type ID in the VLE'
-                            },
-                            'vle_activity_id': {
-                                'type': 'string',
-                                'description': 'Activity unique ID in the VLE'
-                            },
-                            'vle_learner_uid': {
-                                'type': 'string',
-                                'description': 'Learner unique identification in the institution'
-                            },
-                        }
-                    }
-                }
-            }
-        }
-
-        return default
-
-
 # pylint: disable=too-many-ancestors
 class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
@@ -84,6 +48,9 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     queryset = VLE.objects.all().order_by('created_at')
     serializer_class = VLESerializer
+    permission_classes = [
+        permissions.VLEPermission
+    ]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     '''
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
@@ -91,7 +58,7 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     '''
 
     @action(detail=True, methods=['POST', ],
-            schema=NewAssessmentSchema(), serializer_class=VLENewAssessmentSessionSerializer)
+            serializer_class=VLENewAssessmentSessionSerializer)
     def assessment(self, request, pk):
         """
             Create a new assessment session
