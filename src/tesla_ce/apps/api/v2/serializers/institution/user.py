@@ -29,6 +29,8 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                                          validators.UniqueValidator(queryset=User.objects.all())
                                      ]
                                      )
+    password = serializers.CharField(write_only=True, default=None, allow_null=True)
+    password2 = serializers.CharField(write_only=True, default=None, allow_null=True)
     last_login = serializers.DateTimeField(read_only=True)
     first_name = serializers.CharField(required=False, default=None)
     last_name = serializers.CharField(required=False, default=None)
@@ -42,7 +44,7 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstitutionUser
-        exclude = ["password", "is_superuser", "is_staff", "is_active", "date_joined", "groups",
+        exclude = ["is_superuser", "is_staff", "is_active", "date_joined", "groups",
                    "user_permissions", "institution", "login_allowed"]
         validators = [serializers.UniqueTogetherValidator(
             queryset=InstitutionUser.objects.all(),
@@ -59,6 +61,15 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
         """
         # Add predefined fields
         attrs['institution_id'] = self.context['view'].kwargs['parent_lookup_institution_id']
+
+        # Check passwords
+        if attrs.get('login_allowed', True):
+            if 'password' in attrs and attrs.get('password') != attrs.get('password2'):
+                raise serializers.ValidationError('Passwords does not match')
+            if 'password2' in attrs:
+                del attrs['password2']
+        else:
+            attrs['login_allowed'] = False
 
         # Apply validators
         for validator in self.get_validators():
