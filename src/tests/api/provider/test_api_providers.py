@@ -14,16 +14,24 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Test package for provider API """
 import pytest
+from tests.utils import get_module_auth_user
 
 
 @pytest.mark.django_db
-def test_api_provider(rest_api_client):
-    #666 plantilla codi: CANVIAR PROVIDER A el que toqui
-    provider_response = rest_api_client.get('/api/v2/provider/')
-    assert provider_response.status_code == 200
+def test_api_provider(rest_api_client, providers):
+    # Ensure the list of providers is not accessible
+    provider_list_no_auth_response = rest_api_client.get('/api/v2/provider/')
+    assert provider_list_no_auth_response.status_code == 403
 
-    providers = provider_response.json()
-    print('\n**************** ADMIN ***********')
-    print(providers)
+    # Authenticate with Provider object
+    rest_api_client.force_authenticate(user=get_module_auth_user(providers['fr']))
 
-    pytest.skip("TODO")
+    # Check that is not possible to list the Providers
+    provider_list_auth_response = rest_api_client.get('/api/v2/provider/')
+    assert provider_list_auth_response.status_code == 403
+
+    # Get Provider information
+    provider_id = providers['fr'].id
+    provider_info_auth_response = rest_api_client.get('/api/v2/provider/{}/'.format(provider_id))
+    assert provider_info_auth_response.status_code == 200
+    assert provider_info_auth_response.data['id'] == provider_id

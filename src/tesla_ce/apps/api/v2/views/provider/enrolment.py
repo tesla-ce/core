@@ -24,6 +24,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.views import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import ProviderEnrolmentSampleSerializer
 from tesla_ce.apps.api.v2.serializers import ProviderEnrolmentSerializer
 from tesla_ce.models import Enrolment
@@ -41,6 +42,9 @@ class ProviderEnrolmentViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     lookup_field = 'learner__learner_id'
     serializer_class = ProviderEnrolmentSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    permission_classes = [
+        permissions.ProviderPermission
+    ]
     '''
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']

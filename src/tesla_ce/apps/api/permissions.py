@@ -201,3 +201,34 @@ class VLEReadOnlyPermission(VLEPermission):
         if request.method in permissions.SAFE_METHODS:
             return super().has_permission(request, view)
         return False
+
+
+class ProviderPermission(permissions.BasePermission):
+    """
+        Only target Provider can access to the view
+    """
+
+    def has_permission(self, request, view):
+
+        if not isinstance(request.user, AuthenticatedModule):
+            return False
+
+        provider_id = None
+        if request.user.type == 'provider':
+            provider_id = request.user.pk
+
+        if provider_id is None or not request.path.startswith(
+                '/api/{}/provider/{}/'.format(request.version, provider_id)
+        ):
+            return False
+        return True
+
+
+class ProviderReadOnlyPermission(ProviderPermission):
+    """
+        Only the targeted Provider can access to the view in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
