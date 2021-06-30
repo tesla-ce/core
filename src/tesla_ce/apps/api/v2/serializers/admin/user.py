@@ -37,8 +37,8 @@ class UserSerializer(serializers.ModelSerializer):
                                        validators.UniqueValidator(queryset=User.objects.all())
                                    ]
                                    )
-    password = serializers.CharField(write_only=True, default=None)
-    password2 = serializers.CharField(write_only=True, default=None)
+    password = serializers.CharField(write_only=True, default=None, allow_null=True)
+    password2 = serializers.CharField(write_only=True, default=None, allow_null=True)
     institution = serializers.SerializerMethodField(read_only=True)
     roles = serializers.SerializerMethodField(read_only=True)
     institution_id = serializers.IntegerField(write_only=True, allow_null=True, default=None)
@@ -59,10 +59,13 @@ class UserSerializer(serializers.ModelSerializer):
             :rtype: dict
         """
         # Check passwords
-        if 'password' in attrs and attrs.get('password') != attrs.get('password2'):
-            raise serializers.ValidationError('Passwords does not match')
-        if 'password2' in attrs:
-            del attrs['password2']
+        if attrs.get('login_allowed', True):
+            if 'password' in attrs and attrs.get('password') != attrs.get('password2'):
+                raise serializers.ValidationError('Passwords does not match')
+            if 'password2' in attrs:
+                del attrs['password2']
+        else:
+            attrs['login_allowed'] = False
 
         if 'institution_id' in attrs and attrs['institution_id'] == -1:
             attrs['institution_id'] = None
