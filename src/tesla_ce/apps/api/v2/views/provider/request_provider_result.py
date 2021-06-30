@@ -24,6 +24,7 @@ from rest_framework.mixins import UpdateModelMixin
 from rest_framework.views import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import ProviderVerificationRequestResultSerializer
 from tesla_ce.models import RequestProviderResult
 
@@ -36,6 +37,9 @@ class ProviderVerificationRequestResultViewSet(NestedViewSetMixin, UpdateModelMi
     queryset = RequestProviderResult.objects
     serializer_class = ProviderVerificationRequestResultSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    permission_classes = [
+        permissions.ProviderPermission
+    ]
     '''
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']

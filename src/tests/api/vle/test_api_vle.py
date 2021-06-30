@@ -18,7 +18,7 @@ from tests.utils import get_module_auth_user
 
 @pytest.mark.django_db
 def test_api_vle(rest_api_client, institution_course_test_case):
-    # Ensure VLE permissions are required to access the VLE list
+    # Ensure VLE list is not allowed
     vle_list_no_auth_response = rest_api_client.get('/api/v2/vle/')
     assert vle_list_no_auth_response.status_code == 403
 
