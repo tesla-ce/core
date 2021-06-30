@@ -32,8 +32,8 @@ def roles_values():
         ('SEND', 'SEND'),
         ('LEGAL', 'LEGAL'),
         ('DATA', 'DATA'),
-        # ('INSTRUCTOR', 'INSTRUCTOR'),
-        # ('LEARNER', 'LEARNER'),
+        ('INSTRUCTOR', 'INSTRUCTOR'),
+        ('LEARNER', 'LEARNER'),
     )
 
 
@@ -67,6 +67,10 @@ class InstitutionUserFilter(filters_dj.FilterSet):
             filter_q = filter_q | Q(legal_admin=True)
         if 'DATA' in value:
             filter_q = filter_q | Q(data_admin=True)
+        if 'LEARNER' in value:
+            filter_q = filter_q | Q(learner__isnull=False)
+        if 'INSTRUCTOR' in value:
+            filter_q = filter_q | Q(instructor__isnull=False)
         return queryset.filter(filter_q)
 
     class Meta:

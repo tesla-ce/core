@@ -143,3 +143,30 @@ def test_api_institution_user_filters(rest_api_client, institution_course_test_c
     assert get_user_by_role2_resp.status_code == 200
     assert get_user_by_role2_resp.data['count'] == 1
     assert get_user_by_role2_resp.data['results'][0]['id'] == inst_admin.id
+
+    # Filter learners
+    get_user_by_learner_role_resp = client.get('/api/v2/institution/{}/user/?roles=LEARNER'.format(inst_id))
+    assert get_user_by_learner_role_resp.status_code == 200
+    assert get_user_by_learner_role_resp.data['count'] == 1
+    assert get_user_by_learner_role_resp.data['results'][0]['id'] == institution_course_test_case['learner'].id
+
+    # Filter instructors
+    get_user_by_instructor_role_resp = client.get('/api/v2/institution/{}/user/?roles=INSTRUCTOR'.format(inst_id))
+    assert get_user_by_instructor_role_resp.status_code == 200
+    assert get_user_by_instructor_role_resp.data['count'] == 1
+    assert get_user_by_instructor_role_resp.data['results'][0]['id'] == institution_course_test_case['instructor'].id
+
+    # Find for any admin
+    inst_admin = institution_course_test_case['user']
+    inst_admin.institutionuser.inst_admin = True
+    inst_admin.institutionuser.send_admin = True
+    inst_admin.institutionuser.data_admin = True
+    inst_admin.institutionuser.legal_admin = True
+    inst_admin.institutionuser.save()
+
+    get_user_by_admins_roles_resp = client.get(
+        '/api/v2/institution/{}/user/?roles=ADMIN&roles=LEGAL&roles=DATA&roles=SEND'.format(inst_id)
+    )
+    assert get_user_by_admins_roles_resp.status_code == 200
+    assert get_user_by_admins_roles_resp.data['count'] == 1
+    assert get_user_by_admins_roles_resp.data['results'][0]['id'] == inst_admin.id
