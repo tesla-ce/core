@@ -311,7 +311,7 @@ class UserDataSerializer(serializers.Serializer):
         if default_institution is not None:
             return [default_institution]
 
-        return None
+        return []
 
     def get_roles(self, instance):
         """
