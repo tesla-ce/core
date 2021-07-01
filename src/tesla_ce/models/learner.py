@@ -138,7 +138,6 @@ def get_missing_enrolment(learner_id, activity_id):
     learner = Learner.objects.get(id=learner_id)
     activity = Activity.objects.get(id=activity_id)
     # Get the list of instruments and enrolment values
-    instruments = []
     enrolment_obj = {
         'missing_enrolments': False,
         'instruments': {},
