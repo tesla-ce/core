@@ -174,6 +174,26 @@ class InstitutionSENDAdminReadOnlyPermission(InstitutionSENDAdminPermission):
         return False
 
 
+class InstitutionLearnerPermission(InstitutionMemberPermission):
+    """
+        An institution learner accessing his/her information
+    """
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            return '/learner/{}/'.format(request.user.id) in request.path
+        return False
+
+
+class InstitutionLearnerReadOnlyPermission(InstitutionLearnerPermission):
+    """
+        An institution learner accessing his/her information in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
 class VLEPermission(permissions.BasePermission):
     """
         Only target VLE can access to the view

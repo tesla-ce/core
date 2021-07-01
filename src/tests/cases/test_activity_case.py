@@ -17,6 +17,8 @@ import pytest
 
 from . import case_methods
 
+from tesla_ce.models.learner import get_missing_enrolment
+
 
 @pytest.mark.django_db(transaction=False)
 def test_activity_case_complete(rest_api_client, user_global_admin):
@@ -73,6 +75,9 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         # VLE check the status of the Informed Consent of the learner
         case_methods.vle_check_learner_ic(vle, course, learner, missing=True)
 
+        # The VLE fails to create an assessment session because IC is missing
+        case_methods.vle_check_learner_enrolment(vle, learner, activity, ic=False)
+
         # The VLE creates a launcher for the learner to accept IC
         launcher_ic = case_methods.vle_create_launcher(vle, learner)
 
@@ -82,19 +87,58 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         # VLE check the status of the Informed Consent of the learner
         case_methods.vle_check_learner_ic(vle, course, learner, missing=False)
 
+        # The VLE fails to create an assessment session because of enrolment
+        case_methods.vle_check_learner_enrolment(vle, learner, activity, ic=True, enrolment=False)
+
     # The SEND admin assigns send category to the learner
     case_methods.api_set_learner_send(send_admin, send_category, learners[1])
 
-    pytest.skip('TODO')
+    # Invalidate cache to avoid refresh time due to send status change
+    get_missing_enrolment.invalidate(learners[1]['id'], activity['id'])
+
+    # The VLE creates a launcher for the learners to check enrolments
+    launcher_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
+    launcher_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+
+    # A learner check their enrolment status via API
+    l1_enrolment = case_methods.api_learner_enrolment(launcher_enrol1)
+    assert len(l1_enrolment) == 0
+    l2_enrolment = case_methods.api_learner_enrolment(launcher_enrol2)
+    assert len(l2_enrolment) == 0
+
+    # The VLE creates a launcher for the learners to check enrolments required for activity
+    launcher_act_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
+    launcher_act_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+
+    # A learner check missing enrolments for an activity via API
+    l1_missing_enrolment = case_methods.api_learner_missing_enrolment(launcher_act_enrol1, activity, missing=True)
+    assert providers['fr']['instrument']['id'] not in l1_missing_enrolment['instruments']  # Alternative instrument
+    assert providers['ks']['instrument']['id'] in l1_missing_enrolment['instruments']  # Primary instrument
+    assert providers['plag']['instrument']['id'] not in l1_missing_enrolment['instruments']  # No enrolment
+
+    l2_missing_enrolment = case_methods.api_learner_missing_enrolment(launcher_act_enrol2, activity, missing=True)
+    assert providers['fr']['instrument']['id'] in l2_missing_enrolment['instruments']  # Enabled as primary is disabled
+    assert providers['ks']['instrument']['id'] not in l2_missing_enrolment['instruments']  # Disabled by SEND
+    assert providers['plag']['instrument']['id'] not in l2_missing_enrolment['instruments']  # No enrolment
 
     # The VLE checks the enrolment status for the learner (missing is expected as is new learner)
-    missing = case_methods.vle_check_learner_enrolment(vle, learners[0], activity, missing=True)
+    missing1 = case_methods.vle_check_learner_enrolment(vle, learners[0], activity, enrolment=False)
+    assert providers['fr']['instrument']['id'] not in missing1['enrolments']['instruments']  # Alternative instrument
+    assert providers['ks']['instrument']['id'] in missing1['enrolments']['instruments']  # Primary instrument
+    assert providers['plag']['instrument']['id'] not in missing1['enrolments']['instruments']  # No enrolment
+    missing2 = case_methods.vle_check_learner_enrolment(vle, learners[1], activity, enrolment=False)
+    assert providers['fr']['instrument']['id'] in missing2['enrolments']['instruments']  # Enabled as disabled primary
+    assert providers['ks']['instrument']['id'] not in missing2['enrolments']['instruments']  # Disabled by SEND
+    assert providers['plag']['instrument']['id'] not in missing2['enrolments']['instruments']  # No enrolment
+
+
+    pytest.skip('TODO')
 
     # The VLE creates a launcher for the learner to perform the enrolment
     launcher_enrol = case_methods.vle_create_launcher(vle, learners[0])
 
     # The learner perform enrolment for missing instruments, sending data using LAPI
-    case_methods.api_lapi_perform_enrolment(learners[0], launcher_enrol, missing)
+    case_methods.api_lapi_perform_enrolment(learners[0], launcher_enrol, missing=True)
 
     # The VLE creates an assessment session for a learner for the activity
     assessment_session = case_methods.vle_create_assessment_session(vle, learners[0], activity)
