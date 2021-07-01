@@ -71,7 +71,8 @@ class InstitutionLearnerViewSet(NestedViewSetMixin, DetailSerializerMixin, views
         permissions.GlobalAdminReadOnlyPermission |
         permissions.InstitutionAdminPermission |
         permissions.InstitutionLegalAdminReadOnlyPermission |
-        permissions.InstitutionDataAdminReadOnlyPermission
+        permissions.InstitutionDataAdminReadOnlyPermission |
+        permissions.InstitutionLearnerReadOnlyPermission
     ]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['uid', 'email', 'first_name', 'last_name']
@@ -85,7 +86,7 @@ class InstitutionLearnerViewSet(NestedViewSetMixin, DetailSerializerMixin, views
                 queryset = queryset.filter(id=inst_user.id)
         return queryset.all().order_by('id')
 
-    @action(detail=True, methods=['POST', 'DELETE'], permission_classes=[permissions.InstitutionMemberPermission])
+    @action(detail=True, methods=['POST', 'DELETE'], permission_classes=[permissions.InstitutionLearnerPermission])
     def ic(self, request, *args, **kwargs):
         """
             Manage learner informed consent
@@ -131,3 +132,18 @@ class InstitutionLearnerViewSet(NestedViewSetMixin, DetailSerializerMixin, views
 
         serializer = self.get_serializer(learner)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def enrolment(self, request, *args, **kwargs):
+        """
+            Get learner enrolment status
+        """
+        learner = Learner.objects.get(
+            pk=kwargs['pk'],
+            institution_id=kwargs['parent_lookup_institution_id']
+        )
+
+        if 'activity_id' in request.query_params:
+            return Response(learner.missing_enrolments(int(request.query_params['activity_id'])))
+
+        return Response(learner.enrolment_status)

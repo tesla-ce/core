@@ -17,6 +17,8 @@ import json
 
 from django.utils import timezone
 
+from tesla_ce.models.learner import get_missing_enrolment
+
 from tests import auth_utils
 from tests.conftest import get_random_string
 from tests.utils import get_provider_desc_file
@@ -520,6 +522,7 @@ def vle_create_activity(vle, course):
     activity_create_resp = client.post(
         '/api/v2/vle/{}/course/{}/activity/'.format(vle_id, course['id']),
         data={
+            'enabled': True,
             'code': get_random_string(10),
             'description': "PyTest test course",
             'vle_course_id': get_random_string(5),
@@ -570,7 +573,7 @@ def api_configure_activity(launcher, activity, providers):
         'active': True,
         'options': {'online': True},
         'instrument_id': instrument_id,
-        'alternative_to_id': ks_add_response.data['id']
+        'alternative_to': ks_add_response.data['id']
     }
     fr_add_response = client.post(
         '/api/v2/institution/{}/course/{}/activity/{}/instrument/'.format(institution_id, course_id, activity_id),
@@ -675,13 +678,65 @@ def api_set_learner_send(admin, send_category, learner):
     assert send_cat_resp.status_code == 201
 
 
-def vle_check_learner_enrolment(vle, learner, activity, missing=True):
+def api_learner_enrolment(launcher):
+    """
+        A learner check their enrolment status via API.
+        :param launcher: Launcher object
+        :return: List of enrolments
+    """
+    # Authenticate with learner launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "LEARNER" in profile['roles']
+
+    # Get the list of enrolments
+    institution_id = profile['institution']['id']
+    list_enrolments_resp = client.get(
+        '/api/v2/institution/{}/learner/{}/enrolment/'.format(institution_id, profile['id'])
+    )
+    assert list_enrolments_resp.status_code == 200
+
+    return list_enrolments_resp.data
+
+
+def api_learner_missing_enrolment(launcher, activity, missing=False):
+    """
+        A learner check missing enrolments for an activity via API
+        :param launcher: Launcher object
+        :param activity: Activity object
+        :param missing: True if missing enrolment is expected or False otherwise
+        :return: List of enrolments
+    """
+    # Authenticate with learner launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "LEARNER" in profile['roles']
+
+    # Get the list of enrolments
+    institution_id = profile['institution']['id']
+    list_enrolments_resp = client.get(
+        '/api/v2/institution/{}/learner/{}/enrolment/?activity_id={}'.format(
+            institution_id, profile['id'], activity['id']
+        )
+    )
+    assert list_enrolments_resp.status_code == 200
+    assert list_enrolments_resp.data['missing_enrolments'] == missing
+
+    return list_enrolments_resp.data
+
+
+def vle_check_learner_enrolment(vle, learner, activity, ic=True, enrolment=True):
     """
         The VLE checks the enrolment status of the learner.
         :param vle: VLE object
         :param learner: Learner object
         :param activity: Activity object
-        :param missing: True if missing enrolment is expected or False otherwise
+        :param ic: True if IC is expected to be accepted or False otherwise
+        :param enrolment: True if enrolment is expected to be perfomed or False otherwise
         :return: List of missing instruments
     """
     # Authenticate using VLE credentials
@@ -690,15 +745,29 @@ def vle_check_learner_enrolment(vle, learner, activity, missing=True):
     # Get the VLE ID from configuration
     vle_id = config['vle_id']
 
-    instruments = []
+    # Get an evaluation session
+    create_session_resp = client.post(
+        '/api/v2/vle/{}/assessment/'.format(vle_id),
+        data={
+            'vle_activity_type': activity['vle_activity_type'],
+            'vle_activity_id': activity['vle_activity_id'],
+            'vle_learner_uid': learner['uid']
+        },
+        format='json'
+    )
+    if not ic:
+        assert create_session_resp.status_code == 406
+        assert create_session_resp.data['status'] == 2  # MISSING IC
+        assert 'INFORMED CONSENT' in create_session_resp.data['message'].upper()
+    elif not enrolment:
+        assert create_session_resp.status_code == 406
+        assert create_session_resp.data['status'] == 4  # MISSING ENROLMENT
+        assert 'ENROLMENT' in create_session_resp.data['message'].upper()
+    else:
+        assert create_session_resp.status_code == 201
 
     # Check missing instruments
-    if missing:
-        assert len(instruments) > 0
-    else:
-        assert len(instruments) == 0
-
-    return instruments
+    return create_session_resp.data
 
 
 def api_lapi_perform_enrolment(learner, launcher, missing):
