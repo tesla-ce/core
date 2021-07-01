@@ -263,6 +263,7 @@ class UserDataSerializer(serializers.Serializer):
     uid = serializers.CharField(required=False, allow_null=True, allow_blank=False, default=None)
     locale = serializers.CharField(required=False, allow_null=True, allow_blank=False, default=None)
     institution = serializers.SerializerMethodField(read_only=True)
+    institutions = serializers.SerializerMethodField(read_only=True)
     roles = serializers.SerializerMethodField(read_only=True)
     routes = serializers.SerializerMethodField(read_only=True)
 
@@ -297,6 +298,18 @@ class UserDataSerializer(serializers.Serializer):
                 "roles": roles,
                 "locale": instance.institutionuser.locale,
             }
+
+        return None
+
+    def get_institutions(self, instance):
+        """
+            Get list of institutions for user
+            :param instance: User instance
+            :return: Institutions list
+        """
+        default_institution = self.get_institution(instance)
+        if default_institution is not None:
+            return [default_institution]
 
         return None
 
