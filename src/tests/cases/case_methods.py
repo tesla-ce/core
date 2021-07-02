@@ -15,9 +15,11 @@
 """ TeSLA CE Use Case tests methods """
 import json
 
-from django.utils import timezone
+import mock
 
-from tesla_ce.models.learner import get_missing_enrolment
+import requests
+
+from django.utils import timezone
 
 from tests import auth_utils
 from tests.conftest import get_random_string
@@ -729,14 +731,14 @@ def api_learner_missing_enrolment(launcher, activity, missing=False):
     return list_enrolments_resp.data
 
 
-def vle_check_learner_enrolment(vle, learner, activity, ic=True, enrolment=True):
+def vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=True):
     """
-        The VLE checks the enrolment status of the learner.
+        The VLE creates an assessment session.
         :param vle: VLE object
         :param learner: Learner object
         :param activity: Activity object
         :param ic: True if IC is expected to be accepted or False otherwise
-        :param enrolment: True if enrolment is expected to be perfomed or False otherwise
+        :param enrolment: True if enrolment is expected to be performed or False otherwise
         :return: List of missing instruments
     """
     # Authenticate using VLE credentials
@@ -770,29 +772,6 @@ def vle_check_learner_enrolment(vle, learner, activity, ic=True, enrolment=True)
     return create_session_resp.data
 
 
-def api_lapi_perform_enrolment(learner, launcher, missing):
-    """
-        The learner perform enrolment for missing instruments, sending data using LAPI and API
-        :param learner: Learner object
-        :param launcher: Launcher object
-        :param missing: List of instruments with missing enrolment
-    """
-    pass
-
-
-def vle_create_assessment_session(vle, learner, activity):
-    """
-        The VLE creates an assessment session for a learner for the activity
-        :param vle: VLE object
-        :param learner: Learner object
-        :param activity: Activity object
-        :return: New assessment session
-    """
-    assessment_session = None
-
-    return assessment_session
-
-
 def vle_create_launcher(vle, user, session=None):
     """
         The VLE creates a launcher for the user
@@ -816,31 +795,252 @@ def vle_create_launcher(vle, user, session=None):
         data['session_id'] = session['id']
 
     # Create a launcher
-    launcher_create_resp = client.post('/api/v2/vle/{}/launcher/'.format(vle_id),
-                                       data=data)
+    launcher_create_resp = client.post('/api/v2/vle/{}/launcher/'.format(vle_id), data=data)
     assert launcher_create_resp.status_code == 200
 
     launcher = launcher_create_resp.data
     return launcher
 
 
-def lapi_lerner_perform_activity(rest_api_client, learner, launcher, assessment_session):
+def api_lapi_perform_enrolment(launcher, instruments):
+    """
+        The learner perform enrolment for missing instruments, sending data using LAPI and API
+        :param launcher: Learner launcher object
+        :param instruments: List of instruments to enrol
+        :return: List of pending tasks assigned to providers
+    """
+    # List simulating the storage queue
+    pending_tasks_storage = []
+    # List simulating the validation queue
+    pending_tasks_validation = []
+    # Object simulating the providers validation queues
+    pending_provider_tasks_validation = []
+
+    def create_sample_test(*args, **kwargs):
+        pending_tasks_storage.append(('create_sample', args, kwargs))
+
+    def validate_request_test(*args, **kwargs):
+        pending_tasks_validation.append(('validate_request', args, kwargs))
+
+    def validate_request_prov_test(*args, **kwargs):
+        pending_provider_tasks_validation.append(('validate_request', args, kwargs))
+
+    # Authenticate with learner launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "LEARNER" in profile['roles']
+
+    # Get learner data (it is injected with the JS script)
+    inst_id = profile['institution']['id']
+    learner_data_resp = client.get('/api/v2/institution/{}/learner/{}/'.format(inst_id, profile['id']))
+    assert learner_data_resp.status_code == 200
+    learn_id = learner_data_resp.data['learner_id']
+
+    # Create a data object simulating a sensor capture
+    sensor_data = {
+        'learner_id': learn_id,
+        'instruments': [],
+        'metadata': {
+            'mimetype': 'some/mimetype',
+            'filename': None,
+            'created_at': timezone.now(),
+            'context': {}
+        },
+        'data': None
+    }
+    with mock.patch('tesla_ce.tasks.requests.enrolment.create_sample.apply_async', create_sample_test):
+        for inst in instruments:
+            sensor_data['instruments'] = [inst]
+            # Send samples
+            for _ in range(2*inst_id):
+                sensor_data['data'] = get_random_string(50)
+                data_sent_resp = client.post(
+                    '/lapi/v1/enrolment/{}/{}/'.format(inst_id, learn_id),
+                    data=sensor_data,
+                    format='json'
+                )
+                assert data_sent_resp.status_code == 200
+                assert data_sent_resp.data['status'] == 'OK'
+
+    # Run storage tasks
+    with mock.patch('tesla_ce.tasks.requests.enrolment.validate_request.apply_async', validate_request_test):
+        from tesla_ce.tasks.requests.enrolment import create_sample
+        for task in pending_tasks_storage:
+            create_sample(**task[2]['kwargs'])
+
+    # Run validation tasks
+    with mock.patch('tesla_ce.tasks.requests.enrolment.validate_request.apply_async', validate_request_prov_test):
+        from tesla_ce.tasks.requests.enrolment import validate_request
+        for task in pending_tasks_validation:
+            validate_request(*task[1][0])
+
+    # Return pending provider validation tasks
+    return pending_provider_tasks_validation
+
+
+def provider_validate_samples(providers, tasks):
+    """
+    Providers validate samples in their queues
+    :param providers: Available providers
+    :param tasks: Pending tasks to be processed
+    :return: List of pending tasks
+    """
+    # List simulating the validation queue
+    pending_tasks_validation = []
+
+    def create_validation_summary(*args, **kwargs):
+        pending_tasks_validation.append(('create_validation_summary', args, kwargs))
+
+    # Split tasks in queues
+    queues = {}
+    for task in tasks:
+        if task[2]['queue'] not in queues:
+            queues[task[2]['queue']] = []
+        queues[task[2]['queue']].append(task)
+
+    # Each provider should process their tasks
+    for queue_name in queues:
+        provider = None
+        # Get the provider with this queue
+        for prov in providers:
+            if providers[prov]['queue'] == queue_name:
+                instrument_id = providers[prov]['instrument']['id']
+                provider = providers[prov]['credentials']
+        assert provider is not None
+        client, config = auth_utils.client_with_approle_credentials(provider['role_id'], provider['secret_id'])
+        # Get the Provider ID from configuration
+        provider_id = config['provider_id']
+
+        task_count = 0
+        for task in queues[queue_name]:
+            # Get the parameters
+            assert task[0] == 'validate_request'
+            learner_id, sample_id, validation_id = task[1][0]
+            learner_id = str(learner_id)
+
+            # Get Sample information
+            get_sample_resp = client.get('/api/v2/provider/{}/enrolment/{}/sample/{}/validation/{}/'.format(
+                provider_id, learner_id, sample_id, validation_id)
+            )
+            assert get_sample_resp.status_code == 200
+            sample = get_sample_resp.data
+
+            # Download sample content
+            sample_data_resp = requests.get(sample['sample']['data'], verify=False)
+            assert sample_data_resp.status_code == 200
+            sample['sample']['data'] = sample_data_resp.json()
+
+            # Do validation
+            with mock.patch('tesla_ce.tasks.requests.enrolment.create_validation_summary.apply_async',
+                            create_validation_summary):
+                send_validation_resp = client.put('/api/v2/provider/{}/enrolment/{}/sample/{}/validation/{}/'.format(
+                    provider_id, learner_id, sample_id, validation_id),
+                    data={
+                        'status': (task_count % 2) + 1,  # Set half of the samples as not valid
+                        'error_message': None,
+                        'validation_info': {
+                            'free_field1': 35,
+                            'other_field':{
+                                'status':3
+                            }
+                        },
+                        'message_code_id': None,
+                        'contribution': 1.0 / instrument_id  # We send the double of samples than the instrument id
+                    },
+                    format='json'
+                )
+                assert send_validation_resp.status_code == 200
+            task_count += 1
+
+    return pending_tasks_validation
+
+
+def provider_validation_summary(providers, tasks):
+    """
+    Provider compute validation summary from individual validations
+    :param providers: Available providers
+    :param tasks: Pending tasks to be processed
+    :return: List of new pending tasks
+    """
+    enrolment_tasks = []
+
+    return enrolment_tasks
+
+
+def provider_enrol_learners(providers, tasks):
+    """
+    Provider perform learners enrolment
+    :param providers: Available providers
+    :param tasks: Pending tasks to be processed
+    :return: List of new pending tasks
+    """
+    pass
+
+def lapi_lerner_perform_activity(launcher):
     """
         The learner perform the activity, sending information from sensors using the LAPI
-        :param rest_api_client: API client
-        :param learner: Learner object
-        :param launcher: Launcher object
-        :param assessment_session: Assessment session object
+        :param launcher: Learner launcher object
     """
-    pass
+    # Authenticate with learner launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "LEARNER" in profile['roles']
+
+    # Get learner data (it is injected with the JS script)
+    inst_id = profile['institution']['id']
+    learner_data_resp = client.get('/api/v2/institution/{}/learner/{}/'.format(inst_id, profile['id']))
+    assert learner_data_resp.status_code == 200
+    learn_id = learner_data_resp.data['learner_id']
+
+    # Create a data object simulating a sensor capture
+    sensor_data = {
+        'learner_id': learn_id,
+        'course_id': None,
+        'activity_id': None,
+        'session_id': None,
+        'instruments': [],
+        'metadata': {
+            'mimetype': 'some/mimetype',
+            'filename': None,
+            'created_at': timezone.now(),
+            'context': {}
+        },
+        'data': None
+    }
+    data_sent_resp = client.post(
+        '/lapi/v1/verification/{}/{}/'.format(inst_id, learn_id),
+        data=sensor_data,
+        format='json'
+    )
+    assert data_sent_resp.status_code == 200
 
 
-def api_instructor_report(rest_api_client, instructor, activity):
+def api_instructor_report(launcher, activity):
     """
         Instructor review the results for the activity
-        :param rest_api_client: API client
-        :param instructor: Instructor object
+        :param launcher: Instructor launcher object
         :param activity: Activity object
     """
-    pass
+    # Authenticate with instructor launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
 
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "INSTRUCTOR" in profile['roles']
+
+
+def worker_test():
+    pending_tasks = []
+
+    def create_sample_test(*args, **kwargs):
+        pending_tasks.append(('create_sample', args, kwargs))
+
+    with mock.patch('tesla_ce.tasks.requests.enrolment.create_sample.apply_async', create_sample_test):
+        from tesla_ce import tasks
+        tasks.requests.enrolment.create_sample.apply_async(('adadafs', '/dss/', [1]),)
+
+    print(pending_tasks)
