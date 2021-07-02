@@ -86,12 +86,14 @@ def get_learner_enrolment(learner_id):
     ).annotate(
         pending_contribution=models.Sum("enrolmentsamplevalidation__contribution")
     )
-    pending_validation = learner.enrolmentsample_set.filter(status=0,
-                                                            enrolmentsamplevalidation__provider__enabled=True).values(
+    pending_validation = learner.enrolmentsample_set.filter(
+        enrolmentsamplevalidation__status=0,
+        enrolmentsamplevalidation__provider__enabled=True
+    ).values(
         provider_id=models.F("enrolmentsamplevalidation__provider"),
         instrument_id=models.F("enrolmentsamplevalidation__provider__instrument_id"),
     ).annotate(
-        count=models.Count("enrolmentsamplevalidation__contribution")
+        count=models.Count("id")
     )
     enrolments = list(real_enrolments)
     instruments = []
@@ -106,22 +108,43 @@ def get_learner_enrolment(learner_id):
         enrol['not_validated_count'] = int(pending_validation.filter(
             instrument_id=enrol['instrument_id']).aggregate(models.Avg('count')
                                                             )['count__avg'] or 0)
+
+    missing = {}
     for missing_enrolment in pending_validation.exclude(instrument_id__in=instruments).all():
-        enrolments.append({
+        pending_val = pending_validation.filter(instrument_id=missing_enrolment['instrument_id'])
+        missing[missing_enrolment['instrument_id']] = {
             'instrument_id': missing_enrolment['instrument_id'],
             'percentage__min': 0.0,
             'percentage__max': 0.0,
             'can_analyse__min': False,
             'can_analyse__max': False,
             'pending': [],
-            'not_validated': list(pending_validation.filter(
-                instrument_id=missing_enrolment['instrument_id']).all()),
+            'not_validated': list(pending_val.all()),
             'pending_contributions': 0.0,
-            'not_validated_count': int(pending_validation.filter(
-                instrument_id=missing_enrolment['instrument_id']
-            ).aggregate(models.Avg('count'))['count__avg'] or 0)
-        })
+            'not_validated_count': int(pending_val.aggregate(models.Avg('count'))['count__avg'] or 0)
+        }
 
+    for missing_enrolment in pending_contribution.exclude(instrument_id__in=instruments).all():
+        pending_cont = pending_contribution.filter(instrument_id=missing_enrolment['instrument_id'])
+        if missing_enrolment['instrument_id'] in missing:
+            missing[missing_enrolment['instrument_id']]['pending'] = list(pending_cont.all())
+            missing[missing_enrolment['instrument_id']]['pending_contributions'] = min(1.0, pending_cont.aggregate(
+                models.Avg('pending_contribution'))['pending_contribution__avg'] or 0.0)
+        else:
+            missing[missing_enrolment['instrument_id']] = {
+                'instrument_id': missing_enrolment['instrument_id'],
+                'percentage__min': 0.0,
+                'percentage__max': 0.0,
+                'can_analyse__min': False,
+                'can_analyse__max': False,
+                'pending': list(pending_cont.all()),
+                'not_validated': [],
+                'pending_contributions': min(1.0, pending_cont.aggregate(
+                    models.Avg('pending_contribution'))['pending_contribution__avg'] or 0.0),
+                'not_validated_count': 0
+            }
+    for inst in missing:
+        enrolments.append(missing[inst])
     return enrolments
 
 

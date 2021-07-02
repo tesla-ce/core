@@ -13,11 +13,12 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ TeSLA CE Use Case tests methods """
+import io
 import json
-
 import mock
-
+import simplejson
 import requests
+import uuid
 
 from django.utils import timezone
 
@@ -766,7 +767,7 @@ def vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=Tru
         assert create_session_resp.data['status'] == 4  # MISSING ENROLMENT
         assert 'ENROLMENT' in create_session_resp.data['message'].upper()
     else:
-        assert create_session_resp.status_code == 201
+        assert create_session_resp.status_code == 200
 
     # Check missing instruments
     return create_session_resp.data
@@ -854,7 +855,7 @@ def api_lapi_perform_enrolment(launcher, instruments):
         for inst in instruments:
             sensor_data['instruments'] = [inst]
             # Send samples
-            for _ in range(2*inst_id):
+            for _ in range(4*inst):
                 sensor_data['data'] = get_random_string(50)
                 data_sent_resp = client.post(
                     '/lapi/v1/enrolment/{}/{}/'.format(inst_id, learn_id),
@@ -868,16 +869,32 @@ def api_lapi_perform_enrolment(launcher, instruments):
     with mock.patch('tesla_ce.tasks.requests.enrolment.validate_request.apply_async', validate_request_test):
         from tesla_ce.tasks.requests.enrolment import create_sample
         for task in pending_tasks_storage:
+            assert task[0] == 'create_sample'
             create_sample(**task[2]['kwargs'])
 
     # Run validation tasks
     with mock.patch('tesla_ce.tasks.requests.enrolment.validate_request.apply_async', validate_request_prov_test):
         from tesla_ce.tasks.requests.enrolment import validate_request
         for task in pending_tasks_validation:
+            assert task[0] == 'validate_request'
             validate_request(*task[1][0])
 
     # Return pending provider validation tasks
     return pending_provider_tasks_validation
+
+
+def get_task_by_queue(tasks):
+    """
+        Split a list of tasks on their respective queues
+        :param tasks: List of tasks
+        :return: Dictionary with tasks organized in queues
+    """
+    queues = {}
+    for task in tasks:
+        if task[2]['queue'] not in queues:
+            queues[task[2]['queue']] = []
+        queues[task[2]['queue']].append(task)
+    return queues
 
 
 def provider_validate_samples(providers, tasks):
@@ -894,11 +911,7 @@ def provider_validate_samples(providers, tasks):
         pending_tasks_validation.append(('create_validation_summary', args, kwargs))
 
     # Split tasks in queues
-    queues = {}
-    for task in tasks:
-        if task[2]['queue'] not in queues:
-            queues[task[2]['queue']] = []
-        queues[task[2]['queue']].append(task)
+    queues = get_task_by_queue(tasks)
 
     # Each provider should process their tasks
     for queue_name in queues:
@@ -947,7 +960,7 @@ def provider_validate_samples(providers, tasks):
                             }
                         },
                         'message_code_id': None,
-                        'contribution': 1.0 / instrument_id  # We send the double of samples than the instrument id
+                        'contribution': 1.0 / (instrument_id * 2)  # We send four times samples than the instrument id
                     },
                     format='json'
                 )
@@ -957,16 +970,48 @@ def provider_validate_samples(providers, tasks):
     return pending_tasks_validation
 
 
-def provider_validation_summary(providers, tasks):
+def worker_validation_summary(tasks):
     """
-    Provider compute validation summary from individual validations
-    :param providers: Available providers
+    Worker compute validation summary from individual validations
     :param tasks: Pending tasks to be processed
     :return: List of new pending tasks
     """
-    enrolment_tasks = []
+    # List simulating the enrolment queue
+    pending_tasks_enrolment = []
 
-    return enrolment_tasks
+    def enrol_learner_test(*args, **kwargs):
+        pending_tasks_enrolment.append(('enrol_learner', args, kwargs))
+
+    # Run validation summary tasks
+    with mock.patch('tesla_ce.tasks.requests.enrolment.enrol_learner.apply_async', enrol_learner_test):
+        from tesla_ce.tasks.requests.enrolment import create_validation_summary
+        for task in tasks:
+            assert task[0] == 'create_validation_summary'
+            create_validation_summary(*task[1][0])
+
+    return pending_tasks_enrolment
+
+
+def worker_enrol_learner(tasks):
+    """
+        Worker distribute enrolment tasks among providers
+        :param tasks: List of pending tasks
+        :return: List of tasks assigned to each provider
+    """
+    # List simulating the enrolment queue
+    pending_tasks_enrolment = []
+
+    def enrol_learner_test(*args, **kwargs):
+        pending_tasks_enrolment.append(('enrol_learner', args, kwargs))
+
+    # Run validation summary tasks
+    with mock.patch('tesla_ce.tasks.requests.enrolment.enrol_learner.apply_async', enrol_learner_test):
+        from tesla_ce.tasks.requests.enrolment import enrol_learner
+        for task in tasks:
+            assert task[0] == 'enrol_learner'
+            enrol_learner(*task[1][0])
+
+    return pending_tasks_enrolment
 
 
 def provider_enrol_learners(providers, tasks):
@@ -976,7 +1021,132 @@ def provider_enrol_learners(providers, tasks):
     :param tasks: Pending tasks to be processed
     :return: List of new pending tasks
     """
-    pass
+    # Split tasks in queues
+    queues = get_task_by_queue(tasks)
+
+    # Each provider should process their tasks
+    for queue_name in queues:
+        provider = None
+        instrument_id = None
+        # Get the provider with this queue
+        for prov in providers:
+            if providers[prov]['queue'] == queue_name:
+                instrument_id = providers[prov]['instrument']['id']
+                provider = providers[prov]['credentials']
+        assert provider is not None
+        assert instrument_id is not None
+        client, config = auth_utils.client_with_approle_credentials(provider['role_id'], provider['secret_id'])
+        # Get the Provider ID from configuration
+        provider_id = config['provider_id']
+
+        for task in queues[queue_name]:
+            # Get the parameters
+            assert task[0] == 'enrol_learner'
+            learner_id, sample_id = task[1][0]
+            learner_id = str(learner_id)
+            task_id = uuid.uuid4()
+
+            # Get the model
+            get_model_resp = client.post(
+                '/api/v2/provider/{}/enrolment/'.format(provider_id),
+                data={
+                     'learner_id': learner_id,
+                     'task_id': str(task_id)
+                },
+                format='json'
+            )
+            assert get_model_resp.status_code == 201
+            model = get_model_resp.data
+            model_data = None
+            if model is not None and model['model'] is not None:
+                model_data_resp = requests.get(model['model'], verify=False)
+                assert model_data_resp.status_code == 200
+                model_data = model_data_resp.json()
+
+            # Get validated samples
+            final = False
+            val_samples = []
+            while not final:
+                val_samples_resp = client.get('/api/v2/provider/{}/enrolment/{}/available_samples/'.format(
+                    provider_id, learner_id))
+                assert val_samples_resp.status_code == 200
+                val_samples += val_samples_resp.data['results']
+                if val_samples_resp.data['count'] <= len(val_samples):
+                    final = True
+
+            # If there is no sample, unlock the model
+            if len(val_samples) == 0:
+                unlock_resp = client.post('/api/v2/provider/{}/enrolment/{}/unlock/'.format(provider_id, learner_id),
+                                          data={
+                                              'token': task_id
+                                          },
+                                          format='json')
+                assert unlock_resp.status_code == 200
+                continue
+
+            # Get sample validations
+            for sample in val_samples:
+                # Get available validations
+                final = False
+                sample['validations'] = []
+                while not final:
+                    sample_vals_resp = client.get('/api/v2/provider/{}/enrolment/{}/sample/{}/validation/'.format(
+                        provider_id, learner_id, sample_id))
+                    assert sample_vals_resp.status_code == 200
+                    sample['validations'] += sample_vals_resp.data['results']
+                    if sample_vals_resp.data['count'] <= len(sample['validations']):
+                        final = True
+                # Get the sample data
+                sample_data_resp = requests.get(sample['data'], verify=False)
+                assert sample_data_resp.status_code == 200
+                sample['data'] = sample_data_resp.json()
+
+            # Perform the enrolment
+            if model_data is None:
+                model_data = {}
+            new_model_data = model_data
+            if 'num_samples' not in new_model_data:
+                new_model_data['num_samples'] = 0
+            if 'instrument_id' not in new_model_data:
+                new_model_data['instrument_id'] = instrument_id
+            new_model_data['num_samples'] += len(val_samples)
+            new_percentage = 0
+            if 'percentage' in new_model_data:
+                new_percentage = new_model_data['percentage']
+            sample_list = []
+            if 'used_samples' in model:
+                sample_list = model['used_samples']
+            for sample in val_samples:
+                sample_list.append(sample['id'])
+                for validation in sample['validations']:
+                    new_percentage += validation['contribution']
+            new_model_data['percentage'] = min(1.0, new_percentage)
+            model['valid'] = True
+            model['model'] = new_model_data
+            model['can_analyse'] = True
+            model['percentage'] = new_model_data['percentage']
+            model['used_samples'] = sample_list
+
+            # Save the model data
+            model_data_save_resp = requests.post(model['model_upload_url']['url'],
+                                                 data=model['model_upload_url']['fields'],
+                                                 files={
+                                                     'file': io.StringIO(simplejson.dumps(model['model']))
+                                                 }, verify=False)
+            assert model_data_save_resp.status_code == 204
+
+            # Save the model and unlock it
+            model_save_resp = client.put('/api/v2/provider/{}/enrolment/{}/'.format(provider_id, learner_id),
+                                         data={
+                                             'learner_id': learner_id,
+                                             'task_id': task_id,
+                                             'percentage': model['percentage'],
+                                             'can_analyse': model['can_analyse'],
+                                             'used_samples': model['used_samples']
+                                         },
+                                         format='json')
+            assert model_save_resp.status_code == 200
+
 
 def lapi_lerner_perform_activity(launcher):
     """
