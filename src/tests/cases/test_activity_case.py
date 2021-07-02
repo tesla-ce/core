@@ -28,6 +28,8 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         :param user_global_admin: Global administrator object
     """
 
+    #case_methods.worker_test()
+
     # A global administrator register the providers
     providers = case_methods.api_register_providers(user_global_admin)
 
@@ -76,7 +78,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         case_methods.vle_check_learner_ic(vle, course, learner, missing=True)
 
         # The VLE fails to create an assessment session because IC is missing
-        case_methods.vle_check_learner_enrolment(vle, learner, activity, ic=False)
+        case_methods.vle_create_assessment_session(vle, learner, activity, ic=False)
 
         # The VLE creates a launcher for the learner to accept IC
         launcher_ic = case_methods.vle_create_launcher(vle, learner)
@@ -88,7 +90,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         case_methods.vle_check_learner_ic(vle, course, learner, missing=False)
 
         # The VLE fails to create an assessment session because of enrolment
-        case_methods.vle_check_learner_enrolment(vle, learner, activity, ic=True, enrolment=False)
+        case_methods.vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=False)
 
     # The SEND admin assigns send category to the learner
     case_methods.api_set_learner_send(send_admin, send_category, learners[1])
@@ -122,35 +124,64 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert providers['plag']['instrument']['id'] not in l2_missing_enrolment['instruments']  # No enrolment
 
     # The VLE checks the enrolment status for the learner (missing is expected as is new learner)
-    missing1 = case_methods.vle_check_learner_enrolment(vle, learners[0], activity, enrolment=False)
+    missing1 = case_methods.vle_create_assessment_session(vle, learners[0], activity, enrolment=False)
     assert providers['fr']['instrument']['id'] not in missing1['enrolments']['instruments']  # Alternative instrument
     assert providers['ks']['instrument']['id'] in missing1['enrolments']['instruments']  # Primary instrument
     assert providers['plag']['instrument']['id'] not in missing1['enrolments']['instruments']  # No enrolment
-    missing2 = case_methods.vle_check_learner_enrolment(vle, learners[1], activity, enrolment=False)
+    missing2 = case_methods.vle_create_assessment_session(vle, learners[1], activity, enrolment=False)
     assert providers['fr']['instrument']['id'] in missing2['enrolments']['instruments']  # Enabled as disabled primary
     assert providers['ks']['instrument']['id'] not in missing2['enrolments']['instruments']  # Disabled by SEND
     assert providers['plag']['instrument']['id'] not in missing2['enrolments']['instruments']  # No enrolment
 
+    # The VLE creates a launcher for the learner to perform the enrolment
+    launcher_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
+    launcher_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+
+    # The learner perform enrolment for missing instruments, sending data using LAPI
+    provider_validation_tasks = []
+    provider_validation_tasks += case_methods.api_lapi_perform_enrolment(
+        launcher_enrol1, list(missing1['enrolments']['instruments'].keys())
+    )
+    provider_validation_tasks += case_methods.api_lapi_perform_enrolment(
+        launcher_enrol2, list(missing2['enrolments']['instruments'].keys())
+    )
+
+    # Providers validate samples in their queues
+    validation_summary_tasks = case_methods.provider_validate_samples(providers, provider_validation_tasks)
+
+    # The VLE creates a launcher for the learners to check enrolments
+    launcher2_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
+    launcher2_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+
+    # A learner check their enrolment status via API
+    l1_enrolment2 = case_methods.api_learner_enrolment(launcher2_enrol1)
+    assert len(l1_enrolment2) == 1
+    l2_enrolment2 = case_methods.api_learner_enrolment(launcher2_enrol2)
+    assert len(l2_enrolment2) == 1
 
     pytest.skip('TODO')
 
-    # The VLE creates a launcher for the learner to perform the enrolment
-    launcher_enrol = case_methods.vle_create_launcher(vle, learners[0])
+    # Provider compute validation summary from individual validations
+    enrolment_tasks = case_methods.provider_validation_summary(providers, validation_summary_tasks)
 
-    # The learner perform enrolment for missing instruments, sending data using LAPI
-    case_methods.api_lapi_perform_enrolment(learners[0], launcher_enrol, missing=True)
+    # Provider perform learners enrolment
+    case_methods.provider_enrol_learners(providers, enrolment_tasks)
 
     # The VLE creates an assessment session for a learner for the activity
-    assessment_session = case_methods.vle_create_assessment_session(vle, learners[0], activity)
+    assessment_session1 = case_methods.vle_create_assessment_session(vle, learners[0], activity)
+    assessment_session2 = case_methods.vle_create_assessment_session(vle, learners[1], activity)
 
     # The VLE creates a launcher for the learner and assessment session
-    launcher = case_methods.vle_create_launcher(vle, learners[0], assessment_session)
+    launcher1 = case_methods.vle_create_launcher(vle, learners[0], assessment_session1)
+    launcher2 = case_methods.vle_create_launcher(vle, learners[1], assessment_session2)
 
     # The learner perform the activity, sending information from sensors using the LAPI
-    case_methods.lapi_lerner_perform_activity(rest_api_client, learners[0], launcher, assessment_session)
+    case_methods.lapi_lerner_perform_activity(launcher1)
+    case_methods.lapi_lerner_perform_activity(launcher2)
 
     # Instructor review the results for the activity
-    case_methods.api_instructor_report(rest_api_client, instructors[0], activity)
+    launcher_report = case_methods.vle_create_launcher(vle, instructors[0])
+    case_methods.api_instructor_report(launcher_report, activity)
 
     # VLE get the results for the activity for integration
 

@@ -37,6 +37,8 @@ class ProviderSerializer(serializers.ModelSerializer):
     instrument_id = serializers.HiddenField(default=None, allow_null=True)
     options_schema = JSONField(allow_null=True, default=None)
     options = JSONFormField(allow_null=True, default=None, schema='options_schema')
+    enabled = serializers.BooleanField(allow_null=True, default=False)
+    validation_active = serializers.BooleanField(allow_null=True, default=False)
 
     credentials = serializers.SerializerMethodField(default=None, read_only=True)
 
@@ -44,7 +46,7 @@ class ProviderSerializer(serializers.ModelSerializer):
         model = Provider
         fields = ['id', 'instrument_id', 'instrument', 'name', 'queue', 'description', 'url', 'version', 'acronym',
                   'allow_validation', 'inverted_polarity', 'image', 'has_service', 'service_port', 'options_schema',
-                  'options', 'credentials']
+                  'options', 'credentials', 'enabled', 'validation_active']
 
     def validate(self, attrs):
         """
