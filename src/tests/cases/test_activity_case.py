@@ -146,26 +146,96 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         launcher_enrol2, list(missing2['enrolments']['instruments'].keys())
     )
 
+    # The VLE creates a launcher for the learners to check enrolments
+    launcher_enrol_pre_val1 = case_methods.vle_create_launcher(vle, learners[0])
+    launcher_enrol_pre_val2 = case_methods.vle_create_launcher(vle, learners[1])
+
+    # A learner check their enrolment status via API
+    l1_enrolment_pre_val = case_methods.api_learner_enrolment(launcher_enrol_pre_val1)
+    assert len(l1_enrolment_pre_val) == 1
+    assert l1_enrolment_pre_val[0]['instrument_id'] == providers['ks']['instrument']['id']
+    assert len(l1_enrolment_pre_val[0]['not_validated']) == 1
+    assert l1_enrolment_pre_val[0]['not_validated'][0]['provider_id'] == providers['ks']['id']
+    assert l1_enrolment_pre_val[0]['not_validated'][0]['instrument_id'] == providers['ks']['instrument']['id']
+    assert l1_enrolment_pre_val[0]['not_validated'][0]['count'] == providers['ks']['instrument']['id'] * 4
+    assert len(l1_enrolment_pre_val[0]['pending']) == 0
+
+    l2_enrolment_pre_val = case_methods.api_learner_enrolment(launcher_enrol_pre_val2)
+    assert len(l2_enrolment_pre_val) == 1
+    assert l2_enrolment_pre_val[0]['instrument_id'] == providers['fr']['instrument']['id']
+    assert len(l2_enrolment_pre_val[0]['not_validated']) == 1
+    assert l2_enrolment_pre_val[0]['not_validated'][0]['provider_id'] == providers['fr']['id']
+    assert l2_enrolment_pre_val[0]['not_validated'][0]['instrument_id'] == providers['fr']['instrument']['id']
+    assert l2_enrolment_pre_val[0]['not_validated'][0]['count'] == providers['fr']['instrument']['id'] * 4
+    assert len(l2_enrolment_pre_val[0]['pending']) == 0
+
     # Providers validate samples in their queues
     validation_summary_tasks = case_methods.provider_validate_samples(providers, provider_validation_tasks)
 
     # The VLE creates a launcher for the learners to check enrolments
-    launcher2_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
-    launcher2_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+    launcher_enrol_post_val1 = case_methods.vle_create_launcher(vle, learners[0])
+    launcher_enrol_post_val2 = case_methods.vle_create_launcher(vle, learners[1])
 
     # A learner check their enrolment status via API
-    l1_enrolment2 = case_methods.api_learner_enrolment(launcher2_enrol1)
-    assert len(l1_enrolment2) == 1
-    l2_enrolment2 = case_methods.api_learner_enrolment(launcher2_enrol2)
-    assert len(l2_enrolment2) == 1
+    l1_enrolment_post_val = case_methods.api_learner_enrolment(launcher_enrol_post_val1)
+    assert len(l1_enrolment_post_val) == 1
+    assert l1_enrolment_post_val[0]['instrument_id'] == providers['ks']['instrument']['id']
+    assert len(l1_enrolment_post_val[0]['not_validated']) == 0
+    assert l1_enrolment_post_val[0]['not_validated_count'] == 0
+    assert len(l1_enrolment_post_val[0]['pending']) == 1
+    assert l1_enrolment_post_val[0]['pending'][0]['provider_id'] == providers['ks']['id']
+    assert l1_enrolment_post_val[0]['pending'][0]['instrument_id'] == providers['ks']['instrument']['id']
+    assert abs(1.0 - float(l1_enrolment_post_val[0]['pending'][0]['pending_contribution'])) < 0.0001
 
-    pytest.skip('TODO')
+    l2_enrolment_post_val = case_methods.api_learner_enrolment(launcher_enrol_post_val2)
+    assert len(l2_enrolment_post_val) == 1
+    assert l2_enrolment_post_val[0]['instrument_id'] == providers['fr']['instrument']['id']
+    assert len(l2_enrolment_post_val[0]['not_validated']) == 0
+    assert l2_enrolment_post_val[0]['not_validated_count'] == 0
+    assert len(l2_enrolment_post_val[0]['pending']) == 1
+    assert l2_enrolment_post_val[0]['pending'][0]['provider_id'] == providers['fr']['id']
+    assert l2_enrolment_post_val[0]['pending'][0]['instrument_id'] == providers['fr']['instrument']['id']
+    assert abs(1.0 - float(l2_enrolment_post_val[0]['pending'][0]['pending_contribution'])) < 0.0001
 
-    # Provider compute validation summary from individual validations
-    enrolment_tasks = case_methods.provider_validation_summary(providers, validation_summary_tasks)
+    # Worker compute validation summary from individual validations
+    enrolment_tasks = case_methods.worker_validation_summary(validation_summary_tasks)
+
+    # Worker distribute enrolment tasks among providers
+    provider_enrolment_tasks = case_methods.worker_enrol_learner(enrolment_tasks)
 
     # Provider perform learners enrolment
-    case_methods.provider_enrol_learners(providers, enrolment_tasks)
+    case_methods.provider_enrol_learners(providers, provider_enrolment_tasks)
+
+    # The VLE creates a launcher for the learners to check enrolments
+    launcher_enrol_end1 = case_methods.vle_create_launcher(vle, learners[0])
+    launcher_enrol_end2 = case_methods.vle_create_launcher(vle, learners[1])
+
+    # A learner check their enrolment status via API
+    l1_enrolment_end = case_methods.api_learner_enrolment(launcher_enrol_end1)
+    assert len(l1_enrolment_end) == 1
+    assert l1_enrolment_end[0]['instrument_id'] == providers['ks']['instrument']['id']
+    assert len(l1_enrolment_end[0]['not_validated']) == 0
+    # assert len(l1_enrolment_end[0]['pending']) == 0
+    assert abs(1.0 - float(l1_enrolment_end[0]['percentage__min'])) < 0.0001
+    assert abs(1.0 - float(l1_enrolment_end[0]['percentage__max'])) < 0.0001
+    assert l1_enrolment_end[0]['can_analyse__min']
+    assert l1_enrolment_end[0]['can_analyse__max']
+    assert l1_enrolment_end[0]['not_validated_count'] == 0
+
+    l2_enrolment_end = case_methods.api_learner_enrolment(launcher_enrol_end2)
+    assert len(l2_enrolment_end) == 1
+    assert l2_enrolment_end[0]['instrument_id'] == providers['fr']['instrument']['id']
+    assert len(l2_enrolment_end[0]['not_validated']) == 0
+    # assert len(l2_enrolment_end[0]['pending']) == 0
+    assert abs(1.0 - float(l2_enrolment_end[0]['percentage__min'])) < 0.0001
+    assert abs(1.0 - float(l2_enrolment_end[0]['percentage__max'])) < 0.0001
+    assert l2_enrolment_end[0]['can_analyse__min']
+    assert l2_enrolment_end[0]['can_analyse__max']
+    assert l2_enrolment_end[0]['not_validated_count'] == 0
+
+    # Invalidate cache to avoid refresh time
+    get_missing_enrolment.invalidate(learners[0]['id'], activity['id'])
+    get_missing_enrolment.invalidate(learners[1]['id'], activity['id'])
 
     # The VLE creates an assessment session for a learner for the activity
     assessment_session1 = case_methods.vle_create_assessment_session(vle, learners[0], activity)
@@ -174,6 +244,8 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # The VLE creates a launcher for the learner and assessment session
     launcher1 = case_methods.vle_create_launcher(vle, learners[0], assessment_session1)
     launcher2 = case_methods.vle_create_launcher(vle, learners[1], assessment_session2)
+
+    pytest.skip('TODO')
 
     # The learner perform the activity, sending information from sensors using the LAPI
     case_methods.lapi_lerner_perform_activity(launcher1)
@@ -193,5 +265,4 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
 
     # Learner IC status is valid again
 
-    # Add SEND to one of the learners
 

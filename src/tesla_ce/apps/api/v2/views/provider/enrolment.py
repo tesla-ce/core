@@ -63,7 +63,7 @@ class ProviderEnrolmentViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if not model.is_locked:
             raise NotAcceptable('Model is not locked')
         token = self.request.data.get('token')
-        if model.locked_by != token:
+        if str(model.locked_by) != str(token):
             raise PermissionDenied('Invalid unlock token')
         model.locked_by = None
         model.locked_at = None

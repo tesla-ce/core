@@ -103,7 +103,7 @@ class ProviderEnrolmentSerializer(serializers.ModelSerializer):
                 )
                 model.model.save(get_upload_path(model, None),  ContentFile('{}'.encode('utf-8')))
             # Check if model is locked
-            if model.is_locked and model.locked_by != attrs['task_id']:
+            if model.is_locked and str(model.locked_by) != str(attrs['task_id']):
                 # If model lock have more than 5 hours, release previous lock
                 time_threshold = timezone.now() - timezone.timedelta(hours=5)
                 if model.locked_at >= time_threshold:
