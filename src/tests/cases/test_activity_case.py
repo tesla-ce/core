@@ -233,6 +233,10 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert l2_enrolment_end[0]['can_analyse__max']
     assert l2_enrolment_end[0]['not_validated_count'] == 0
 
+    # Invalidate cache to avoid refresh time
+    get_missing_enrolment.invalidate(learners[0]['id'], activity['id'])
+    get_missing_enrolment.invalidate(learners[1]['id'], activity['id'])
+
     # The VLE creates an assessment session for a learner for the activity
     assessment_session1 = case_methods.vle_create_assessment_session(vle, learners[0], activity)
     assessment_session2 = case_methods.vle_create_assessment_session(vle, learners[1], activity)
