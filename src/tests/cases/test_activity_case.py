@@ -262,7 +262,33 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     launcher_report = case_methods.vle_create_launcher(vle, instructors[0])
     reports = case_methods.api_instructor_report(launcher_report, activity)
     assert len(reports) == 2
-    
+    for report in reports:
+        assert report['identity_level'] == 2  # OK
+        assert report['content_level'] == 2  # OK
+        assert report['integrity_level'] == 1  # NO INFORMATION
+        if report['learner']['id'] == learners[0]['id']:
+            inst_ref = 2
+        else:
+            inst_ref = 1
+        assert len(report['detail']) == 2
+        if report['detail'][0]['instrument_id'] == 5:
+            assert report['detail'][0]['identity_level'] == 1
+            assert report['detail'][0]['content_level'] == 2
+            assert report['detail'][0]['integrity_level'] == 1
+            assert report['detail'][1]['instrument_id'] == inst_ref
+            assert report['detail'][1]['identity_level'] == 2
+            assert report['detail'][1]['content_level'] == 1
+            assert report['detail'][1]['integrity_level'] == 1
+        else:
+            assert report['detail'][0]['instrument_id'] == inst_ref
+            assert report['detail'][0]['identity_level'] == 2
+            assert report['detail'][0]['content_level'] == 1
+            assert report['detail'][0]['integrity_level'] == 1
+            assert report['detail'][1]['instrument_id'] == 5
+            assert report['detail'][1]['identity_level'] == 1
+            assert report['detail'][1]['content_level'] == 2
+            assert report['detail'][1]['integrity_level'] == 1
+
     # VLE get the results for the activity for integration
 
     # Legal admin updates Informed consent status
