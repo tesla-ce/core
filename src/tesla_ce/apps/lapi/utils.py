@@ -15,11 +15,12 @@
 from django.conf import settings
 
 from tesla_ce.models import AuthenticatedUser
+from tesla_ce.models import AuthenticatedModule
 from tesla_ce.models import Learner
 from tesla_ce.models import InstitutionUser
 
 
-def is_authenticated(request, instituton_id, learner_id, data):
+def is_authenticated(request, institution_id, learner_id, data):
 
     if data['learner_id'] != str(learner_id):
         return False
@@ -29,10 +30,13 @@ def is_authenticated(request, instituton_id, learner_id, data):
         if isinstance(request.user, AuthenticatedUser):
             return request.user.type == 'learner' and request.user.sub == str(learner_id)
         if isinstance(request.user, Learner):
-            return str(request.user.learner_id) == str(learner_id) and request.user.institution_id == instituton_id
+            return str(request.user.learner_id) == str(learner_id) and request.user.institution_id == institution_id
         if isinstance(request.user, InstitutionUser):
             return str(request.user.learner.learner_id) == str(learner_id) and \
-                   request.user.learner.institution_id == instituton_id
+                   request.user.learner.institution_id == institution_id
+        if isinstance(request.user, AuthenticatedModule) and request.user.type == 'vle':
+            return request.user.module.institution_id == institution_id
+
     except request.user._meta.model.learner.RelatedObjectDoesNotExist:
         # Current user is not a learner
         return False

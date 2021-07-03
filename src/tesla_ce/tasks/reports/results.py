@@ -81,12 +81,14 @@ def update_learner_activity_instrument_report(self, learner_id, activity_id, ins
     else:
         instrument_report.integrity_level = 1 # No data
     # Get mean enrolment value from used providers
-    instrument_report.enrolment = round(models.Enrolment.objects.filter(
-        learner_id=learner_id,
-        provider_id__in=results_qs.values_list(
-            'request__requestproviderresult__provider_id',
-            flat=True).distinct()
-    ).aggregate(Min('percentage'))['percentage__min'] * 100)
+    instrument_report.enrolment = 0
+    if instrument_report.instrument.requires_enrolment:
+        instrument_report.enrolment = round(models.Enrolment.objects.filter(
+            learner_id=learner_id,
+            provider_id__in=results_qs.values_list(
+                'request__requestproviderresult__provider_id',
+                flat=True).distinct()
+        ).aggregate(Min('percentage'))['percentage__min'] * 100)
     instrument_report.save()
 
     # Update the report

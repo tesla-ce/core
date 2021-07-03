@@ -41,6 +41,21 @@ def get_profile(client):
     return profile_resp.data
 
 
+def client_with_token_credentials(access_token, refresh_token=None):
+    """
+        Get an API client instance authenticated with token object
+        :param access_token: Token for authentication
+        :param refresh_token: Token for token renewal
+        :return: Client authenticated for the user
+    """
+    client = APIClient()
+
+    # Assign credentials
+    client.credentials(HTTP_AUTHORIZATION='JWT {}'.format(access_token))
+
+    return client
+
+
 def client_with_user_credentials(email, password):
     """
         Get an API client instance authenticated with provided user credentials
@@ -60,11 +75,11 @@ def client_with_user_credentials(email, password):
     assert auth_resp.status_code == 200
     assert 'token' in auth_resp.data
 
-    # Assign credentials
-    token = auth_resp.data['token']['access_token']
-    client.credentials(HTTP_AUTHORIZATION='JWT {}'.format(token))
-
-    return client
+    # Get client
+    return client_with_token_credentials(
+        auth_resp.data['token']['access_token'],
+        auth_resp.data['token']['refresh_token']
+    )
 
 
 def client_with_approle_credentials(role_id, secret_id):
@@ -104,9 +119,10 @@ def client_with_launcher_credentials(launcher):
     )
     assert auth_resp.status_code == 200
     assert 'access_token' in auth_resp.data
+    assert 'refresh_token' in auth_resp.data
 
-    # Assign credentials
-    token = auth_resp.data['access_token']
-    client.credentials(HTTP_AUTHORIZATION='JWT {}'.format(token))
-
-    return client
+    # Get client
+    return client_with_token_credentials(
+        auth_resp.data['access_token'],
+        auth_resp.data['refresh_token']
+    )
