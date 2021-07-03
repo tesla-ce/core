@@ -215,7 +215,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert len(l1_enrolment_end) == 1
     assert l1_enrolment_end[0]['instrument_id'] == providers['ks']['instrument']['id']
     assert len(l1_enrolment_end[0]['not_validated']) == 0
-    # assert len(l1_enrolment_end[0]['pending']) == 0
+    # assert len(l1_enrolment_end[0]['pending']) == 0  # TODO: Issue 30
     assert abs(1.0 - float(l1_enrolment_end[0]['percentage__min'])) < 0.0001
     assert abs(1.0 - float(l1_enrolment_end[0]['percentage__max'])) < 0.0001
     assert l1_enrolment_end[0]['can_analyse__min']
@@ -226,7 +226,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert len(l2_enrolment_end) == 1
     assert l2_enrolment_end[0]['instrument_id'] == providers['fr']['instrument']['id']
     assert len(l2_enrolment_end[0]['not_validated']) == 0
-    # assert len(l2_enrolment_end[0]['pending']) == 0
+    # assert len(l2_enrolment_end[0]['pending']) == 0  # TODO: Issue 30
     assert abs(1.0 - float(l2_enrolment_end[0]['percentage__min'])) < 0.0001
     assert abs(1.0 - float(l2_enrolment_end[0]['percentage__max'])) < 0.0001
     assert l2_enrolment_end[0]['can_analyse__min']
@@ -241,20 +241,28 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assessment_session1 = case_methods.vle_create_assessment_session(vle, learners[0], activity)
     assessment_session2 = case_methods.vle_create_assessment_session(vle, learners[1], activity)
 
-    # The VLE creates a launcher for the learner and assessment session
-    launcher1 = case_methods.vle_create_launcher(vle, learners[0], assessment_session1)
-    launcher2 = case_methods.vle_create_launcher(vle, learners[1], assessment_session2)
-
-    pytest.skip('TODO')
-
     # The learner perform the activity, sending information from sensors using the LAPI
-    case_methods.lapi_lerner_perform_activity(launcher1)
-    case_methods.lapi_lerner_perform_activity(launcher2)
+    provider_verification_tasks = []
+    tasks, activity_doc1 = case_methods.lapi_lerner_perform_activity(assessment_session1)
+    provider_verification_tasks += tasks
+    tasks, activity_doc2 = case_methods.lapi_lerner_perform_activity(assessment_session2)
+    provider_verification_tasks += tasks
+
+    # VLE send the activity
+    provider_verification_tasks += case_methods.vle_send_activity(vle, assessment_session1, activity_doc1)
+    provider_verification_tasks += case_methods.vle_send_activity(vle, assessment_session2, activity_doc2)
+
+    # Provider perform verification process on data collected during the activity
+    reporting_tasks = case_methods.provider_verify_request(providers, provider_verification_tasks)
+
+    # Worker process verification results to create the reports
+    case_methods.worker_create_reports(reporting_tasks)
 
     # Instructor review the results for the activity
     launcher_report = case_methods.vle_create_launcher(vle, instructors[0])
-    case_methods.api_instructor_report(launcher_report, activity)
-
+    reports = case_methods.api_instructor_report(launcher_report, activity)
+    assert len(reports) == 2
+    
     # VLE get the results for the activity for integration
 
     # Legal admin updates Informed consent status
@@ -264,5 +272,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # Learner accepts new IC
 
     # Learner IC status is valid again
+
+    # Add a 2nd provider with deferred process for one of the used instruments
 
 

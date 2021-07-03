@@ -15,6 +15,8 @@
 """ TeSLA CE Use Case tests methods """
 import io
 import json
+import random
+
 import mock
 import simplejson
 import requests
@@ -846,7 +848,7 @@ def api_lapi_perform_enrolment(launcher, instruments):
         'metadata': {
             'mimetype': 'some/mimetype',
             'filename': None,
-            'created_at': timezone.now(),
+            'created_at': None,
             'context': {}
         },
         'data': None
@@ -857,6 +859,7 @@ def api_lapi_perform_enrolment(launcher, instruments):
             # Send samples
             for _ in range(4*inst):
                 sensor_data['data'] = get_random_string(50)
+                sensor_data['created_at']: timezone.now()
                 data_sent_resp = client.post(
                     '/lapi/v1/enrolment/{}/{}/'.format(inst_id, learn_id),
                     data=sensor_data,
@@ -1148,45 +1151,360 @@ def provider_enrol_learners(providers, tasks):
             assert model_save_resp.status_code == 200
 
 
-def lapi_lerner_perform_activity(launcher):
+def get_data_object_from_session(assessment_session):
     """
-        The learner perform the activity, sending information from sensors using the LAPI
-        :param launcher: Learner launcher object
+        Get data object from assessment session
+        :param assessment_session: Assessment session object
+        :return: Data object
     """
+    # Get the data object
+    injected_data_resp = requests.get(assessment_session['data']['data'], verify=False)
+    assert injected_data_resp.status_code == 200
+    data = injected_data_resp.json()
+
     # Authenticate with learner launcher credentials
-    client = auth_utils.client_with_launcher_credentials(launcher)
+    assert 'launcher' in data
+    client = auth_utils.client_with_launcher_credentials(data['launcher'])
 
     # Get the user profile
     profile = auth_utils.get_profile(client)
     assert "LEARNER" in profile['roles']
 
-    # Get learner data (it is injected with the JS script)
-    inst_id = profile['institution']['id']
-    learner_data_resp = client.get('/api/v2/institution/{}/learner/{}/'.format(inst_id, profile['id']))
-    assert learner_data_resp.status_code == 200
-    learn_id = learner_data_resp.data['learner_id']
+    assert data['learner']['id'] == profile['id']
+    assert data['learner']['institution_id'] == profile['institution']['id']
+    assert data['learner']['first_name'] == profile['first_name']
+    assert data['learner']['last_name'] == profile['last_name']
+
+    # Check that data contains the learner credentials
+    assert 'token' in data
+    assert 'access_token' in data['token']
+    assert 'refresh_token' in data['token']
+
+    return injected_data_resp.json()
+
+
+def lapi_lerner_perform_activity(assessment_session):
+    """
+        The learner perform the activity, sending information from sensors using the LAPI
+        :param assessment_session: Assessment session object
+        :return: Tuple with the list of tasks pending to be executed by providers and performed activity
+    """
+    # Performed activity
+    performed_activity = None
+
+    # List simulating the storage queue
+    pending_tasks_storage = []
+    # List simulating the verification queue
+    pending_tasks_verification = []
+    # Object simulating the providers verification queues
+    pending_provider_tasks_verification = []
+
+    def create_request_test(*args, **kwargs):
+        pending_tasks_storage.append(('create_request', args, kwargs))
+
+    def verify_request_test(*args, **kwargs):
+        pending_tasks_verification.append(('verify_request', args, kwargs))
+
+    def verify_request_prov_test(*args, **kwargs):
+        pending_provider_tasks_verification.append(('verify_request', args, kwargs))
+
+    # Get the assessment session data
+    session_data = get_data_object_from_session(assessment_session)
+
+    # Authenticate with learner launcher credentials
+    client = auth_utils.client_with_token_credentials(session_data['token']['access_token'],
+                                                      session_data['token']['refresh_token'])
+
+    # Get the required data
+    institution_id = session_data['learner']['institution_id']
+    learner_id = session_data['learner']['learner_id']
+    sensors = session_data['sensors']
 
     # Create a data object simulating a sensor capture
     sensor_data = {
-        'learner_id': learn_id,
-        'course_id': None,
-        'activity_id': None,
-        'session_id': None,
+        'learner_id': learner_id,
+        'course_id': session_data['activity']['course']['id'],
+        'activity_id': session_data['activity']['id'],
+        'session_id': session_data['session_id'],
         'instruments': [],
         'metadata': {
             'mimetype': 'some/mimetype',
             'filename': None,
-            'created_at': timezone.now(),
+            'created_at': None,
             'context': {}
         },
         'data': None
     }
-    data_sent_resp = client.post(
-        '/lapi/v1/verification/{}/{}/'.format(inst_id, learn_id),
-        data=sensor_data,
-        format='json'
-    )
-    assert data_sent_resp.status_code == 200
+    with mock.patch('tesla_ce.tasks.requests.verification.create_request.apply_async', create_request_test):
+        for sensor in sensors:
+            if sensor == 'activity':
+                # Activities are sent by VLE when learner submit them. Just create a random activity
+                performed_activity = {
+                    'filename': get_random_string(50),
+                    'content': get_random_string(2048),
+                    'mimetype': 'activity/mimetype'
+                }
+                continue
+            sensor_data['instruments'] = sensors[sensor]
+            sensor_data['metadata']['mimetype'] = '{}/mimetype'.format(sensor)
+            # Send samples
+            for capture_id in range(10):
+                sensor_data['data'] = get_random_string(50)
+                sensor_data['metadata']['created_at'] = timezone.now()
+                sensor_data['metadata']['context']['sequence'] = capture_id
+                data_sent_resp = client.post(
+                    '/lapi/v1/verification/{}/{}/'.format(institution_id, learner_id),
+                    data=sensor_data,
+                    format='json'
+                )
+                assert data_sent_resp.status_code == 200
+                assert data_sent_resp.data['status'] == 'OK'
+
+    # Run storage tasks
+    with mock.patch('tesla_ce.tasks.requests.verification.verify_request.apply_async', verify_request_test):
+        from tesla_ce.tasks.requests.verification import create_request
+        for task in pending_tasks_storage:
+            assert task[0] == 'create_request'
+            create_request(**task[2]['kwargs'])
+
+    # Run verification tasks
+    with mock.patch('tesla_ce.tasks.requests.verification.verify_request.apply_async', verify_request_prov_test):
+        from tesla_ce.tasks.requests.verification import verify_request
+        for task in pending_tasks_verification:
+            assert task[0] == 'verify_request'
+            verify_request(task[1][0][0])
+
+    return pending_provider_tasks_verification, performed_activity
+
+
+def vle_send_activity(vle, assessment_session, document):
+    """
+        The VLE send the submission performed by learner to TeSLA if required
+        :param vle: VLE object
+        :param assessment_session: Assessment session object
+        :param document: Submitted document
+        :return: Pending tasks
+    """
+    # List simulating the storage queue
+    pending_tasks_storage = []
+    # List simulating the verification queue
+    pending_tasks_verification = []
+    # Object simulating the providers verification queues
+    pending_provider_tasks_verification = []
+
+    def create_request_test(*args, **kwargs):
+        pending_tasks_storage.append(('create_request', args, kwargs))
+
+    def verify_request_test(*args, **kwargs):
+        pending_tasks_verification.append(('verify_request', args, kwargs))
+
+    def verify_request_prov_test(*args, **kwargs):
+        pending_provider_tasks_verification.append(('verify_request', args, kwargs))
+
+    # Authenticate using VLE credentials
+    client, config = auth_utils.client_with_approle_credentials(vle['role_id'], vle['secret_id'])
+
+    # Get the options for verification
+    session_data = get_data_object_from_session(assessment_session)
+
+    # If no document is required just return an empty list of tasks
+    if document is None:
+        assert 'activity' not in session_data['sensors']
+        return []
+
+    # Get required data
+    vle_id = config['vle_id']
+    learner_id = session_data['learner']['learner_id']
+    institution_id = session_data['learner']['institution_id']
+    course_id = session_data['activity']['course']['id']
+    activity_id = session_data['activity']['id']
+
+    # Get the list of instruments waiting for document
+    activity_instruments_resp = client.get('/api/v2/vle/{}/course/{}/activity/{}/attachment/{}/'.format(
+        vle_id, course_id, activity_id, learner_id
+    ))
+    assert activity_instruments_resp.status_code == 200
+    instruments = [inst['instrument'] for inst in activity_instruments_resp.data]
+
+    # Make a submission of the document
+    with mock.patch('tesla_ce.tasks.requests.verification.create_request.apply_async', create_request_test):
+        data_sent_resp = client.post(
+            '/lapi/v1/verification/{}/{}/'.format(institution_id, learner_id),
+            data={
+                'learner_id': learner_id,
+                'course_id': session_data['activity']['course']['id'],
+                'activity_id': session_data['activity']['id'],
+                'session_id': session_data['session_id'],
+                'instruments': instruments,
+                'metadata': {
+                    'mimetype': document['mimetype'],
+                    'filename': document['filename'],
+                    'created_at': timezone.now(),
+                    'context': {}
+                },
+                'data': document['content']
+            },
+            format='json'
+        )
+        assert data_sent_resp.status_code == 200
+        assert data_sent_resp.data['status'] == 'OK'
+
+    # Run storage tasks
+    with mock.patch('tesla_ce.tasks.requests.verification.verify_request.apply_async', verify_request_test):
+        from tesla_ce.tasks.requests.verification import create_request
+        for task in pending_tasks_storage:
+            assert task[0] == 'create_request'
+            create_request(**task[2]['kwargs'])
+
+    # Run verification tasks
+    with mock.patch('tesla_ce.tasks.requests.verification.verify_request.apply_async', verify_request_prov_test):
+        from tesla_ce.tasks.requests.verification import verify_request
+        for task in pending_tasks_verification:
+            assert task[0] == 'verify_request'
+            verify_request(task[1][0][0])
+
+    return pending_provider_tasks_verification
+
+
+def provider_verify_request(providers, tasks):
+    """
+        Providers verify the information from requests in their queues
+        :param providers: Available providers
+        :param tasks: Pending tasks to be processed
+        :return: List of pending tasks
+    """
+    # List simulating the verification queue
+    pending_tasks_verification = []
+
+    def create_verification_summary_test(*args, **kwargs):
+        pending_tasks_verification.append(('create_verification_summary', args, kwargs))
+
+    # Split tasks in queues
+    queues = get_task_by_queue(tasks)
+
+    # Each provider should process their tasks
+    for queue_name in queues:
+        provider_creds = None
+        instrument_id = None
+        # Get the provider with this queue
+        for prov in providers:
+            if providers[prov]['queue'] == queue_name:
+                instrument_id = providers[prov]['instrument']['id']
+                provider_creds = providers[prov]['credentials']
+        assert provider_creds is not None
+        assert instrument_id is not None
+        client, config = auth_utils.client_with_approle_credentials(provider_creds['role_id'],
+                                                                    provider_creds['secret_id'])
+        # Get the Provider ID from configuration
+        provider_id = config['provider_id']
+
+        for task in queues[queue_name]:
+            # Get the parameters
+            assert task[0] == 'verify_request'
+            request_id, result_id = task[1][0]
+
+            # Get the request
+            get_request_resp = client.get('/api/v2/provider/{}/request/{}/'.format(provider_id, result_id))
+            assert get_request_resp.status_code == 200
+            request = get_request_resp.data
+            learner_id = request['learner_id']
+
+            # Get the provider data
+            get_provider_resp = client.get('/api/v2/provider/{}/'.format(provider_id))
+            assert get_provider_resp.status_code == 200
+            provider = get_provider_resp.data
+
+            # Get the model if necessary
+            model_data = None
+            if provider['instrument']['requires_enrolment']:
+                # Download learner model
+                get_model_resp = client.get('/api/v2/provider/{}/enrolment/{}/'.format(provider_id, learner_id))
+                assert get_model_resp.status_code == 200
+                model = get_model_resp.data
+                assert model['can_analyse']
+
+                # Get model data
+                model_data_resp = requests.get(model['model'], verify=False)
+                assert model_data_resp.status_code == 200
+                model_data = model_data_resp.json()
+
+            # Get request data
+            request_data_resp = requests.get(request['request']['data'], verify=False)
+            assert request_data_resp.status_code == 200
+            request['request']['data'] = request_data_resp.json()
+
+            # Perform verification
+            result_err = random.random() / 10.0  # Generate values with an error of maximum 10%
+            if provider['inverted_polarity']:
+                result = result_err
+            else:
+                result = 1.0 - result_err
+            verification_result = {
+                'status': 1,  # PROCESSED  (2 for ERROR)
+                'error_message': None,
+                'audit_data': {
+                    'using_model': model_data is not None,
+                    'some_other_field': get_random_string(15)
+                },
+                'result': result,
+                'code': 1,  # OK  (2 WARNING, 3 ALERT)
+                'message_code': None
+            }
+            with mock.patch('tesla_ce.tasks.requests.verification.create_verification_summary.apply_async',
+                            create_verification_summary_test):
+                put_result_resp = client.put('/api/v2/provider/{}/request/{}/'.format(provider_id, result_id),
+                                             data=verification_result,
+                                             format='json'
+                                         )
+                assert put_result_resp.status_code == 200
+
+    return pending_tasks_verification
+
+
+def worker_create_reports(tasks):
+    """
+        Worker process verification results to create the reports
+        :param tasks: List of pending reporting tasks
+    """
+    # List simulating the reporting queue
+    pending_tasks_reporting = []
+
+    # List simulating the reporting queue
+    pending_tasks_reporting2 = []
+
+    def update_learner_activity_instrument_report_test(*args, **kwargs):
+        pending_tasks_reporting.append(('update_learner_activity_instrument_report', args, kwargs))
+
+    def update_learner_activity_report_test(*args, **kwargs):
+        pending_tasks_reporting2.append(('update_learner_activity_report', args, kwargs))
+
+    for task in tasks:
+        assert task[0] == 'create_verification_summary'
+        with mock.patch(
+                'tesla_ce.tasks.reports.results.update_learner_activity_instrument_report.apply_async',
+                update_learner_activity_instrument_report_test):
+            from tesla_ce.tasks.requests.verification import create_verification_summary
+            create_verification_summary(*task[1][0])
+
+    # Perform reporting tasks
+    for task in pending_tasks_reporting:
+        assert task[0] == 'update_learner_activity_instrument_report'
+        with mock.patch(
+                'tesla_ce.tasks.reports.results.update_learner_activity_report.apply_async',
+                update_learner_activity_report_test):
+            from tesla_ce.tasks.reports.results import update_learner_activity_instrument_report
+            update_learner_activity_instrument_report(*task[1][0])
+
+    # Perform reporting tasks
+    for task in pending_tasks_reporting2:
+        assert task[0] == 'update_learner_activity_report'
+        from tesla_ce.tasks.reports.results import update_learner_activity_report
+        from celery.exceptions import Reject
+        try:
+            update_learner_activity_report(*task[1][0])
+        except Reject:
+            # Raised when no new data is available
+            pass
 
 
 def api_instructor_report(launcher, activity):
@@ -1202,15 +1520,16 @@ def api_instructor_report(launcher, activity):
     profile = auth_utils.get_profile(client)
     assert "INSTRUCTOR" in profile['roles']
 
+    # Get required data
+    institution_id = profile['institution']['id']
+    course_id = activity['course']['id']
+    activity_id = activity['id']
 
-def worker_test():
-    pending_tasks = []
-
-    def create_sample_test(*args, **kwargs):
-        pending_tasks.append(('create_sample', args, kwargs))
-
-    with mock.patch('tesla_ce.tasks.requests.enrolment.create_sample.apply_async', create_sample_test):
-        from tesla_ce import tasks
-        tasks.requests.enrolment.create_sample.apply_async(('adadafs', '/dss/', [1]),)
-
-    print(pending_tasks)
+    # Get the list of reports from the activity
+    activity_reports_resp = client.get('/api/v2/institution/{}/course/{}/activity/{}/report/'.format(
+        institution_id,
+        course_id,
+        activity_id
+    ))
+    assert activity_reports_resp.status_code == 200
+    return activity_reports_resp.data['results']

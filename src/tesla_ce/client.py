@@ -760,7 +760,6 @@ class Client():
                 raise TeslaInvalidICException()
 
         # Get the list of instruments and enrolment values
-        instruments = []
         enrolment_obj = {
             'missing_enrolments': False,
             'instruments': {}
@@ -772,36 +771,16 @@ class Client():
                 raise TeslaMissingEnrolmentException(enrolment_obj)
 
         # Set the list of sensors
-        # TODO: Store link between instruments and sensors to models
+        activity_instruments = activity.get_learner_instruments(learner)
         sensors = {}
-        for instrument in instruments:
-            if instrument == 1:
-                # FR
-                # TODO: Check if is online (camera) and/or offline (assessment)
-                if 'camera' not in sensors:
-                    sensors['camera'] = []
-                sensors['camera'].append(1)
-            elif instrument == 2:
-                # KS
-                if 'keyboard' not in sensors:
-                    sensors['keyboard'] = []
-                sensors['keyboard'].append(2)
-            elif instrument == 3:
-                # VR
-                # TODO: Check if is online (microphone) and/or offline (assessment)
-                if 'microphone' not in sensors:
-                    sensors['microphone'] = []
-                sensors['microphone'].append(3)
-            elif instrument == 4:
-                # FA
-                if 'assessment' not in sensors:
-                    sensors['assessment'] = []
-                sensors['assessment'].append(4)
-            elif instrument == 5:
-                # Plagiarism
-                if 'assessment' not in sensors:
-                    sensors['assessment'] = []
-                sensors['assessment'].append(5)
+        instruments = []
+        for instrument in activity_instruments:
+            instruments.append(instrument.instrument_id)
+            inst_sensor = instrument.get_sensors()
+            for sensor in inst_sensor:
+                if sensor not in sensors:
+                    sensors[sensor] = []
+                sensors[sensor].append(instrument.instrument_id)
 
         # Initialize a new Assessment Session
         session = models.AssessmentSession.objects.create(activity=activity, learner=learner)
