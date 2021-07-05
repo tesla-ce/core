@@ -86,7 +86,7 @@ def post_rest_api_client(rest_api_client, str_path, str_data, module, message, s
     @param status: Testing status (example: 200, 404...)
     @return: New item ID (-1 if creation failed)
     """
-    response = rest_api_client.post(str_path, data=str_data)
+    response = rest_api_client.post(str_path, data=str_data, format='json')
     body = response.json()
     str_log = [[module], ['POST data:', str_data], ['Expected Status:', status],
                ['Received Status:', response.status_code], [message, body]]
@@ -112,7 +112,7 @@ def put_rest_api_client(rest_api_client, str_path, str_data, module, message, st
     @param message: Logging info message
     @param status: Testing status (example: 200, 404...)
     """
-    response = rest_api_client.put(str_path, data=str_data)
+    response = rest_api_client.put(str_path, data=str_data, format='json')
     body = response.json()
 
     str_log = [[module], ['PUT item:', str_path], ['PUT data:', str_data],

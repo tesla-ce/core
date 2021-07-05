@@ -13,14 +13,11 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Test module for institution SEND data management """
-import json
 import logging
 
 import pytest
 
 import tests.utils
-
-from tests.utils import getting_variables
 
 
 @pytest.mark.django_db
@@ -41,17 +38,15 @@ def test_api_institution_send(rest_api_client, institution_course_test_case):
                                            'List SEND categories', str_message, 200)
     n_send = body['count']
     assert n_send == 0
-    variables = getting_variables(body, institution_id)
 
     # Create a new SEND Category
     logging.info('\n2) Create a new SEND Category --------------------------------------')
-    # 666 Add getting SEND enabled options and disabled instruments lists in automated way
-    # data = {'enabled_options': ['text_to_speech', 'big_fonts', 'high_contrast'],
-    #        'disabled_instruments': [1, 2, 3, 4, 5]}
+    data = {'enabled_options': ['text_to_speech', 'big_fonts', 'high_contrast'],
+            'disabled_instruments': [1, 2, 3, 4, 5]}
 
     str_data = {'parent': '',
                 'description': 'SEND Category for TESTING purposes',
-                'data': ''}
+                'data': data}
     new_send_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
                                                    'Create a new SEND Category', 'RESPONSE: ', 201)
 
@@ -62,38 +57,21 @@ def test_api_institution_send(rest_api_client, institution_course_test_case):
 
     # Read SEND Category information
     logging.info('\n3) Read SEND Category information --------------------------------------')
-    institution_user.send_admin = True
-    institution_user.save()
-    rest_api_client.force_authenticate(user=institution_user)
 
     str_path = '/api/v2/institution/{}/send/{}/'.format(institution_id, new_send_id)
     str_response = 'RESPONSE SEND ID={}:'.format(new_send_id)
-    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
-                                           'Read SEND Category information', str_response, 200)
+    tests.utils.get_rest_api_client(rest_api_client, str_path,
+                                    'Read SEND Category information', str_response, 200)
 
     # Update SEND Category
     logging.info('\n4) Update SEND Category --------------------------------------')
-    institution_user.send_admin = True
-    institution_user.save()
-    rest_api_client.force_authenticate(user=institution_user)
 
     str_data = {'description': 'CHANGED SEND Category for TESTING purposes'}
-    '''
-    str_data = {'parent': '',
-                'description': 'SEND Category for TESTING purposes',
-                'data': ''}
-    data = {'enabled_options': ['text_to_speech', 'big_fonts', 'high_contrast'],
-                'disabled_instruments': [1, 2, 3, 4, 5]}
-    '''
-
     tests.utils.put_rest_api_client(rest_api_client, str_path, str_data,
                                     'Update SEND Category', str_response, 200)
 
     # Delete SEND Category
     logging.info('\n5) Delete SEND Category --------------------------------------')
-    institution_user.send_admin = True
-    institution_user.save()
-    rest_api_client.force_authenticate(user=institution_user)
 
     str_path = '/api/v2/institution/{}/send/{}/'.format(institution_id, new_send_id)
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
