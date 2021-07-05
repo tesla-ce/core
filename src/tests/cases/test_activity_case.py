@@ -238,7 +238,10 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     get_missing_enrolment.invalidate(learners[1]['id'], activity['id'])
 
     # The VLE creates an assessment session for a learner for the activity
-    assessment_session1 = case_methods.vle_create_assessment_session(vle, learners[0], activity)
+    vle_options = {
+        'floating_menu_initial_pos': 'top-right'
+    }
+    assessment_session1 = case_methods.vle_create_assessment_session(vle, learners[0], activity, vle_options)
     assessment_session2 = case_methods.vle_create_assessment_session(vle, learners[1], activity)
 
     # The learner perform the activity, sending information from sensors using the LAPI
