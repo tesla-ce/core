@@ -13,13 +13,64 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+""" Swarm deployment scripts management tests """
+import os
+import tempfile
+
+from io import StringIO
+
+from django.core.management import call_command
 
 
-def test_swarm_core_deployment(admin_client):
+def test_swarm_services_deployment(tesla_ce_system):
 
-    assert admin_client is not None
+    assert tesla_ce_system is not None
 
-    files = admin_client.deploy.get_deployment_scripts()
+    out = StringIO()
+    err = StringIO()
 
-    assert files is not None
-    assert isinstance(files, dict)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        call_command(
+            'deploy_services',
+            stdout=out,
+            stderr=err,
+            out=tmp_dir
+        )
+
+        gen_files = os.listdir(tmp_dir)
+
+        assert 'secrets' in gen_files
+        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+
+        assert 'config' in gen_files
+        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+
+        assert 'tesla_lb.yml' in gen_files
+        assert 'tesla_services.yml' in gen_files
+
+
+def test_swarm_core_deployment(tesla_ce_system):
+
+    assert tesla_ce_system is not None
+
+    out = StringIO()
+    err = StringIO()
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        call_command(
+            'deploy_core',
+            stdout=out,
+            stderr=err,
+            out=tmp_dir
+        )
+
+        gen_files = os.listdir(tmp_dir)
+
+        assert 'secrets' in gen_files
+        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+
+        assert 'tesla_lb.yml' in gen_files
+        assert 'tesla_core.yml' in gen_files
