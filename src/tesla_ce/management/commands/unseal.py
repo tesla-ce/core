@@ -26,7 +26,7 @@ from ..base import TeslaConfigCommand
 class Command(TeslaConfigCommand):
     """ Command to unseal Vault """
     help = 'Unseal Vault for TeSLA CE system'
-    requires_system_checks = False
+    requires_system_checks = []
 
     def add_arguments(self, parser):
         """

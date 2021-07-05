@@ -19,7 +19,7 @@ from ..base import TeslaCommand
 class Command(TeslaCommand):
     """ Command to show TeSLA CE Version """
     help = 'Show TeSLA CE system version'
-    requires_system_checks = False
+    requires_system_checks = []
 
     def handle(self, *args, **options):
         # Print current version

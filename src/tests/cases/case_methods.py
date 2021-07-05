@@ -88,6 +88,7 @@ def api_register_providers(global_admin):
                                         format='json')
     assert fr_prov_register_resp.status_code == 201
     providers['fr'] = fr_prov_register_resp.data
+    providers['fr']['deferred'] = False
 
     # Register a KS provider
     ks_desc = json.load(open(get_provider_desc_file('ks_tks'), 'r'))
@@ -100,6 +101,7 @@ def api_register_providers(global_admin):
                                         format='json')
     assert ks_prov_register_resp.status_code == 201
     providers['ks'] = ks_prov_register_resp.data
+    providers['ks']['deferred'] = False
 
     # Register a Plagiarism provider
     pt_desc = json.load(open(get_provider_desc_file('pt_tpt'), 'r'))
@@ -111,6 +113,19 @@ def api_register_providers(global_admin):
                                         format='json')
     assert pt_prov_register_resp.status_code == 201
     providers['plag'] = pt_prov_register_resp.data
+    providers['plag']['deferred'] = False
+
+    # Register a Plagiarism provider with deferred processing
+    pt_desc2 = json.load(open(get_provider_desc_file('pt_turkund'), 'r'))
+    pt_desc2['enabled'] = True
+    if 'instrument' in pt_desc2:
+        del pt_desc2['instrument']
+    pt2_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(plag_inst),
+                                        data=pt_desc2,
+                                        format='json')
+    assert pt2_prov_register_resp.status_code == 201
+    providers['plag_def'] = pt2_prov_register_resp.data
+    providers['plag_def']['deferred'] = True
 
     # Enable the instruments
     fr_inst_enable_resp = client.patch('/api/v2/admin/instrument/{}/'.format(fr_inst),
@@ -1392,11 +1407,13 @@ def provider_verify_request(providers, tasks):
     for queue_name in queues:
         provider_creds = None
         instrument_id = None
+        deferred = False
         # Get the provider with this queue
         for prov in providers:
             if providers[prov]['queue'] == queue_name:
                 instrument_id = providers[prov]['instrument']['id']
                 provider_creds = providers[prov]['credentials']
+                deferred = providers[prov]['deferred']
         assert provider_creds is not None
         assert instrument_id is not None
         client, config = auth_utils.client_with_approle_credentials(provider_creds['role_id'],
@@ -1440,29 +1457,37 @@ def provider_verify_request(providers, tasks):
             request['request']['data'] = request_data_resp.json()
 
             # Perform verification
-            result_err = random.random() / 10.0  # Generate values with an error of maximum 10%
-            if provider['inverted_polarity']:
-                result = result_err
+            if deferred:
+                # Deferred instrument
+                req_status_resp = client.post('/api/v2/provider/{}/request/{}/status/'.format(provider_id, result_id),
+                                              data={"status": 7},  # WAITING_EXTERNAL_SERVICE
+                                              format='json'
+                                              )
             else:
-                result = 1.0 - result_err
-            verification_result = {
-                'status': 1,  # PROCESSED  (2 for ERROR)
-                'error_message': None,
-                'audit_data': {
-                    'using_model': model_data is not None,
-                    'some_other_field': get_random_string(15)
-                },
-                'result': result,
-                'code': 1,  # OK  (2 WARNING, 3 ALERT)
-                'message_code': None
-            }
-            with mock.patch('tesla_ce.tasks.requests.verification.create_verification_summary.apply_async',
-                            create_verification_summary_test):
-                put_result_resp = client.put('/api/v2/provider/{}/request/{}/'.format(provider_id, result_id),
-                                             data=verification_result,
-                                             format='json'
-                                         )
-                assert put_result_resp.status_code == 200
+                # Instrument compute result without external services
+                result_err = random.random() / 10.0  # Generate values with an error of maximum 10%
+                if provider['inverted_polarity']:
+                    result = result_err
+                else:
+                    result = 1.0 - result_err
+                verification_result = {
+                    'status': 1,  # PROCESSED  (2 for ERROR)
+                    'error_message': None,
+                    'audit_data': {
+                        'using_model': model_data is not None,
+                        'some_other_field': get_random_string(15)
+                    },
+                    'result': result,
+                    'code': 1,  # OK  (2 WARNING, 3 ALERT)
+                    'message_code': None
+                }
+                with mock.patch('tesla_ce.tasks.requests.verification.create_verification_summary.apply_async',
+                                create_verification_summary_test):
+                    put_result_resp = client.put('/api/v2/provider/{}/request/{}/'.format(provider_id, result_id),
+                                                 data=verification_result,
+                                                 format='json'
+                                             )
+                    assert put_result_resp.status_code == 200
 
     return pending_tasks_verification
 

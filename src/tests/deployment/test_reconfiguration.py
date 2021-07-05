@@ -13,10 +13,8 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-""" Swarm deployment scripts management tests """
+""" Reconfiguration script management tests """
 import os
-import tempfile
-
 from io import StringIO
 
 from django.core.management import call_command
@@ -29,8 +27,19 @@ def test_reconfigure(tesla_ce_system):
     out = StringIO()
     err = StringIO()
 
+    # If local configuration file is not available, generate configuration
+    if not os.path.exists('tesla-ce.cfg'):
+        call_command(
+            'generate_config',
+            'tesla-ce',
+            stdout=out,
+            stderr=err,
+            local=True
+        )
+
     call_command(
         'reconfigure',
         stdout=out,
-        stderr=err
+        stderr=err,
+        local=True
     )

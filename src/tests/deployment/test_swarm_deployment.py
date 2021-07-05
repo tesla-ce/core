@@ -29,12 +29,24 @@ def test_swarm_services_deployment(tesla_ce_system):
     out = StringIO()
     err = StringIO()
 
+    # If local configuration file is not available, generate configuration
+    if not os.path.exists('tesla-ce.cfg'):
+        call_command(
+            'generate_config',
+            'tesla-ce',
+            stdout=out,
+            stderr=err,
+            local=True,
+            with_services=True
+        )
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         call_command(
             'deploy_services',
             stdout=out,
             stderr=err,
-            out=tmp_dir
+            out=tmp_dir,
+            local=True
         )
 
         gen_files = os.listdir(tmp_dir)
@@ -58,12 +70,23 @@ def test_swarm_core_deployment(tesla_ce_system):
     out = StringIO()
     err = StringIO()
 
+    # If local configuration file is not available, generate configuration
+    if not os.path.exists('tesla-ce.cfg'):
+        call_command(
+            'generate_config',
+            'tesla-ce',
+            stdout=out,
+            stderr=err,
+            local=True
+        )
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         call_command(
             'deploy_core',
             stdout=out,
             stderr=err,
-            out=tmp_dir
+            out=tmp_dir,
+            local=True
         )
 
         gen_files = os.listdir(tmp_dir)
