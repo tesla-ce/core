@@ -734,7 +734,7 @@ def api_learner_missing_enrolment(launcher, activity, missing=False):
     return list_enrolments_resp.data
 
 
-def vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=True):
+def vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=True, options=None):
     """
         The VLE creates an assessment session.
         :param vle: VLE object
@@ -742,6 +742,7 @@ def vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=Tru
         :param activity: Activity object
         :param ic: True if IC is expected to be accepted or False otherwise
         :param enrolment: True if enrolment is expected to be performed or False otherwise
+        :param options: Dictionary of options to customize the client
         :return: List of missing instruments
     """
     # Authenticate using VLE credentials
@@ -756,7 +757,8 @@ def vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=Tru
         data={
             'vle_activity_type': activity['vle_activity_type'],
             'vle_activity_id': activity['vle_activity_id'],
-            'vle_learner_uid': learner['uid']
+            'vle_learner_uid': learner['uid'],
+            'options': options
         },
         format='json'
     )
@@ -1179,6 +1181,10 @@ def get_data_object_from_session(assessment_session):
     assert 'token' in data
     assert 'access_token' in data['token']
     assert 'refresh_token' in data['token']
+
+    # Check that data contains options
+    assert 'options' in data
+    assert 'floating_menu_initial_pos' in data['options']
 
     return injected_data_resp.json()
 

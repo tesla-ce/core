@@ -732,7 +732,7 @@ class Client():
                 out_fh.write(files[file])
 
     def create_assessment_session(self, activity, learner, locale=None, max_ttl=120, redirect_reject_url=None,
-                                  reject_message=None):
+                                  reject_message=None, options=None):
         """
             Create a new assessment session for a given activity and learner
 
@@ -748,6 +748,7 @@ class Client():
             :type redirect_reject_url: str
             :param reject_message: Message provided to learner in case ethical warning is rejected
             :type reject_message: str
+            :param options: Options that can be passed to the data object to modify some default properties
             :return: Created session
             :rtype: tesla_ce.models.AssessmentSession
         """
@@ -810,6 +811,12 @@ class Client():
         # Compute the base path for assets
         base_url = '{}'.format(static('web-plugin/web-plugin.js').split('web-plugin.js')[0])
 
+        # Set default options
+        if options is None:
+            options = {}
+        if 'floating_menu_initial_pos' not in options:
+            options['floating_menu_initial_pos'] = 'top-right'
+
         # Update the information
         session_connector_data = {
             'mode': 'verification',
@@ -855,7 +862,8 @@ class Client():
             'dashboard_url': settings.DASHBOARD_URL,
             'launcher': launcher,
             'base_url': base_url,
-            'locale': locale
+            'locale': locale,
+            'options': options
         }
 
         # Store the session data

@@ -93,12 +93,15 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         # Create the assessment session
         try:
-            assessment_session = get_default_client().create_assessment_session(activity=activity,
-                                                                                learner=learner,
-                                                                                locale=serializer.data['locale'],
-                                                                                max_ttl=serializer.data['max_ttl'],
-                                                                                redirect_reject_url=serializer.data['redirect_reject_url'],
-                                                                                reject_message=serializer.data['reject_message'])
+            assessment_session = get_default_client(
+            ).create_assessment_session(activity=activity,
+                                        learner=learner,
+                                        locale=serializer.data['locale'],
+                                        max_ttl=serializer.data['max_ttl'],
+                                        redirect_reject_url=serializer.data['redirect_reject_url'],
+                                        reject_message=serializer.data['reject_message'],
+                                        options=serializer.data['options']
+                                        )
         except TeslaMissingICException:
             return Response({
                 'status': tesla_status.TESLA_MISSING_IC,

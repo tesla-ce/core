@@ -15,6 +15,8 @@
 """VLE api serialize module."""
 from rest_framework import serializers
 
+from tesla_ce.apps.api.utils import JSONField
+
 from tesla_ce.models import AssessmentSession
 from tesla_ce.models import AssessmentSessionData
 
@@ -28,10 +30,11 @@ class VLENewAssessmentSessionBodySerializer(serializers.Serializer):
     session_id = serializers.IntegerField(required=False, allow_null=True, default=None)
     redirect_reject_url = serializers.URLField(required=False, allow_null=True, default=None)
     reject_message = serializers.CharField(required=False, allow_null=True, default=None)
+    options = JSONField(required=False, allow_null=True, default=True)
 
     class Meta:
         fields = ["vle_activity_type", "vle_activity_id", "vle_learner_uid", "locale", "max_ttl",
-                  "session_id", "redirect_reject_url", "reject_message"]
+                  "session_id", "redirect_reject_url", "reject_message", "options"]
 
 
 class VLENewAssessmentSessionDataSerializer(serializers.ModelSerializer):

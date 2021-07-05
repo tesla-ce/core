@@ -71,15 +71,17 @@ def update_learner_activity_instrument_report(self, learner_id, activity_id, ins
     if instrument_report.instrument.identity:
         instrument_report.identity_level = code
     else:
-        instrument_report.identity_level = 1 # No data
+        instrument_report.identity_level = 1  # No data
     if instrument_report.instrument.originality or instrument_report.instrument.authorship:
         instrument_report.content_level = code
+        instrument_report.authorship_level = code
     else:
-        instrument_report.authorship_level = 1 # No data
+        instrument_report.content_level = 1  # No data
+        instrument_report.authorship_level = 1  # No data
     if instrument_report.instrument.integrity:
         instrument_report.integrity_level = code
     else:
-        instrument_report.integrity_level = 1 # No data
+        instrument_report.integrity_level = 1  # No data
     # Get mean enrolment value from used providers
     instrument_report.enrolment = 0
     if instrument_report.instrument.requires_enrolment:

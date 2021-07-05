@@ -14,8 +14,15 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 """ Configuration file generation test module """
+import mock
 import os
 import tempfile
+import pytest
+
+from io import StringIO
+
+from django.core.management import call_command
+from django.core.management.base import CommandError
 
 
 def test_generate_configuration(tesla_ce_system, config_mode_settings):
@@ -24,26 +31,39 @@ def test_generate_configuration(tesla_ce_system, config_mode_settings):
 
     assert tesla_ce_system is not None
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        # Generate the configuration file
-        conf_file = os.path.join(tmp_dir, 'test_gen_config.cfg')
-        tesla_ce_system.generate_configuration(conf_file, 'test_domain',
-                                               deploy_external_services=False, deploy_moodle=False)
+    out = StringIO()
+    err = StringIO()
 
-        # Read the configuration
-        conf = ConfigManager(load_config=False)
-        conf.load_file(conf_file)
+    with mock.patch('tesla_ce.management.base.TeslaCommand.get_client', return_value=tesla_ce_system):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            # Generate the configuration file
+            conf_file = os.path.join(tmp_dir, 'test_gen_config.cfg')
+            with mock.patch('tesla_ce.management.base.TeslaConfigCommand.get_config_file', return_value=conf_file):
+                # Generate the configuration file
+                domain = 'test_domain'
+                call_command(
+                    'generate_config',
+                    domain,
+                    stdout=out,
+                    stderr=err,
+                    with_services=False,
+                    local=True
+                )
 
-        # Check expected values
-        assert conf.config.get('TESLA_DOMAIN') == 'test_domain'
-        assert conf.config.get('DJANGO_SECRET_KEY') is not None
-        assert 'test_domain' in conf.config.get('DJANGO_ALLOWED_HOSTS')
+            # Read the configuration
+            conf = ConfigManager(load_config=False)
+            conf.load_file(conf_file)
 
-        # Check Moodle
-        assert not conf.config.get('MOODLE_DEPLOY')
-        assert conf.config.get('MOODLE_ADMIN_PASSWORD') is None
-        assert conf.config.get('MOODLE_DB_HOST') is None
-        assert conf.config.get('MOODLE_DB_PASSWORD') is None
+            # Check expected values
+            assert conf.config.get('TESLA_DOMAIN') == 'test_domain'
+            assert conf.config.get('DJANGO_SECRET_KEY') is not None
+            assert 'test_domain' in conf.config.get('DJANGO_ALLOWED_HOSTS')
+
+            # Check Moodle
+            assert not conf.config.get('MOODLE_DEPLOY')
+            assert conf.config.get('MOODLE_ADMIN_PASSWORD') is None
+            assert conf.config.get('MOODLE_DB_HOST') is None
+            assert conf.config.get('MOODLE_DB_PASSWORD') is None
 
 
 def test_generate_configuration_with_services(tesla_ce_system, config_mode_settings):
@@ -51,11 +71,23 @@ def test_generate_configuration_with_services(tesla_ce_system, config_mode_setti
 
     assert tesla_ce_system is not None
 
+    out = StringIO()
+    err = StringIO()
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         # Generate the configuration file
         conf_file = os.path.join(tmp_dir, 'test_gen_config2.cfg')
-        tesla_ce_system.generate_configuration(conf_file, 'test_domain2',
-                                               deploy_external_services=True, deploy_moodle=False)
+        with mock.patch('tesla_ce.management.base.TeslaConfigCommand.get_config_file', return_value=conf_file):
+            # Generate the configuration file
+            domain = 'test_domain2'
+            call_command(
+                'generate_config',
+                domain,
+                stdout=out,
+                stderr=err,
+                with_services=True,
+                local=True
+            )
 
         # Read the configuration
         conf = ConfigManager(load_config=False)
@@ -89,11 +121,24 @@ def test_generate_configuration_with_moodle(tesla_ce_system, config_mode_setting
 
     assert tesla_ce_system is not None
 
+    out = StringIO()
+    err = StringIO()
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         # Generate the configuration file
         conf_file = os.path.join(tmp_dir, 'test_gen_config3.cfg')
-        tesla_ce_system.generate_configuration(conf_file, 'test_domain3',
-                                               deploy_external_services=False, deploy_moodle=True)
+        with mock.patch('tesla_ce.management.base.TeslaConfigCommand.get_config_file', return_value=conf_file):
+            # Generate the configuration file
+            domain = 'test_domain3'
+            call_command(
+                'generate_config',
+                domain,
+                stdout=out,
+                stderr=err,
+                with_services=True,
+                with_moodle=True,
+                local=True
+            )
 
         # Read the configuration
         conf = ConfigManager(load_config=False)
@@ -109,3 +154,71 @@ def test_generate_configuration_with_moodle(tesla_ce_system, config_mode_setting
         assert conf.config.get('MOODLE_ADMIN_PASSWORD') is not None
         assert conf.config.get('MOODLE_DB_HOST') is not None
         assert conf.config.get('MOODLE_DB_PASSWORD') is not None
+
+
+def test_generate_configuration_override(tesla_ce_system, config_mode_settings):
+    from tesla_ce.lib.config import ConfigManager
+
+    assert tesla_ce_system is not None
+
+    out = StringIO()
+    err = StringIO()
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # Generate the configuration file
+        conf_file = os.path.join(tmp_dir, 'test_gen_config4.cfg')
+        with mock.patch('tesla_ce.management.base.TeslaConfigCommand.get_config_file', return_value=conf_file):
+            # Generate the configuration file
+            domain = 'test_domain4'
+            call_command(
+                'generate_config',
+                domain,
+                stdout=out,
+                stderr=err,
+                local=True
+            )
+
+        # Read the configuration
+        conf = ConfigManager(load_config=False)
+        conf.load_file(conf_file)
+
+        # Check expected values
+        assert conf.config.get('TESLA_DOMAIN') == 'test_domain4'
+        assert conf.config.get('DJANGO_SECRET_KEY') is not None
+        assert 'test_domain4' in conf.config.get('DJANGO_ALLOWED_HOSTS')
+
+        with mock.patch('tesla_ce.management.base.TeslaConfigCommand.get_config_file', return_value=conf_file):
+            # Generate again the configuration file without the override command
+            domain = 'test_domain5'
+            try:
+                call_command(
+                    'generate_config',
+                    domain,
+                    stdout=out,
+                    stderr=err,
+                    local=True
+                )
+                pytest.fail('Configuration file overrided')
+            except CommandError:
+                assert 'Use --override option' in out.getvalue()
+
+        with mock.patch('tesla_ce.management.base.TeslaConfigCommand.get_config_file', return_value=conf_file):
+            # Generate the configuration file
+            domain = 'test_domain5'
+            call_command(
+                'generate_config',
+                domain,
+                stdout=out,
+                stderr=err,
+                override=True,
+                local=True
+            )
+
+        # Read the configuration
+        conf = ConfigManager(load_config=False)
+        conf.load_file(conf_file)
+
+        # Check expected values
+        assert conf.config.get('TESLA_DOMAIN') == 'test_domain5'
+        assert conf.config.get('DJANGO_SECRET_KEY') is not None
+        assert 'test_domain5' in conf.config.get('DJANGO_ALLOWED_HOSTS')

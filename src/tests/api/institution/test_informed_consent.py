@@ -44,7 +44,7 @@ def test_api_institution_informed_consent(rest_api_client, user_global_admin, in
         Status Codes:
             200 OK – Ok
             404 Not Found – Institution not found
-
+  
      Privileges: Institution privileges
      """
     logging.info('\n1) LIST INFORMED CONSENTS --------------------------------------')
