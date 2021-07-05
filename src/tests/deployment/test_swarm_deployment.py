@@ -45,8 +45,7 @@ def test_swarm_services_deployment(tesla_ce_system):
             'deploy_services',
             stdout=out,
             stderr=err,
-            out=tmp_dir,
-            local=True
+            out=tmp_dir
         )
 
         gen_files = os.listdir(tmp_dir)
@@ -85,8 +84,7 @@ def test_swarm_core_deployment(tesla_ce_system):
             'deploy_core',
             stdout=out,
             stderr=err,
-            out=tmp_dir,
-            local=True
+            out=tmp_dir
         )
 
         gen_files = os.listdir(tmp_dir)
