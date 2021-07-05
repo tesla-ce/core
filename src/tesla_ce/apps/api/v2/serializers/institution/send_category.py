@@ -23,7 +23,7 @@ from .institution import InstitutionSerializer
 
 
 def get_instruments():
-    return [(inst.id, inst.name) for inst in  Instrument.objects.all()]
+    return [(inst.id, inst.name) for inst in Instrument.objects.all()]
 
 
 class InstitutionSENDCategoryDataSerializer(serializers.Serializer):

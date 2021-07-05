@@ -591,7 +591,7 @@ Add SEND category to a learner
    :<json datetime expires_at: When the special need is temporal, provide the date when it disappears.
        For permanent needs, let it null.
 
-   :statuscode 200: Ok
+   :statuscode 201: Created
    :statuscode 400: Invalid information provided. The response contains the description of the errors.
    :statuscode 404: Institution not found
    :statuscode 404: Learner not found
