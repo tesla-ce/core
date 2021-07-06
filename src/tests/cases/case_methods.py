@@ -117,7 +117,7 @@ def api_register_providers(global_admin):
 
     # Register a Plagiarism provider with deferred processing
     pt_desc2 = json.load(open(get_provider_desc_file('pt_turkund'), 'r'))
-    pt_desc2['enabled'] = True
+    pt_desc2['enabled'] = False  # TODO: Enable once deferred instruments are implemented on tests
     if 'instrument' in pt_desc2:
         del pt_desc2['instrument']
     pt2_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(plag_inst),

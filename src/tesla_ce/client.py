@@ -322,7 +322,6 @@ class Client():
         """
             Check the current configuration
 
-            :param config: Configuration object
             :return: Report of the configuration check
             :rtype: dict
         """
