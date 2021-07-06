@@ -91,11 +91,11 @@ class TeslaCommand(BaseCommand):
             Check if the defined configuration file exists
         """
         # Check if file exists or not
-        if os.path.exists(self.config_file):
-            self.stdout.write('Reading configuration from {}: {}'.format(self.config_file,
+        if os.path.exists(self.conf_file):
+            self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
                                                                          self.style.SUCCESS('[OK]')))
         else:
-            self.stdout.write('Reading configuration from {}: {}'.format(self.config_file,
+            self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
                                                                          self.style.ERROR('[ERROR]')))
             raise CommandError('Configuration file not found')
 
