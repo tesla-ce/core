@@ -27,7 +27,7 @@ BASE_TESLA_CONF_FILE = 'tesla-ce.cfg'
 class Command(TeslaConfigCommand):
     """ Command to generate configuration file from template """
     help = 'Generates a configuration file to be used on the initial setup of the TeSLA CE system'
-    requires_system_checks = False
+    requires_system_checks = []
 
     def add_arguments(self, parser):
         """

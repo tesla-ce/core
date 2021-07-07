@@ -12,19 +12,30 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" DJango command to generate the configuration file for TeSLA system """
-from ..base import TeslaDeployCommand
+#
+""" Reconfiguration script management tests """
+import os
+from io import StringIO
+
+from django.core.management import call_command
 
 
-class Command(TeslaDeployCommand):
-    """ Command to generate deployment files for services """
-    help = 'Generates configuration files to deploy the TeSLA CE required services'
-    requires_system_checks = []
+def test_reconfigure(tesla_ce_system):
 
-    def custom_handle(self):
-        """
-            Custom actions for this command
-        """
-        # Export the deployment scripts
-        self.client.export_services_scripts(output=self._options['out'], mode=self._options['mode'])
-        self.stdout.write(self.style.SUCCESS('Deployment scripts written at {}'.format(self._options['out'])))
+    assert tesla_ce_system is not None
+
+    out = StringIO()
+    err = StringIO()
+
+    # If local configuration file is not available, generate configuration
+    if not os.path.exists('tesla-ce.cfg'):
+        # Write the configuration file to disk
+        with open('tesla-ce.cfg', 'w') as out_fh:
+            tesla_ce_system.config.config.write(out_fh)
+
+    call_command(
+        'reconfigure',
+        stdout=out,
+        stderr=err,
+        local=True
+    )

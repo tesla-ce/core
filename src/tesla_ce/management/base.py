@@ -52,7 +52,13 @@ class TeslaCommand(BaseCommand):
             :param options: Provided options to the command
             :return: Instance of client
         """
-        return settings.TESLA_CONFIG.config.get('TESLA_CONFIG_FILE')
+        # Get value in environment
+        config_file = settings.TESLA_CONFIG.config.get('TESLA_CONFIG_FILE')
+        if config_file is None:
+            # Check default paths
+            config_file = ConfigManager.find_config_file()
+
+        return config_file
 
     @property
     def client(self):
@@ -80,26 +86,16 @@ class TeslaCommand(BaseCommand):
         """
         self.stdout.write('TeSLA CE version {}'.format(self.client.version))
 
-    def get_configuration_file(self):
-        """
-            Obtain the configuration file to be used
-            :return:
-        """
-        return settings.TESLA_CONFIG.config.get('TESLA_CONFIG_FILE')
-
     def check_configuration_file(self):
         """
             Check if the defined configuration file exists
         """
-        # Get the file to be checked
-        config_file = self.get_configuration_file()
-
         # Check if file exists or not
-        if os.path.exists(config_file):
-            self.stdout.write('Reading configuration from {}: {}'.format(config_file,
+        if os.path.exists(self.conf_file):
+            self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
                                                                          self.style.SUCCESS('[OK]')))
         else:
-            self.stdout.write('Reading configuration from {}: {}'.format(config_file,
+            self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
                                                                          self.style.ERROR('[ERROR]')))
             raise CommandError('Configuration file not found')
 

@@ -25,7 +25,7 @@ from tesla_ce.client import Client
 
 class Command(BaseCommand):
     help = 'Register a new Provider to TeSLA CE system'
-    requires_system_checks = True
+    requires_system_checks = '__all__'
 
     def add_arguments(self, parser):
         parser.add_argument(

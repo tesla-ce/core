@@ -12,15 +12,34 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" DJango command to show TeSLA system version """
-from ..base import TeslaCommand
+#
+""" Vault unseal script management tests """
+import os
+import pytest
+
+from io import StringIO
+
+from django.core.management import call_command
 
 
-class Command(TeslaCommand):
-    """ Command to show TeSLA CE Version """
-    help = 'Show TeSLA CE system version'
-    requires_system_checks = []
+def test_unseal(tesla_ce_system):
 
-    def handle(self, *args, **options):
-        # Print current version
-        self.print_version()
+    pytest.skip("Not valid with Vault in dev mode. TODO: Start test service for Vault in production mode")
+
+    assert tesla_ce_system is not None
+
+    out = StringIO()
+    err = StringIO()
+
+    # If local configuration file is not available, generate configuration
+    if not os.path.exists('tesla-ce.cfg'):
+        # Write the configuration file to disk
+        with open('tesla-ce.cfg', 'w') as out_fh:
+            tesla_ce_system.config.config.write(out_fh)
+
+    call_command(
+        'unseal',
+        stdout=out,
+        stderr=err,
+        local=True
+    )

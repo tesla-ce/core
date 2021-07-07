@@ -12,19 +12,23 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" DJango command to generate the configuration file for TeSLA system """
-from ..base import TeslaDeployCommand
+#
+""" Vault version script management tests """
+import os
+import pytest
+
+from io import StringIO
+
+from django.core.management import call_command
 
 
-class Command(TeslaDeployCommand):
-    """ Command to generate deployment files for services """
-    help = 'Generates configuration files to deploy the TeSLA CE required services'
-    requires_system_checks = []
+def test_version(tesla_ce_system):
 
-    def custom_handle(self):
-        """
-            Custom actions for this command
-        """
-        # Export the deployment scripts
-        self.client.export_services_scripts(output=self._options['out'], mode=self._options['mode'])
-        self.stdout.write(self.style.SUCCESS('Deployment scripts written at {}'.format(self._options['out'])))
+    out = StringIO()
+    err = StringIO()
+
+    call_command(
+        'tesla_version',
+        stdout=out,
+        stderr=err
+    )

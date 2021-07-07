@@ -19,6 +19,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionInstructorSerializer
 from tesla_ce.models import Instructor
 
@@ -30,6 +31,14 @@ class InstitutionInstructorViewSet(viewsets.ModelViewSet, NestedViewSetMixin):
     """
     model = Instructor
     serializer_class = InstitutionInstructorSerializer
+    permission_classes = [
+        permissions.GlobalAdminReadOnlyPermission |
+        permissions.InstitutionAdminPermission |
+        permissions.InstitutionLegalAdminReadOnlyPermission |
+        permissions.InstitutionDataAdminReadOnlyPermission |
+        permissions.InstitutionLearnerReadOnlyPermission
+    ]
+
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     '''
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']

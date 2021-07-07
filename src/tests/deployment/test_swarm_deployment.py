@@ -13,13 +13,92 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+""" Swarm deployment scripts management tests """
+import os
+import tempfile
+
+from io import StringIO
+
+# from django.core.management import call_command
+import pytest
 
 
-def test_swarm_core_deployment(admin_client):
+def test_swarm_services_deployment(tesla_ce_system):
 
-    assert admin_client is not None
+    out = StringIO()
+    err = StringIO()
 
-    files = admin_client.deploy.get_deployment_scripts()
+    # If local configuration file is not available, generate configuration
+    if not os.path.exists('tesla-ce.cfg'):
+        assert tesla_ce_system.config.get('VAULT_TOKEN') is not None
+        # Write the configuration file to disk
+        with open('tesla-ce.cfg', 'w') as out_fh:
+            tesla_ce_system.config.config.write(out_fh)
+    else:
+        from tesla_ce.lib.config import ConfigManager
+        conf = ConfigManager(load_config=False)
+        conf.load_file('tesla-ce.cfg')
+        assert conf.config.get('VAULT_TOKEN') is not None
 
-    assert files is not None
-    assert isinstance(files, dict)
+    # Enable with services flag
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        assert tmp_dir is not None
+        pytest.skip('TODO')
+        #call_command(
+        #    'deploy_services',
+        #    stdout=out,
+        #    stderr=err,
+        #    out=tmp_dir,
+        #    mode='swarm'
+        #)
+        tesla_ce_system.export_services_scripts(output=tmp_dir, mode='swarm')
+
+        gen_files = os.listdir(tmp_dir)
+
+        assert 'secrets' in gen_files
+        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+
+        assert 'config' in gen_files
+        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+
+        assert 'tesla_lb.yml' in gen_files
+        assert 'tesla_services.yml' in gen_files
+
+
+def test_swarm_core_deployment(tesla_ce_system):
+
+    out = StringIO()
+    err = StringIO()
+
+    # If local configuration file is not available, generate configuration
+    if not os.path.exists('tesla-ce.cfg'):
+        assert tesla_ce_system.config.get('VAULT_TOKEN') is not None
+        # Write the configuration file to disk
+        with open('tesla-ce.cfg', 'w') as out_fh:
+            tesla_ce_system.config.config.write(out_fh)
+    else:
+        from tesla_ce.lib.config import ConfigManager
+        conf = ConfigManager(load_config=False)
+        conf.load_file('tesla-ce.cfg')
+        assert conf.config.get('VAULT_TOKEN') is not None
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        #call_command(
+        #    'deploy_core',
+        #    stdout=out,
+        #    stderr=err,
+        #    out=tmp_dir,
+        #    mode='swarm'
+        #)
+        tesla_ce_system.export_deployment_scripts(output=tmp_dir, mode='swarm')
+
+        gen_files = os.listdir(tmp_dir)
+
+        assert 'secrets' in gen_files
+        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+
+        assert 'tesla_lb.yml' in gen_files
+        assert 'tesla_core.yml' in gen_files

@@ -19,7 +19,7 @@ from ..base import TeslaDeployCommand
 class Command(TeslaDeployCommand):
     """ Command to generate VLE deployment scripts """
     help = 'Generate VLE deployment scripts'
-    requires_system_checks = True
+    requires_system_checks = '__all__'
 
     def add_arguments(self, parser):
         """
