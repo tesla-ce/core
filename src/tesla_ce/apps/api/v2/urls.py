@@ -187,7 +187,7 @@ institution_user = institution_router.register(r'user',
 institution_learner_send_router = institution_learner_router.register(r'send',
                                                                       views.InstitutionSENDLearnerViewSet,
                                                                       basename='institution-learner-send',
-                                                                      parents_query_lookups=['institution_id',
+                                                                      parents_query_lookups=['learner__institution_id',
                                                                                              'learner_id']
                                                                       )
 
