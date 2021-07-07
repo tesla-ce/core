@@ -46,12 +46,14 @@ def test_swarm_services_deployment(tesla_ce_system):
             "DEPLOYMENT_SERVICES": "True"
         }):
             assert tmp_dir is not None
-            call_command(
-                'deploy_services',
-                stdout=out,
-                stderr=err,
-                out=tmp_dir
-            )
+            #call_command(
+            #    'deploy_services',
+            #    stdout=out,
+            #    stderr=err,
+            #    out=tmp_dir,
+            #    mode='swarm'
+            #)
+            tesla_ce_system.export_services_scripts(output=tmp_dir, mode='swarm')
 
             gen_files = os.listdir(tmp_dir)
 
@@ -85,12 +87,14 @@ def test_swarm_core_deployment(tesla_ce_system):
         assert conf.config.get('VAULT_TOKEN') is not None
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        call_command(
-            'deploy_core',
-            stdout=out,
-            stderr=err,
-            out=tmp_dir
-        )
+        #call_command(
+        #    'deploy_core',
+        #    stdout=out,
+        #    stderr=err,
+        #    out=tmp_dir,
+        #    mode='swarm'
+        #)
+        tesla_ce_system.export_deployment_scripts(output=tmp_dir, mode='swarm')
 
         gen_files = os.listdir(tmp_dir)
 
