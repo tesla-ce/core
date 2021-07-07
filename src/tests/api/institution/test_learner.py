@@ -319,14 +319,13 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
     tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
                                      'Add SEND category to a learner',
                                      'RESPONSE: ', 201)
-    '''
     str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, new_learner_id)
     str_response = 'RESPONSE Learner ID={}:'.format(new_learner_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'Read SEND categories assigned to a learner',
                                            str_response, 200)
     assert body['count'] == 1
-    '''
+    new_send_assignment_id = body['results'][0]['id']
 
     # 9) Remove a SEND Category from a learner
     """ ---------------------------------------------------------------------
@@ -340,24 +339,28 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
             404 Not Found – SEND Category not found
     Request Headers: Authorization - JWT with Institution Admin/SEND privileges
     """
-    '''
-    # 666 TODO: fix issue READ. GET request returns status 500 and does not identify institution_id:
-    # FieldError("Cannot resolve keyword 'institution_id' into field. Choices are: category, category_id, 
-    # created_at, expires_at, id, learner, learner_id, updated_at")
     logging.info('\n9) Remove a SEND Category from a learner --------------------------------------')
     institution_user.send_admin = True
     institution_user.save()
     rest_api_client.force_authenticate(user=institution_user)
 
-    str_path = '/api/v2/institution/{}/learner/{}/send/{}/'.format(institution_id, new_learner_id, new_send_id)
+    str_path = '/api/v2/institution/{}/learner/{}/send/{}/'.format(institution_id,
+                                                                   new_learner_id,
+                                                                   new_send_assignment_id)
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
                                        'Remove a SEND Category from a learner', "RESPONSE: ", 204)
 
-    '''
     # Delete SEND Category for testing purposes
     str_path = '/api/v2/institution/{}/send/{}/'.format(institution_id, new_send_id)
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
                                        'Delete SEND Category', "RESPONSE: ", 204)
+
+    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, new_learner_id)
+    str_response = 'RESPONSE Learner ID={}:'.format(new_learner_id)
+    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
+                                           'Read SEND categories assigned to a learner',
+                                           str_response, 200)
+    assert body['count'] == 0
 
     # 10) Delete learner
     """ ---------------------------------------------------------------------
