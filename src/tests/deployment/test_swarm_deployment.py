@@ -14,6 +14,7 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 """ Swarm deployment scripts management tests """
+import mock
 import os
 import tempfile
 
@@ -35,26 +36,30 @@ def test_swarm_services_deployment(tesla_ce_system):
         with open('tesla-ce.cfg', 'w') as out_fh:
             tesla_ce_system.config.config.write(out_fh)
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        call_command(
-            'deploy_services',
-            stdout=out,
-            stderr=err,
-            out=tmp_dir
-        )
+    # Enable with services flag
+    with mock.patch.dict(os.environ, {
+        "DEPLOYMENT_SERVICES": True
+    }):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            call_command(
+                'deploy_services',
+                stdout=out,
+                stderr=err,
+                out=tmp_dir
+            )
 
-        gen_files = os.listdir(tmp_dir)
+            gen_files = os.listdir(tmp_dir)
 
-        assert 'secrets' in gen_files
-        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
-        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+            assert 'secrets' in gen_files
+            assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+            assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
 
-        assert 'config' in gen_files
-        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
-        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+            assert 'config' in gen_files
+            assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+            assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
 
-        assert 'tesla_lb.yml' in gen_files
-        assert 'tesla_services.yml' in gen_files
+            assert 'tesla_lb.yml' in gen_files
+            assert 'tesla_services.yml' in gen_files
 
 
 def test_swarm_core_deployment(tesla_ce_system):
@@ -66,13 +71,9 @@ def test_swarm_core_deployment(tesla_ce_system):
 
     # If local configuration file is not available, generate configuration
     if not os.path.exists('tesla-ce.cfg'):
-        call_command(
-            'generate_config',
-            'tesla-ce',
-            stdout=out,
-            stderr=err,
-            local=True
-        )
+        # Write the configuration file to disk
+        with open('tesla-ce.cfg', 'w') as out_fh:
+            tesla_ce_system.config.config.write(out_fh)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         call_command(
