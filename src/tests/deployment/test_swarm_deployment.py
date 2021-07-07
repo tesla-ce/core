@@ -31,14 +31,9 @@ def test_swarm_services_deployment(tesla_ce_system):
 
     # If local configuration file is not available, generate configuration
     if not os.path.exists('tesla-ce.cfg'):
-        call_command(
-            'generate_config',
-            'tesla-ce',
-            stdout=out,
-            stderr=err,
-            local=True,
-            with_services=True
-        )
+        # Write the configuration file to disk
+        with open('tesla-ce.cfg', 'w') as out_fh:
+            tesla_ce_system.config.config.write(out_fh)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         call_command(

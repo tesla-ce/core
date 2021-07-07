@@ -29,13 +29,9 @@ def test_reconfigure(tesla_ce_system):
 
     # If local configuration file is not available, generate configuration
     if not os.path.exists('tesla-ce.cfg'):
-        call_command(
-            'generate_config',
-            'tesla-ce',
-            stdout=out,
-            stderr=err,
-            local=True
-        )
+        # Write the configuration file to disk
+        with open('tesla-ce.cfg', 'w') as out_fh:
+            tesla_ce_system.config.config.write(out_fh)
 
     call_command(
         'reconfigure',
