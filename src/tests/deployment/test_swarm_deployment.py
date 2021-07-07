@@ -34,6 +34,11 @@ def test_swarm_services_deployment(tesla_ce_system):
         # Write the configuration file to disk
         with open('tesla-ce.cfg', 'w') as out_fh:
             tesla_ce_system.config.config.write(out_fh)
+    else:
+        from tesla_ce.lib.config import ConfigManager
+        conf = ConfigManager(load_config=False)
+        conf.load_file('tesla-ce.cfg')
+        assert conf.get('VAULT_TOKEN') is not None
 
     # Enable with services flag
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -73,6 +78,11 @@ def test_swarm_core_deployment(tesla_ce_system):
         # Write the configuration file to disk
         with open('tesla-ce.cfg', 'w') as out_fh:
             tesla_ce_system.config.config.write(out_fh)
+    else:
+        from tesla_ce.lib.config import ConfigManager
+        conf = ConfigManager(load_config=False)
+        conf.load_file('tesla-ce.cfg')
+        assert conf.get('VAULT_TOKEN') is not None
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         call_command(
