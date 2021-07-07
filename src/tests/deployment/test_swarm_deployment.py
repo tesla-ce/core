@@ -37,10 +37,11 @@ def test_swarm_services_deployment(tesla_ce_system):
             tesla_ce_system.config.config.write(out_fh)
 
     # Enable with services flag
-    with mock.patch.dict(os.environ, {
-        "DEPLOYMENT_SERVICES": True
-    }):
-        with tempfile.TemporaryDirectory() as tmp_dir:
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        with mock.patch.dict(os.environ, {
+            "DEPLOYMENT_SERVICES": True
+        }):
+            assert tmp_dir is not None
             call_command(
                 'deploy_services',
                 stdout=out,
