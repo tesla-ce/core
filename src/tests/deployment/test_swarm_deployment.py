@@ -25,13 +25,12 @@ from django.core.management import call_command
 
 def test_swarm_services_deployment(tesla_ce_system):
 
-    assert tesla_ce_system is not None
-
     out = StringIO()
     err = StringIO()
 
     # If local configuration file is not available, generate configuration
     if not os.path.exists('tesla-ce.cfg'):
+        assert tesla_ce_system.config.get('VAULT_TOKEN') is not None
         # Write the configuration file to disk
         with open('tesla-ce.cfg', 'w') as out_fh:
             tesla_ce_system.config.config.write(out_fh)
@@ -64,8 +63,6 @@ def test_swarm_services_deployment(tesla_ce_system):
 
 
 def test_swarm_core_deployment(tesla_ce_system):
-
-    assert tesla_ce_system is not None
 
     out = StringIO()
     err = StringIO()
