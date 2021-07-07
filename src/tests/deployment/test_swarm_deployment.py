@@ -38,7 +38,7 @@ def test_swarm_services_deployment(tesla_ce_system):
         from tesla_ce.lib.config import ConfigManager
         conf = ConfigManager(load_config=False)
         conf.load_file('tesla-ce.cfg')
-        assert conf.get('VAULT_TOKEN') is not None
+        assert conf.config.get('VAULT_TOKEN') is not None
 
     # Enable with services flag
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -82,7 +82,7 @@ def test_swarm_core_deployment(tesla_ce_system):
         from tesla_ce.lib.config import ConfigManager
         conf = ConfigManager(load_config=False)
         conf.load_file('tesla-ce.cfg')
-        assert conf.get('VAULT_TOKEN') is not None
+        assert conf.config.get('VAULT_TOKEN') is not None
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         call_command(
