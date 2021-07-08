@@ -1406,6 +1406,12 @@ def lapi_lerner_perform_activity(assessment_session):
                 assert data_sent_resp.status_code == 200
                 assert data_sent_resp.data['status'] == 'OK'
 
+            # Learner can refresh the token
+            new_token = auth_utils.refresh_token(session_data['token']['access_token'],
+                                                 session_data['token']['refresh_token'])
+            client = auth_utils.client_with_token_credentials(new_token['access_token'],
+                                                              new_token['refresh_token'])
+
     # Run storage tasks
     with mock.patch('tesla_ce.tasks.requests.verification.verify_request.apply_async', verify_request_test):
         from tesla_ce.tasks.requests.verification import create_request

@@ -145,7 +145,8 @@ def refresh_token(access_token, refresh_token):
                                data={'token': access_token},
                                format='json')
     assert refresh_resp.status_code == 200
-    assert 'access_token' in refresh_resp.data
-    assert 'refresh_token' in refresh_resp.data
+    assert 'token' in refresh_resp.data
+    assert 'access_token' in refresh_resp.data['token']
+    assert 'refresh_token' in refresh_resp.data['token']
 
-    return refresh_resp.data
+    return refresh_resp.data['token']
