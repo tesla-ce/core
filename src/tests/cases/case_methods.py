@@ -90,6 +90,19 @@ def api_register_providers(global_admin):
     providers['fr'] = fr_prov_register_resp.data
     providers['fr']['deferred'] = False
 
+    # Register a FR provider that use deferred analysis
+    fr_desc2 = json.load(open(get_provider_desc_file('fr_amazon'), 'r'))
+    fr_desc2['enabled'] = False
+    fr_desc2['validation_active'] = True
+    if 'instrument' in fr_desc2:
+        del fr_desc2['instrument']
+    fr_prov2_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(fr_inst),
+                                         data=fr_desc2,
+                                         format='json')
+    assert fr_prov2_register_resp.status_code == 201
+    providers['fr_def'] = fr_prov2_register_resp.data
+    providers['fr_def']['deferred'] = True
+
     # Register a KS provider
     ks_desc = json.load(open(get_provider_desc_file('ks_tks'), 'r'))
     ks_desc['enabled'] = True
@@ -121,8 +134,8 @@ def api_register_providers(global_admin):
     if 'instrument' in pt_desc2:
         del pt_desc2['instrument']
     pt2_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(plag_inst),
-                                        data=pt_desc2,
-                                        format='json')
+                                         data=pt_desc2,
+                                         format='json')
     assert pt2_prov_register_resp.status_code == 201
     providers['plag_def'] = pt2_prov_register_resp.data
     providers['plag_def']['deferred'] = True
