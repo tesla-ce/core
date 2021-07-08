@@ -126,3 +126,26 @@ def client_with_launcher_credentials(launcher):
         auth_resp.data['access_token'],
         auth_resp.data['refresh_token']
     )
+
+
+def refresh_token(access_token, refresh_token):
+    """
+        Refresh a token
+        :param access_token: Access JWT token
+        :param refresh_token: Refresh JWT token
+        :return: A new token pair
+    """
+    client = APIClient()
+
+    # Assign credentials
+    client.credentials(HTTP_AUTHORIZATION='JWT {}'.format(refresh_token))
+
+    # Refresh token
+    refresh_resp = client.post('/api/v2/auth/token/refresh',
+                               data={'token': access_token},
+                               format='json')
+    assert refresh_resp.status_code == 200
+    assert 'access_token' in refresh_resp.data
+    assert 'refresh_token' in refresh_resp.data
+
+    return refresh_resp.data

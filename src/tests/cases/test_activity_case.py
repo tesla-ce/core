@@ -163,14 +163,31 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     l2_enrolment_pre_val = case_methods.api_learner_enrolment(launcher_enrol_pre_val2)
     assert len(l2_enrolment_pre_val) == 1
     assert l2_enrolment_pre_val[0]['instrument_id'] == providers['fr']['instrument']['id']
-    assert len(l2_enrolment_pre_val[0]['not_validated']) == 1
-    assert l2_enrolment_pre_val[0]['not_validated'][0]['provider_id'] == providers['fr']['id']
-    assert l2_enrolment_pre_val[0]['not_validated'][0]['instrument_id'] == providers['fr']['instrument']['id']
-    assert l2_enrolment_pre_val[0]['not_validated'][0]['count'] == providers['fr']['instrument']['id'] * 4
+    assert len(l2_enrolment_pre_val[0]['not_validated']) == 2
+    if l2_enrolment_pre_val[0]['not_validated'][0]['provider_id'] == providers['fr']['id']:
+        assert l2_enrolment_pre_val[0]['not_validated'][0]['instrument_id'] == providers['fr']['instrument']['id']
+        assert l2_enrolment_pre_val[0]['not_validated'][0]['count'] == providers['fr']['instrument']['id'] * 4
+        assert l2_enrolment_pre_val[0]['not_validated'][1]['provider_id'] == providers['fr_def']['id']
+        assert l2_enrolment_pre_val[0]['not_validated'][1]['instrument_id'] == providers['fr_def']['instrument']['id']
+        assert l2_enrolment_pre_val[0]['not_validated'][1]['count'] == providers['fr_def']['instrument']['id'] * 4
+    else:
+        assert l2_enrolment_pre_val[0]['not_validated'][0]['provider_id'] == providers['fr_def']['id']
+        assert l2_enrolment_pre_val[0]['not_validated'][0]['instrument_id'] == providers['fr_def']['instrument']['id']
+        assert l2_enrolment_pre_val[0]['not_validated'][0]['count'] == providers['fr_def']['instrument']['id'] * 4
+        assert l2_enrolment_pre_val[0]['not_validated'][1]['provider_id'] == providers['fr']['id']
+        assert l2_enrolment_pre_val[0]['not_validated'][1]['instrument_id'] == providers['fr']['instrument']['id']
+        assert l2_enrolment_pre_val[0]['not_validated'][1]['count'] == providers['fr']['instrument']['id'] * 4
     assert len(l2_enrolment_pre_val[0]['pending']) == 0
 
     # Providers validate samples in their queues
     validation_summary_tasks = case_methods.provider_validate_samples(providers, provider_validation_tasks)
+
+    # As we have deferred providers, some of the validations are postponed via notifications.
+    notification_tasks = case_methods.worker_send_notifications()
+    assert len(notification_tasks) > 0
+
+    # Providers process their notifications to generate final validation results
+    validation_summary_tasks += case_methods.provider_process_notifications(providers, notification_tasks, 'validation')
 
     # The VLE creates a launcher for the learners to check enrolments
     launcher_enrol_post_val1 = case_methods.vle_create_launcher(vle, learners[0])
@@ -192,10 +209,20 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert l2_enrolment_post_val[0]['instrument_id'] == providers['fr']['instrument']['id']
     assert len(l2_enrolment_post_val[0]['not_validated']) == 0
     assert l2_enrolment_post_val[0]['not_validated_count'] == 0
-    assert len(l2_enrolment_post_val[0]['pending']) == 1
-    assert l2_enrolment_post_val[0]['pending'][0]['provider_id'] == providers['fr']['id']
-    assert l2_enrolment_post_val[0]['pending'][0]['instrument_id'] == providers['fr']['instrument']['id']
-    assert abs(1.0 - float(l2_enrolment_post_val[0]['pending'][0]['pending_contribution'])) < 0.0001
+    assert len(l2_enrolment_post_val[0]['pending']) == 2
+    if l2_enrolment_post_val[0]['pending'][0]['provider_id'] == providers['fr']['id']:
+        assert l2_enrolment_post_val[0]['pending'][0]['instrument_id'] == providers['fr']['instrument']['id']
+        assert abs(1.0 - float(l2_enrolment_post_val[0]['pending'][0]['pending_contribution'])) < 0.0001
+        assert l2_enrolment_post_val[0]['pending'][1]['provider_id'] == providers['fr_def']['id']
+        assert l2_enrolment_post_val[0]['pending'][1]['instrument_id'] == providers['fr_def']['instrument']['id']
+        assert abs(1.0 - float(l2_enrolment_post_val[0]['pending'][1]['pending_contribution'])) < 0.0001
+    else:
+        assert l2_enrolment_post_val[0]['pending'][0]['provider_id'] == providers['fr_def']['id']
+        assert l2_enrolment_post_val[0]['pending'][0]['instrument_id'] == providers['fr_def']['instrument']['id']
+        assert abs(1.0 - float(l2_enrolment_post_val[0]['pending'][0]['pending_contribution'])) < 0.0001
+        assert l2_enrolment_post_val[0]['pending'][1]['provider_id'] == providers['fr']['id']
+        assert l2_enrolment_post_val[0]['pending'][1]['instrument_id'] == providers['fr']['instrument']['id']
+        assert abs(1.0 - float(l2_enrolment_post_val[0]['pending'][1]['pending_contribution'])) < 0.0001
 
     # Worker compute validation summary from individual validations
     enrolment_tasks = case_methods.worker_validation_summary(validation_summary_tasks)
@@ -205,6 +232,13 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
 
     # Provider perform learners enrolment
     case_methods.provider_enrol_learners(providers, provider_enrolment_tasks)
+
+    # As we have deferred providers, some of the enrolments are postponed via notifications.
+    notification_tasks = case_methods.worker_send_notifications()
+    assert len(notification_tasks) > 0
+
+    # Providers process their notifications to generate final enrolment results
+    provider_enrolment_tasks += case_methods.provider_process_notifications(providers, notification_tasks, 'enrolment')
 
     # The VLE creates a launcher for the learners to check enrolments
     launcher_enrol_end1 = case_methods.vle_create_launcher(vle, learners[0])
@@ -262,7 +296,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     notification_tasks = case_methods.worker_send_notifications()
     assert len(notification_tasks) > 0
 
-    # Providers process those notifications to generate final verification results
+    # Providers process their notifications to generate final verification results
     reporting_tasks += case_methods.provider_process_notifications(providers, notification_tasks, 'verification')
 
     # Worker process verification results to create the reports

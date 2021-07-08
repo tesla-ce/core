@@ -87,7 +87,7 @@ def get_learner_enrolment(learner_id):
         pending_contribution=models.Sum("enrolmentsamplevalidation__contribution")
     )
     pending_validation = learner.enrolmentsample_set.filter(
-        enrolmentsamplevalidation__status=0,
+        models.Q(enrolmentsamplevalidation__status=0) | models.Q(enrolmentsamplevalidation__status=4),
         enrolmentsamplevalidation__provider__enabled=True
     ).values(
         provider_id=models.F("enrolmentsamplevalidation__provider"),
