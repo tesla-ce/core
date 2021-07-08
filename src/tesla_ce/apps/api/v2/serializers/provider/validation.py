@@ -78,7 +78,7 @@ class ProviderEnrolmentSampleValidationSerializer(serializers.ModelSerializer):
                                ContentFile(json.dumps(validated_data['validation_info']).encode('utf-8')))
         new_instance =  super().update(instance, validated_data)
 
-        if new_instance.status > 0:
+        if 0 < new_instance.status < 4:
             create_validation_summary.apply_async((new_instance.sample.learner.learner_id, new_instance.sample_id,))
 
         return new_instance
