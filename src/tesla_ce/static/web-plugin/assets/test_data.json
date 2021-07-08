@@ -41,5 +41,8 @@
   "enrolment": null,
   "launcher": null,
   "base_url": "http://localhost:4200/",
-  "locale": "ca"
+  "locale": "ca",
+  "options": {
+    "floating_menu_initial_pos": "bottom-right"
+  }
 }
