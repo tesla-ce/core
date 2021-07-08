@@ -161,7 +161,7 @@ def create_verification_summary(self, request_id, instrument_id):
                                                                 provider__instrument_id=instrument_id
                                                                ).aggregate(Min('status'), Max('status'))
 
-    # Update status. If there are pending requests, set as PENDING, otherwise to the maximum status level
+    # Update status. If here are pending requests, set as PENDING, otherwise to the maximum status level
     result.status = 0
     if status_values['status__min'] > 0:
         result.status = status_values['status__max']
