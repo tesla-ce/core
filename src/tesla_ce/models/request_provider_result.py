@@ -62,6 +62,9 @@ class RequestProviderResult(BaseModel):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        unique_together = (('provider', 'request'),)
+
     def __repr__(self):
         return "<RequestProviderResult(request='%s', provider='%s', status='%r', " \
                "result='%r', code='%r')>" % (

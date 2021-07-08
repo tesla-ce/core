@@ -35,6 +35,7 @@ class ProviderVerificationRequestResultViewSet(NestedViewSetMixin, UpdateModelMi
     API endpoint that allows activity to be viewed or edited.
     """
     queryset = RequestProviderResult.objects
+    lookup_field = 'request_id'
     serializer_class = ProviderVerificationRequestResultSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     permission_classes = [
@@ -63,7 +64,7 @@ class ProviderVerificationRequestResultViewSet(NestedViewSetMixin, UpdateModelMi
 
         request_result = get_object_or_404(self.queryset,
                                            provider_id=kwargs['parent_lookup_provider_id'],
-                                           pk=kwargs['pk'])
+                                           request_id=kwargs['request_id'])
 
         if request_result.status == 1:
             raise ValidationError('Cannot change processed results status.')

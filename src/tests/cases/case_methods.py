@@ -90,6 +90,19 @@ def api_register_providers(global_admin):
     providers['fr'] = fr_prov_register_resp.data
     providers['fr']['deferred'] = False
 
+    # Register a FR provider that use deferred analysis
+    fr_desc2 = json.load(open(get_provider_desc_file('fr_amazon'), 'r'))
+    fr_desc2['enabled'] = False
+    fr_desc2['validation_active'] = True
+    if 'instrument' in fr_desc2:
+        del fr_desc2['instrument']
+    fr_prov2_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(fr_inst),
+                                         data=fr_desc2,
+                                         format='json')
+    assert fr_prov2_register_resp.status_code == 201
+    providers['fr_def'] = fr_prov2_register_resp.data
+    providers['fr_def']['deferred'] = True
+
     # Register a KS provider
     ks_desc = json.load(open(get_provider_desc_file('ks_tks'), 'r'))
     ks_desc['enabled'] = True
@@ -117,12 +130,12 @@ def api_register_providers(global_admin):
 
     # Register a Plagiarism provider with deferred processing
     pt_desc2 = json.load(open(get_provider_desc_file('pt_turkund'), 'r'))
-    pt_desc2['enabled'] = False  # TODO: Enable once deferred instruments are implemented on tests
+    pt_desc2['enabled'] = True  # TODO: Enable once deferred instruments are implemented on tests
     if 'instrument' in pt_desc2:
         del pt_desc2['instrument']
     pt2_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(plag_inst),
-                                        data=pt_desc2,
-                                        format='json')
+                                         data=pt_desc2,
+                                         format='json')
     assert pt2_prov_register_resp.status_code == 201
     providers['plag_def'] = pt2_prov_register_resp.data
     providers['plag_def']['deferred'] = True
@@ -936,11 +949,13 @@ def provider_validate_samples(providers, tasks):
     # Each provider should process their tasks
     for queue_name in queues:
         provider = None
+        deferred = False
         # Get the provider with this queue
         for prov in providers:
             if providers[prov]['queue'] == queue_name:
                 instrument_id = providers[prov]['instrument']['id']
                 provider = providers[prov]['credentials']
+                deferred = providers[prov]['deferred']
         assert provider is not None
         client, config = auth_utils.client_with_approle_credentials(provider['role_id'], provider['secret_id'])
         # Get the Provider ID from configuration
@@ -966,26 +981,80 @@ def provider_validate_samples(providers, tasks):
             sample['sample']['data'] = sample_data_resp.json()
 
             # Do validation
-            with mock.patch('tesla_ce.tasks.requests.enrolment.create_validation_summary.apply_async',
-                            create_validation_summary):
-                send_validation_resp = client.put('/api/v2/provider/{}/enrolment/{}/sample/{}/validation/{}/'.format(
-                    provider_id, learner_id, sample_id, validation_id),
-                    data={
-                        'status': (task_count % 2) + 1,  # Set half of the samples as not valid
-                        'error_message': None,
-                        'validation_info': {
-                            'free_field1': 35,
-                            'other_field':{
-                                'status':3
-                            }
-                        },
-                        'message_code_id': None,
-                        'contribution': 1.0 / (instrument_id * 2)  # We send four times samples than the instrument id
+            val_result = {
+                'status': (task_count % 2) + 1,  # Set half of the samples as not valid
+                'error_message': None,
+                'validation_info': {
+                    'free_field1': 35,
+                    'other_field':{
+                        'status':3
+                    }
+                },
+                'message_code_id': None,
+                'contribution': 1.0 / (instrument_id * 2)  # We send four times samples than the instrument id
+            }
+            task_count +=1
+
+            if deferred:
+                # Deferred instrument
+                samp_status_resp = client.post(
+                    '/api/v2/provider/{}/enrolment/{}/sample/{}/validation/{}/status/'.format(
+                        provider_id, learner_id, sample_id, validation_id),
+                                              data={"status": 7},  # WAITING_EXTERNAL_SERVICE
+                                              format='json'
+                                              )
+                assert samp_status_resp.status_code == 200
+                def_validation_result = {
+                    'status': 7,  # WAITING_EXTERNAL_SERVICE
+                    'error_message': None,
+                    'validation_info': None,
+                    'message_code_id': None,
+                    'contribution': None
+                }
+                def_result = {
+                    'result': def_validation_result,
+                    'status': 7,
+                    'info': {
+                        'info_field1': 56,
+                        'info_other_field': 'test',
+                        'test_data_for_notification': {
+                            'type': 'validation',
+                            'url': '/api/v2/provider/{}/enrolment/{}/sample/{}/validation/{}/'.format(
+                                provider_id, learner_id, sample_id, validation_id
+                            ),
+                            'data': val_result
+                        }
                     },
-                    format='json'
-                )
-                assert send_validation_resp.status_code == 200
-            task_count += 1
+                    'learner_id': learner_id,
+                    'sample_id': sample_id,
+                    'validation_id': validation_id
+                }
+                # Set the result
+                sample_deferred_validate_resp = client.put(def_result['info']['test_data_for_notification']['url'],
+                                                           data=def_result['result'],
+                                                           format='json')
+                assert sample_deferred_validate_resp.status_code == 200
+
+                # Send a notification request
+                notification = {
+                    'key': get_random_string(10),
+                    'when': (timezone.now() + timezone.timedelta(seconds=-10)).isoformat(),  # Negative to ensure is due
+                    'info': def_result['info']
+                }
+                send_notification_resp = client.post('/api/v2/provider/{}/notification/'.format(provider_id),
+                                                     data=notification,
+                                                     format='json')
+                assert send_notification_resp.status_code == 201
+            else:
+                with mock.patch('tesla_ce.tasks.requests.enrolment.create_validation_summary.apply_async',
+                                create_validation_summary):
+                    send_validation_resp = client.put(
+                        '/api/v2/provider/{}/enrolment/{}/sample/{}/validation/{}/'.format(
+                            provider_id, learner_id, sample_id, validation_id),
+                        data=val_result,
+                        format='json'
+                    )
+                    assert send_validation_resp.status_code == 200
 
     return pending_tasks_validation
 
@@ -1048,11 +1117,13 @@ def provider_enrol_learners(providers, tasks):
     for queue_name in queues:
         provider = None
         instrument_id = None
+        deferred = False
         # Get the provider with this queue
         for prov in providers:
             if providers[prov]['queue'] == queue_name:
                 instrument_id = providers[prov]['instrument']['id']
                 provider = providers[prov]['credentials']
+                deferred = providers[prov]['deferred']
         assert provider is not None
         assert instrument_id is not None
         client, config = auth_utils.client_with_approle_credentials(provider['role_id'], provider['secret_id'])
@@ -1147,25 +1218,28 @@ def provider_enrol_learners(providers, tasks):
             model['percentage'] = new_model_data['percentage']
             model['used_samples'] = sample_list
 
-            # Save the model data
-            model_data_save_resp = requests.post(model['model_upload_url']['url'],
-                                                 data=model['model_upload_url']['fields'],
-                                                 files={
-                                                     'file': io.StringIO(simplejson.dumps(model['model']))
-                                                 }, verify=False)
-            assert model_data_save_resp.status_code == 204
+            if deferred:
+                pass
+            else:
+                # Save the model data
+                model_data_save_resp = requests.post(model['model_upload_url']['url'],
+                                                     data=model['model_upload_url']['fields'],
+                                                     files={
+                                                         'file': io.StringIO(simplejson.dumps(model['model']))
+                                                     }, verify=False)
+                assert model_data_save_resp.status_code == 204
 
-            # Save the model and unlock it
-            model_save_resp = client.put('/api/v2/provider/{}/enrolment/{}/'.format(provider_id, learner_id),
-                                         data={
-                                             'learner_id': learner_id,
-                                             'task_id': task_id,
-                                             'percentage': model['percentage'],
-                                             'can_analyse': model['can_analyse'],
-                                             'used_samples': model['used_samples']
-                                         },
-                                         format='json')
-            assert model_save_resp.status_code == 200
+                # Save the model and unlock it
+                model_save_resp = client.put('/api/v2/provider/{}/enrolment/{}/'.format(provider_id, learner_id),
+                                             data={
+                                                 'learner_id': learner_id,
+                                                 'task_id': task_id,
+                                                 'percentage': model['percentage'],
+                                                 'can_analyse': model['can_analyse'],
+                                                 'used_samples': model['used_samples']
+                                             },
+                                             format='json')
+                assert model_save_resp.status_code == 200
 
 
 def get_data_object_from_session(assessment_session):
@@ -1427,7 +1501,7 @@ def provider_verify_request(providers, tasks):
             request_id, result_id = task[1][0]
 
             # Get the request
-            get_request_resp = client.get('/api/v2/provider/{}/request/{}/'.format(provider_id, result_id))
+            get_request_resp = client.get('/api/v2/provider/{}/request/{}/'.format(provider_id, request_id))
             assert get_request_resp.status_code == 200
             request = get_request_resp.data
             learner_id = request['learner_id']
@@ -1456,40 +1530,196 @@ def provider_verify_request(providers, tasks):
             assert request_data_resp.status_code == 200
             request['request']['data'] = request_data_resp.json()
 
+            # Instrument compute result without external services
+            result_err = random.random() / 10.0  # Generate values with an error of maximum 10%
+            if provider['inverted_polarity']:
+                result = result_err
+            else:
+                result = 1.0 - result_err
+            verification_result = {
+                'status': 1,  # PROCESSED  (2 for ERROR)
+                'error_message': None,
+                'audit_data': {
+                    'using_model': model_data is not None,
+                    'some_other_field': get_random_string(15)
+                },
+                'result': result,
+                'code': 1,  # OK  (2 WARNING, 3 ALERT)
+                'message_code': None
+            }
+
             # Perform verification
             if deferred:
                 # Deferred instrument
-                req_status_resp = client.post('/api/v2/provider/{}/request/{}/status/'.format(provider_id, result_id),
+                req_status_resp = client.post('/api/v2/provider/{}/request/{}/status/'.format(provider_id, request_id),
                                               data={"status": 7},  # WAITING_EXTERNAL_SERVICE
                                               format='json'
                                               )
-            else:
-                # Instrument compute result without external services
-                result_err = random.random() / 10.0  # Generate values with an error of maximum 10%
-                if provider['inverted_polarity']:
-                    result = result_err
-                else:
-                    result = 1.0 - result_err
-                verification_result = {
-                    'status': 1,  # PROCESSED  (2 for ERROR)
+                assert req_status_resp.status_code == 200
+                def_verification_result = {
+                    'status': 7,  # WAITING_EXTERNAL_SERVICE
                     'error_message': None,
                     'audit_data': {
                         'using_model': model_data is not None,
                         'some_other_field': get_random_string(15)
                     },
-                    'result': result,
-                    'code': 1,  # OK  (2 WARNING, 3 ALERT)
+                    'result': None,
+                    'code': 0,  # PENDING
                     'message_code': None
                 }
+                def_result = {
+                    'result': def_verification_result,
+                    'status': 7,
+                    'info': {
+                        'info_field1': 56,
+                        'info_other_field': 'test',
+                        'test_data_for_notification': {
+                            'type': 'verification',
+                            'url': '/api/v2/provider/{}/request/{}/'.format(provider_id, request_id),
+                            'data': verification_result
+                        }
+                    },
+                    'request_id': request_id,
+                    'audit_data': {}
+                }
+                # Set the result
+                req_deferred_verify_resp = client.put(def_result['info']['test_data_for_notification']['url'],
+                                                      data=def_result['result'],
+                                                      format='json')
+                assert req_deferred_verify_resp.status_code == 200
+
+                # Send a notification request
+                notification = {
+                    'key': get_random_string(10),
+                    'when': (timezone.now() + timezone.timedelta(seconds=-10)).isoformat(),  # Negative to ensure is due
+                    'info': def_result['info']
+                }
+                send_notification_resp = client.post('/api/v2/provider/{}/notification/'.format(provider_id),
+                                                     data=notification,
+                                                     format='json')
+                assert send_notification_resp.status_code == 201
+            else:
                 with mock.patch('tesla_ce.tasks.requests.verification.create_verification_summary.apply_async',
                                 create_verification_summary_test):
-                    put_result_resp = client.put('/api/v2/provider/{}/request/{}/'.format(provider_id, result_id),
+                    put_result_resp = client.put('/api/v2/provider/{}/request/{}/'.format(provider_id, request_id),
                                                  data=verification_result,
                                                  format='json'
                                              )
                     assert put_result_resp.status_code == 200
 
     return pending_tasks_verification
+
+
+def worker_send_notifications():
+    """
+        Worker process notification tasks
+        :return: List of pending provider notification tasks
+    """
+    # List simulating the notifications queue
+    pending_tasks_notification = []
+
+    def provider_notify_test(*args, **kwargs):
+        pending_tasks_notification.append(('provider_notify', args, kwargs))
+
+    # Process notifications
+    with mock.patch('tesla_ce.tasks.notification.providers.provider_notify.apply_async',
+                    provider_notify_test):
+        from tesla_ce.tasks.notification.providers import send_provider_notifications
+        send_provider_notifications()
+
+    return pending_tasks_notification
+
+
+def provider_process_notifications(providers, tasks, expected_type):
+    """
+        Providers process the notifications in their queues
+        :param providers: Available providers
+        :param tasks: Pending tasks to be processed
+        :param expected_type: Type of expected notifications
+        :return: List of pending tasks
+    """
+    # List simulating the proper queue depending on type of notification
+    pending_tasks = []
+
+    def create_validation_summary_test(*args, **kwargs):
+        pending_tasks.append(('create_validation_summary', args, kwargs))
+
+    def create_verification_summary_test(*args, **kwargs):
+        pending_tasks.append(('create_verification_summary', args, kwargs))
+
+    # Split tasks in queues
+    queues = get_task_by_queue(tasks)
+
+    # Each provider should process their tasks
+    for queue_name in queues:
+        provider_creds = None
+        instrument_id = None
+        deferred = False
+        # Get the provider with this queue
+        for prov in providers:
+            if providers[prov]['queue'] == queue_name:
+                instrument_id = providers[prov]['instrument']['id']
+                provider_creds = providers[prov]['credentials']
+                deferred = providers[prov]['deferred']
+        assert provider_creds is not None
+        assert instrument_id is not None
+        assert deferred
+        client, config = auth_utils.client_with_approle_credentials(provider_creds['role_id'],
+                                                                    provider_creds['secret_id'])
+        # Get the Provider ID from configuration
+        provider_id = config['provider_id']
+
+        for task in queues[queue_name]:
+            # Get the parameters
+            assert task[0] == 'provider_notify'
+            notification_id = task[1][0][0]
+
+            # Get notification content
+            get_notification_resp = client.get('/api/v2/provider/{}/notification/{}/'.format(provider_id,
+                                                                                             notification_id))
+            assert get_notification_resp.status_code == 200
+            notification = get_notification_resp.data
+
+            # Get the information required to process the notification
+            notification_type = notification['info']['test_data_for_notification']['type']
+            url = notification['info']['test_data_for_notification']['url']
+            data = notification['info']['test_data_for_notification']['data']
+            assert notification_type == expected_type
+            # Process each request depending on their type
+            if notification_type == 'validation':
+                with mock.patch('tesla_ce.tasks.requests.enrolment.create_validation_summary.apply_async',
+                                create_validation_summary_test):
+                    put_result_resp = client.put(url,
+                                                 data=data,
+                                                 format='json'
+                                                 )
+                    assert put_result_resp.status_code == 200
+            elif notification_type == 'enrolment':
+                model_url = notification['info']['test_data_for_notification']['model_url']
+                model = notification['info']['test_data_for_notification']['model']
+                # Save the model data
+                model_data_save_resp = requests.post(model_url,
+                                                     data=model['model_upload_url']['fields'],
+                                                     files={
+                                                         'file': io.StringIO(simplejson.dumps(model['model']))
+                                                     }, verify=False)
+                assert model_data_save_resp.status_code == 204
+
+                # Save the model and unlock it
+                model_save_resp = client.put(url,
+                                             data=data,
+                                             format='json')
+                assert model_save_resp.status_code == 200
+            elif notification_type == 'verification':
+                with mock.patch('tesla_ce.tasks.requests.verification.create_verification_summary.apply_async',
+                                create_verification_summary_test):
+                    put_result_resp = client.put(url,
+                                                 data=data,
+                                                 format='json'
+                                                 )
+                    assert put_result_resp.status_code == 200
+
+    return pending_tasks
 
 
 def worker_create_reports(tasks):
@@ -1563,4 +1793,17 @@ def api_instructor_report(launcher, activity):
         activity_id
     ))
     assert activity_reports_resp.status_code == 200
-    return activity_reports_resp.data['results']
+    reports = activity_reports_resp.data['results']
+
+    # Get the detail for each report
+    for report in reports:
+        reports_detail_resp = client.get('/api/v2/institution/{}/course/{}/activity/{}/report/{}/'.format(
+            institution_id,
+            course_id,
+            activity_id,
+            report['id']
+        ))
+        assert reports_detail_resp.status_code == 200
+        report['detailed_report'] = reports_detail_resp.data
+
+    return reports

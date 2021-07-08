@@ -258,6 +258,13 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # Provider perform verification process on data collected during the activity
     reporting_tasks = case_methods.provider_verify_request(providers, provider_verification_tasks)
 
+    # As we have deferred providers, some of the verifications are postponed via notifications.
+    notification_tasks = case_methods.worker_send_notifications()
+    assert len(notification_tasks) > 0
+
+    # Providers process those notifications to generate final verification results
+    reporting_tasks += case_methods.provider_process_notifications(providers, notification_tasks, 'verification')
+
     # Worker process verification results to create the reports
     case_methods.worker_create_reports(reporting_tasks)
 

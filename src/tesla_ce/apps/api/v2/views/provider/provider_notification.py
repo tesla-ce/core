@@ -31,7 +31,7 @@ class ProviderNotificationViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows Provider manage enrolment sample validation.
     """
-    queryset = ProviderNotification.objects
+    #queryset = ProviderNotification.objects
     serializer_class = ProviderNotificationSerializer
     permission_classes = [
         permissions.ProviderPermission
@@ -41,3 +41,7 @@ class ProviderNotificationViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     '''
+
+    def get_queryset(self):
+        queryset = self.filter_queryset_by_parents_lookups(ProviderNotification.objects)
+        return queryset.all()
