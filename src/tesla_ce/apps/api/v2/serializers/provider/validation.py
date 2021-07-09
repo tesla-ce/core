@@ -76,7 +76,7 @@ class ProviderEnrolmentSampleValidationSerializer(serializers.ModelSerializer):
         if validated_data['validation_info'] is not None:
             instance.info.save('{}.validation.{}'.format(instance.sample.data.name, instance.id),
                                ContentFile(json.dumps(validated_data['validation_info']).encode('utf-8')))
-        new_instance =  super().update(instance, validated_data)
+        new_instance = super().update(instance, validated_data)
 
         if 0 < new_instance.status < 4:
             create_validation_summary.apply_async((new_instance.sample.learner.learner_id, new_instance.sample_id,))

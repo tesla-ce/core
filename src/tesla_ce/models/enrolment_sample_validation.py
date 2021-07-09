@@ -57,9 +57,6 @@ class EnrolmentSampleValidation(BaseModel):
                                      on_delete=models.SET_NULL,
                                      help_text=_("Related message code"))
 
-    included = models.BooleanField(null=False, default=False,
-                                   help_text=_("Whether this sample is included in current model"))
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

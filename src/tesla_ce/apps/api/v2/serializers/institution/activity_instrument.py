@@ -35,7 +35,6 @@ class InstitutionCourseActivityInstrumentSerializer(serializers.ModelSerializer)
     options = JSONFormField(allow_null=True, schema='instrument.options_schema', default=None)
     instrument = InstitutionCourseActivityInstrumentInfoSerializer(many=False, read_only=True)
     instrument_id = serializers.IntegerField(allow_null=False, write_only=True)
-    required = serializers.BooleanField(allow_null=True, default=True)
 
     class Meta:
         model = ActivityInstrument

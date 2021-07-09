@@ -45,9 +45,6 @@ class ActivityInstrument(BaseModel):
                                        on_delete=models.CASCADE,
                                        help_text=_('Primary instrument to be used.'))
 
-    required = models.BooleanField(null=False, blank=False,
-                                   help_text="Is instrument required?")
-
     active = models.BooleanField(null=False, blank=False,
                                  help_text="Is instrument active?")
 
@@ -82,9 +79,9 @@ class ActivityInstrument(BaseModel):
 
     def __repr__(self):
         return "<ActivityInstrument(activity_id='%r', instrument_id='%r', " \
-               "is_primary='%r', required='%r', active='%r')>" % (
+               "is_primary='%r', active='%r')>" % (
                    self.activity.id, self.instrument,
-                   self.is_primary, self.required, self.active)
+                   self.is_primary, self.active)
 
     def get_options(self):
         """
