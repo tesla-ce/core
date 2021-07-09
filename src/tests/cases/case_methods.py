@@ -92,7 +92,7 @@ def api_register_providers(global_admin):
 
     # Register a FR provider that use deferred analysis
     fr_desc2 = json.load(open(get_provider_desc_file('fr_amazon'), 'r'))
-    fr_desc2['enabled'] = False
+    fr_desc2['enabled'] = True
     fr_desc2['validation_active'] = True
     if 'instrument' in fr_desc2:
         del fr_desc2['instrument']
@@ -130,7 +130,7 @@ def api_register_providers(global_admin):
 
     # Register a Plagiarism provider with deferred processing
     pt_desc2 = json.load(open(get_provider_desc_file('pt_turkund'), 'r'))
-    pt_desc2['enabled'] = True  # TODO: Enable once deferred instruments are implemented on tests
+    pt_desc2['enabled'] = True
     if 'instrument' in pt_desc2:
         del pt_desc2['instrument']
     pt2_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(plag_inst),
@@ -1000,12 +1000,12 @@ def provider_validate_samples(providers, tasks):
                 samp_status_resp = client.post(
                     '/api/v2/provider/{}/enrolment/{}/sample/{}/validation/{}/status/'.format(
                         provider_id, learner_id, sample_id, validation_id),
-                                              data={"status": 7},  # WAITING_EXTERNAL_SERVICE
+                                              data={"status": 4},  # WAITING_EXTERNAL_SERVICE
                                               format='json'
                                               )
                 assert samp_status_resp.status_code == 200
                 def_validation_result = {
-                    'status': 7,  # WAITING_EXTERNAL_SERVICE
+                    'status': 4,  # WAITING_EXTERNAL_SERVICE
                     'error_message': None,
                     'validation_info': None,
                     'message_code_id': None,
@@ -1013,7 +1013,7 @@ def provider_validate_samples(providers, tasks):
                 }
                 def_result = {
                     'result': def_validation_result,
-                    'status': 7,
+                    'status': 4,
                     'info': {
                         'info_field1': 56,
                         'info_other_field': 'test',
@@ -1218,8 +1218,59 @@ def provider_enrol_learners(providers, tasks):
             model['percentage'] = new_model_data['percentage']
             model['used_samples'] = sample_list
 
+            enrolment_result = {
+                'learner_id': learner_id,
+                'task_id': task_id,
+                'percentage': model['percentage'],
+                'can_analyse': model['can_analyse'],
+                'used_samples': model['used_samples'],
+                'error_message': None
+            }
+
             if deferred:
-                pass
+                def_enrolment_result = {
+                    'status': 6,  # WAITING_EXTERNAL_SERVICE
+                    'learner_id': learner_id,
+                    'task_id': task_id
+                }
+                def_result = {
+                    'result': def_enrolment_result,
+                    'status': 6,
+                    'model': model,
+                    'info': {
+                        'info_field1': 56,
+                        'info_other_field': 'test',
+                        'test_data_for_notification': {
+                            'type': 'enrolment',
+                            'url': '/api/v2/provider/{}/enrolment/{}/'.format(provider_id, learner_id),
+                            'data': enrolment_result,
+                            'model_data': {
+                                'url': model['model_upload_url']['url'],
+                                'data': model['model_upload_url']['fields'],
+                                'file_content': model['model']
+                            }
+                        }
+                    },
+                    'learner_id': learner_id,
+                    'sample_id': sample_id,
+                    'task_id': task_id
+                }
+                # Set the result
+                deferred_enrolment_resp = client.put(def_result['info']['test_data_for_notification']['url'],
+                                                     data=def_result['result'],
+                                                     format='json')
+                assert deferred_enrolment_resp.status_code == 200
+
+                # Send a notification request
+                notification = {
+                    'key': get_random_string(10),
+                    'when': (timezone.now() + timezone.timedelta(seconds=-10)).isoformat(),  # Negative to ensure is due
+                    'info': def_result['info']
+                }
+                send_notification_resp = client.post('/api/v2/provider/{}/notification/'.format(provider_id),
+                                                     data=notification,
+                                                     format='json')
+                assert send_notification_resp.status_code == 201
             else:
                 # Save the model data
                 model_data_save_resp = requests.post(model['model_upload_url']['url'],
@@ -1354,6 +1405,12 @@ def lapi_lerner_perform_activity(assessment_session):
                 )
                 assert data_sent_resp.status_code == 200
                 assert data_sent_resp.data['status'] == 'OK'
+
+            # Learner can refresh the token
+            new_token = auth_utils.refresh_token(session_data['token']['access_token'],
+                                                 session_data['token']['refresh_token'])
+            client = auth_utils.client_with_token_credentials(new_token['access_token'],
+                                                              new_token['refresh_token'])
 
     # Run storage tasks
     with mock.patch('tesla_ce.tasks.requests.verification.verify_request.apply_async', verify_request_test):
@@ -1695,13 +1752,15 @@ def provider_process_notifications(providers, tasks, expected_type):
                                                  )
                     assert put_result_resp.status_code == 200
             elif notification_type == 'enrolment':
-                model_url = notification['info']['test_data_for_notification']['model_url']
-                model = notification['info']['test_data_for_notification']['model']
+                model_url = notification['info']['test_data_for_notification']['model_data']['url']
+                model_data = notification['info']['test_data_for_notification']['model_data']['data']
+                model_file_content = notification['info']['test_data_for_notification']['model_data']['file_content']
+
                 # Save the model data
                 model_data_save_resp = requests.post(model_url,
-                                                     data=model['model_upload_url']['fields'],
+                                                     data=model_data,
                                                      files={
-                                                         'file': io.StringIO(simplejson.dumps(model['model']))
+                                                         'file': io.StringIO(simplejson.dumps(model_file_content))
                                                      }, verify=False)
                 assert model_data_save_resp.status_code == 204
 
@@ -1718,6 +1777,9 @@ def provider_process_notifications(providers, tasks, expected_type):
                                                  format='json'
                                                  )
                     assert put_result_resp.status_code == 200
+
+            # Once processed, remove notification
+            client.delete('/api/v2/provider/{}/notification/{}/'.format(provider_id, notification_id))
 
     return pending_tasks
 

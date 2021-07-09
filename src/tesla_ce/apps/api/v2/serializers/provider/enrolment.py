@@ -34,7 +34,7 @@ class ProviderEnrolmentSerializer(serializers.ModelSerializer):
     percentage = serializers.FloatField(required=False, allow_null=None, default=0)
     can_analyse = serializers.BooleanField(required=False, allow_null=None, default=False)
     model_total_samples = serializers.IntegerField(read_only=True)
-    used_samples = serializers.ListField(write_only=True, required=False, default=[],
+    used_samples = serializers.ListField(write_only=True, allow_null=True, allow_empty=True, required=False, default=[],
                                          child=serializers.IntegerField())
 
     class Meta:
