@@ -25,14 +25,13 @@ from tesla_ce.models import Activity
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionCourseActivityViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+class InstitutionCourseActivityViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows activity in a course to be viewed or edited.
     """
     model = Activity
     serializer_class = InstitutionCourseActivitySerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    queryset = Activity.objects
     permission_classes = [
         permissions.GlobalAdminReadOnlyPermission |
         permissions.InstitutionAdminPermission |
@@ -42,3 +41,7 @@ class InstitutionCourseActivityViewSet(NestedViewSetMixin, viewsets.ModelViewSet
     # filterset_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']
     # search_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']
 
+    def get_queryset(self):
+        queryset = self.filter_queryset_by_parents_lookups(Activity.objects)
+
+        return queryset

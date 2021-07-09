@@ -27,7 +27,7 @@ from .institution import InstitutionViewSet
 from .instructor import InstitutionInstructorViewSet
 from .instrument import InstitutionInstrumentViewSet
 from .learner import InstitutionLearnerViewSet
-from .request import InstitutionCourseActivityLearnerRequestViewSet
+from .request import InstitutionCourseActivityReportRequestViewSet
 from .send_category import InstitutionSENDCategoryViewSet
 from .send_learner import InstitutionSENDLearnerViewSet
 from .ui_option import InstitutionUIOptionViewSet
@@ -43,7 +43,7 @@ __all__ = [
     "InstitutionCourseGroupViewSet",
     "InstitutionCourseGroupCourseViewSet",
     "InstitutionLearnerViewSet",
-    "InstitutionCourseActivityLearnerRequestViewSet",
+    "InstitutionCourseActivityReportRequestViewSet",
     "InstitutionCourseLearnerViewSet",
     "InstitutionCourseInstructorViewSet",
     "InstitutionInstructorViewSet",

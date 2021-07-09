@@ -280,9 +280,9 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
 
     # The learner perform the activity, sending information from sensors using the LAPI
     provider_verification_tasks = []
-    tasks, activity_doc1 = case_methods.lapi_lerner_perform_activity(assessment_session1)
+    tasks, activity_doc1 = case_methods.lapi_learner_perform_activity(assessment_session1)
     provider_verification_tasks += tasks
-    tasks, activity_doc2 = case_methods.lapi_lerner_perform_activity(assessment_session2)
+    tasks, activity_doc2 = case_methods.lapi_learner_perform_activity(assessment_session2)
     provider_verification_tasks += tasks
 
     # VLE send the activity
@@ -315,6 +315,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         else:
             inst_ref = 1
         assert len(report['detail']) == 2
+        assert len(report['detailed_report']['requests']) == (10 + 1)  # 10 from ks or fr and 1 for plagiarism
         if report['detail'][0]['instrument_id'] == 5:
             assert report['detail'][0]['identity_level'] == 1
             assert report['detail'][0]['content_level'] == 2

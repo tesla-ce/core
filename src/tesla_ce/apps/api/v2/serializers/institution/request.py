@@ -19,16 +19,16 @@ from tesla_ce.models import Request
 from tesla_ce.models import RequestResult
 
 
-class InstitutionCourseActivityLearnerRequestResultSerializer(serializers.ModelSerializer):
+class InstitutionCourseActivityReportRequestResultSerializer(serializers.ModelSerializer):
     """ Request result model serializer """
     class Meta:
         model = RequestResult
         fields = "__all__"
 
 
-class InstitutionCourseActivityLearnerRequestSerializer(serializers.ModelSerializer):
+class InstitutionCourseActivityReportRequestSerializer(serializers.ModelSerializer):
     """ Learner Request serializer model """
-    result = InstitutionCourseActivityLearnerRequestResultSerializer(source="requestresult_set", many=True)
+    result = InstitutionCourseActivityReportRequestResultSerializer(source="requestresult_set", many=True)
 
     class Meta:
         model = Request

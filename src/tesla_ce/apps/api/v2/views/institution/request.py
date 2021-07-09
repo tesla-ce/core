@@ -20,16 +20,17 @@ from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce.apps.api import permissions
-from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivityLearnerRequestSerializer
+from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivityReportRequestSerializer
 from tesla_ce.models import Request
+from tesla_ce.models import ReportActivity
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionCourseActivityLearnerRequestViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+class InstitutionCourseActivityReportRequestViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows activity to be viewed or edited.
     """
-    serializer_class = InstitutionCourseActivityLearnerRequestSerializer
+    serializer_class = InstitutionCourseActivityReportRequestSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     permission_classes = [
         permissions.GlobalAdminReadOnlyPermission |
@@ -41,7 +42,7 @@ class InstitutionCourseActivityLearnerRequestViewSet(NestedViewSetMixin, viewset
     search_fields = ['instruments']
 
     def get_queryset(self):
-        queryset = self.filter_queryset_by_parents_lookups(Request.objects)
-
-        return queryset.all().order_by('-id')
+        report = self.filter_queryset_by_parents_lookups(ReportActivity.objects).get()
+        queryset = Request.objects.filter(activity=report.activity, learner=report.learner)
+        return queryset.all().order_by('session_id', 'id')
 
