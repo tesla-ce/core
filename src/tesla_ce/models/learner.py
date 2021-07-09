@@ -79,7 +79,7 @@ def get_learner_enrolment(learner_id):
     # Compute enrolment estimation from pending enrolment samples
     pending_contribution = learner.enrolmentsample_set.filter(
         enrolmentsamplevalidation__status=1,
-        enrolmentsamplevalidation__included=False
+        models__isnull=True
     ).values(
         provider_id=models.F("enrolmentsamplevalidation__provider"),
         instrument_id=models.F("enrolmentsamplevalidation__provider__instrument_id"),

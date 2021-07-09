@@ -249,7 +249,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert len(l1_enrolment_end) == 1
     assert l1_enrolment_end[0]['instrument_id'] == providers['ks']['instrument']['id']
     assert len(l1_enrolment_end[0]['not_validated']) == 0
-    # assert len(l1_enrolment_end[0]['pending']) == 0  # TODO: Issue 30
+    assert len(l1_enrolment_end[0]['pending']) == 0
     assert abs(1.0 - float(l1_enrolment_end[0]['percentage__min'])) < 0.0001
     assert abs(1.0 - float(l1_enrolment_end[0]['percentage__max'])) < 0.0001
     assert l1_enrolment_end[0]['can_analyse__min']
@@ -260,7 +260,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert len(l2_enrolment_end) == 1
     assert l2_enrolment_end[0]['instrument_id'] == providers['fr']['instrument']['id']
     assert len(l2_enrolment_end[0]['not_validated']) == 0
-    # assert len(l2_enrolment_end[0]['pending']) == 0  # TODO: Issue 30
+    assert len(l2_enrolment_end[0]['pending']) == 0
     assert abs(1.0 - float(l2_enrolment_end[0]['percentage__min'])) < 0.0001
     assert abs(1.0 - float(l2_enrolment_end[0]['percentage__max'])) < 0.0001
     assert l2_enrolment_end[0]['can_analyse__min']
