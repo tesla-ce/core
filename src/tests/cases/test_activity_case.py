@@ -342,7 +342,3 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # Learner accepts new IC
 
     # Learner IC status is valid again
-
-    # Add a 2nd provider with deferred process for one of the used instruments
-
-

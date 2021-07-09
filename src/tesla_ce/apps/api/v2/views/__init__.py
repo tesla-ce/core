@@ -29,6 +29,9 @@ from .institution import InstitutionInformedConsentViewSet
 from .institution import InstitutionInstructorViewSet
 from .institution import InstitutionInstrumentViewSet
 from .institution import InstitutionLearnerViewSet
+from .institution import InstitutionCourseLearnerViewSet
+from .institution import InstitutionCourseInstructorViewSet
+from .institution import InstitutionCourseActivityLearnerRequestViewSet
 from .institution import InstitutionSENDCategoryViewSet
 from .institution import InstitutionSENDLearnerViewSet
 from .institution import InstitutionUIOptionViewSet
@@ -79,6 +82,9 @@ __all__ = [
     "InstitutionCourseActivityReportViewSet",
     "InstitutionCourseActivityInstrumentViewSet",
     "InstitutionLearnerViewSet",
+    "InstitutionCourseLearnerViewSet",
+    "InstitutionCourseInstructorViewSet",
+    "InstitutionCourseActivityLearnerRequestViewSet",
     "InstitutionInstructorViewSet",
     "InstitutionInformedConsentViewSet",
     "InstitutionInformedConsentDocumentViewSet",

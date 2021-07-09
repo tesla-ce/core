@@ -12,7 +12,7 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Institution Instructor views module """
+""" Request views module """
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
@@ -20,35 +20,28 @@ from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce.apps.api import permissions
-from tesla_ce.apps.api.v2.serializers import InstitutionInstructorSerializer
-from tesla_ce.models import Instructor
+from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivityLearnerRequestSerializer
+from tesla_ce.models import Request
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionInstructorViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+class InstitutionCourseActivityLearnerRequestViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint that allows instructors to be viewed or edited.
+    API endpoint that allows activity to be viewed or edited.
     """
-    model = Instructor
-    serializer_class = InstitutionInstructorSerializer
+    serializer_class = InstitutionCourseActivityLearnerRequestSerializer
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     permission_classes = [
         permissions.GlobalAdminReadOnlyPermission |
-        permissions.InstitutionAdminPermission |
-        permissions.InstitutionLegalAdminReadOnlyPermission |
-        permissions.InstitutionDataAdminReadOnlyPermission |
-        permissions.InstitutionLearnerReadOnlyPermission
+        permissions.InstitutionAdminReadOnlyPermission |
+        permissions.InstitutionLearnerReadOnlyPermission |
+        permissions.InstitutionCourseInstructorReadOnlyPermission
     ]
-
-    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    '''
-    filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    '''
+    filterset_fields = ['instruments']
+    search_fields = ['instruments']
 
     def get_queryset(self):
-        queryset = Instructor.objects
-        if 'parent_lookup_institution_id' in self.kwargs:
-            queryset = queryset.filter(
-                institution_id=self.kwargs['parent_lookup_institution_id']
-            )
-        return queryset.all().order_by('id')
+        queryset = self.filter_queryset_by_parents_lookups(Request.objects)
+
+        return queryset.all().order_by('-id')
+

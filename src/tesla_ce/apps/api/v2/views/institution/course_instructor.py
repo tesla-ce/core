@@ -20,35 +20,33 @@ from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce.apps.api import permissions
-from tesla_ce.apps.api.v2.serializers import InstitutionInstructorSerializer
+from tesla_ce.apps.api.v2.serializers import InstitutionCourseInstructorSerializer
 from tesla_ce.models import Instructor
+from tesla_ce.models import Course
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionInstructorViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+class InstitutionCourseInstructorViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows instructors to be viewed or edited.
     """
     model = Instructor
-    serializer_class = InstitutionInstructorSerializer
+    serializer_class = InstitutionCourseInstructorSerializer
     permission_classes = [
         permissions.GlobalAdminReadOnlyPermission |
         permissions.InstitutionAdminPermission |
         permissions.InstitutionLegalAdminReadOnlyPermission |
         permissions.InstitutionDataAdminReadOnlyPermission |
-        permissions.InstitutionLearnerReadOnlyPermission
+        permissions.InstitutionCourseLearnerReadOnlyPermission |
+        permissions.InstitutionCourseInstructorPermission
     ]
 
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    '''
-    filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    '''
+    filterset_fields = ['uid', 'first_name', 'last_name', 'email']
+    search_fields = ['uid', 'first_name', 'last_name', 'email']
+
 
     def get_queryset(self):
-        queryset = Instructor.objects
-        if 'parent_lookup_institution_id' in self.kwargs:
-            queryset = queryset.filter(
-                institution_id=self.kwargs['parent_lookup_institution_id']
-            )
+        queryset = self.filter_queryset_by_parents_lookups(Course.objects)
+        queryset = queryset.get().instructors
         return queryset.all().order_by('id')
