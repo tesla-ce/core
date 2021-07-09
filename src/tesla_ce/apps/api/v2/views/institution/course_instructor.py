@@ -12,7 +12,7 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
-""" Course views module """
+""" Institution Instructor views module """
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
@@ -20,28 +20,33 @@ from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce.apps.api import permissions
-from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivitySerializer
-from tesla_ce.models import Activity
+from tesla_ce.apps.api.v2.serializers import InstitutionCourseInstructorSerializer
+from tesla_ce.models import Instructor
+from tesla_ce.models import Course
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionCourseActivityViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+class InstitutionCourseInstructorViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
-    API endpoint that allows activity in a course to be viewed or edited.
+    API endpoint that allows instructors to be viewed or edited.
     """
-    model = Activity
-    serializer_class = InstitutionCourseActivitySerializer
-    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    model = Instructor
+    serializer_class = InstitutionCourseInstructorSerializer
     permission_classes = [
         permissions.GlobalAdminReadOnlyPermission |
         permissions.InstitutionAdminPermission |
-        permissions.InstitutionCourseInstructorPermission |
-        permissions.InstitutionCourseLearnerReadOnlyPermission
+        permissions.InstitutionLegalAdminReadOnlyPermission |
+        permissions.InstitutionDataAdminReadOnlyPermission |
+        permissions.InstitutionCourseLearnerReadOnlyPermission |
+        permissions.InstitutionCourseInstructorPermission
     ]
-    # filterset_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']
-    # search_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']
+
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['uid', 'first_name', 'last_name', 'email']
+    search_fields = ['uid', 'first_name', 'last_name', 'email']
+
 
     def get_queryset(self):
-        queryset = self.filter_queryset_by_parents_lookups(Activity.objects)
-
-        return queryset
+        queryset = self.filter_queryset_by_parents_lookups(Course.objects)
+        queryset = queryset.get().instructors
+        return queryset.all().order_by('id')

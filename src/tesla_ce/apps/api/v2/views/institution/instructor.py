@@ -25,7 +25,7 @@ from tesla_ce.models import Instructor
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionInstructorViewSet(viewsets.ModelViewSet, NestedViewSetMixin):
+class InstitutionInstructorViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows instructors to be viewed or edited.
     """

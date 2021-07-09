@@ -1329,7 +1329,7 @@ def get_data_object_from_session(assessment_session):
     return injected_data_resp.json()
 
 
-def lapi_lerner_perform_activity(assessment_session):
+def lapi_learner_perform_activity(assessment_session):
     """
         The learner perform the activity, sending information from sensors using the LAPI
         :param assessment_session: Assessment session object
@@ -1390,21 +1390,21 @@ def lapi_lerner_perform_activity(assessment_session):
                     'content': get_random_string(2048),
                     'mimetype': 'activity/mimetype'
                 }
-                continue
-            sensor_data['instruments'] = sensors[sensor]
-            sensor_data['metadata']['mimetype'] = '{}/mimetype'.format(sensor)
-            # Send samples
-            for capture_id in range(10):
-                sensor_data['data'] = get_random_string(50)
-                sensor_data['metadata']['created_at'] = timezone.now()
-                sensor_data['metadata']['context']['sequence'] = capture_id
-                data_sent_resp = client.post(
-                    '/lapi/v1/verification/{}/{}/'.format(institution_id, learner_id),
-                    data=sensor_data,
-                    format='json'
-                )
-                assert data_sent_resp.status_code == 200
-                assert data_sent_resp.data['status'] == 'OK'
+            else:
+                sensor_data['instruments'] = sensors[sensor]
+                sensor_data['metadata']['mimetype'] = '{}/mimetype'.format(sensor)
+                # Send samples
+                for capture_id in range(10):
+                    sensor_data['data'] = get_random_string(50)
+                    sensor_data['metadata']['created_at'] = timezone.now()
+                    sensor_data['metadata']['context']['sequence'] = capture_id
+                    data_sent_resp = client.post(
+                        '/lapi/v1/verification/{}/{}/'.format(institution_id, learner_id),
+                        data=sensor_data,
+                        format='json'
+                    )
+                    assert data_sent_resp.status_code == 200
+                    assert data_sent_resp.data['status'] == 'OK'
 
             # Learner can refresh the token
             new_token = auth_utils.refresh_token(session_data['token']['access_token'],
@@ -1867,5 +1867,22 @@ def api_instructor_report(launcher, activity):
         ))
         assert reports_detail_resp.status_code == 200
         report['detailed_report'] = reports_detail_resp.data
+
+        request_list = []
+        final = False
+        while not final:
+            report_requests = client.get(
+                '/api/v2/institution/{}/course/{}/activity/{}/report/{}/request/?offset={}'.format(
+                    institution_id,
+                    course_id,
+                    activity_id,
+                    report['id'],
+                    len(request_list)
+            ))
+            assert report_requests.status_code == 200
+            request_list += report_requests.data['results']
+            if len(request_list) >= report_requests.data['count']:
+                final = True
+        report['detailed_report']['requests'] = request_list
 
     return reports

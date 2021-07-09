@@ -36,6 +36,9 @@ from .institution import InstitutionLearnerSerializer
 from .institution import InstitutionSENDCategorySerializer
 from .institution import InstitutionSENDLearnerSerializer
 from .institution import InstitutionSerializer
+from .institution import InstitutionCourseActivityReportRequestSerializer
+from .institution import InstitutionCourseLearnerSerializer
+from .institution import InstitutionCourseInstructorSerializer
 from .institution import InstitutionUIOptionSerializer
 from .institution import InstitutionUserSerializer
 from .institution import InstitutionVLESerializer
@@ -95,7 +98,10 @@ __all__ = [
     "InstitutionCourseSerializer",
     "InstitutionCourseGroupSerializer",
     "InstitutionCourseGroupCourseSerializer",
+    "InstitutionCourseLearnerSerializer",
+    "InstitutionCourseInstructorSerializer",
     "InstitutionLearnerSerializer",
+    "InstitutionCourseActivityReportRequestSerializer",
     "InstitutionInstructorSerializer",
     "InstitutionLearnerDetailSerializer",
     "InstitutionLearnerICBodySerializer",

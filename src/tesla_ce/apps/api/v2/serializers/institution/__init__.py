@@ -21,6 +21,8 @@ from .activity_report import InstitutionCourseActivityReportSerializer
 from .course import InstitutionCourseSerializer
 from .course_group import InstitutionCourseGroupCourseSerializer
 from .course_group import InstitutionCourseGroupSerializer
+from .course_learner import InstitutionCourseLearnerSerializer
+from .course_instructor import InstitutionCourseInstructorSerializer
 from .informed_consent import InstitutionInformedConsentSerializer
 from .informed_consent_document import InstitutionInformedConsentDocumentSerializer
 from .institution import InstitutionSerializer
@@ -28,6 +30,7 @@ from .instructor import InstitutionInstructorSerializer
 from .learner import InstitutionLearnerDetailSerializer
 from .learner import InstitutionLearnerICBodySerializer
 from .learner import InstitutionLearnerSerializer
+from .request import InstitutionCourseActivityReportRequestSerializer
 from .send_category import InstitutionSENDCategorySerializer
 from .send_learner import InstitutionSENDLearnerSerializer
 from .ui_option import InstitutionUIOptionSerializer
@@ -45,7 +48,10 @@ __all__ = [
     "InstitutionCourseActivityInstrumentSerializer",
     "InstitutionCourseGroupSerializer",
     "InstitutionCourseGroupCourseSerializer",
+    "InstitutionCourseLearnerSerializer",
     "InstitutionLearnerSerializer",
+    "InstitutionCourseInstructorSerializer",
+    "InstitutionCourseActivityReportRequestSerializer",
     "InstitutionLearnerDetailSerializer",
     "InstitutionInstructorSerializer",
     "InstitutionInformedConsentSerializer",

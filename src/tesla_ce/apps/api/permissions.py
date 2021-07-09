@@ -18,6 +18,7 @@ from rest_framework import permissions
 from tesla_ce.models import InstitutionUser
 from tesla_ce.models import User
 from tesla_ce.models import AuthenticatedModule
+from tesla_ce.models import Course
 
 
 class GlobalAdminPermission(permissions.BasePermission):
@@ -185,6 +186,98 @@ class InstitutionLearnerPermission(InstitutionMemberPermission):
 
 
 class InstitutionLearnerReadOnlyPermission(InstitutionLearnerPermission):
+    """
+        An institution learner accessing his/her information in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
+class InstitutionCourseInstructorPermission(InstitutionMemberPermission):
+    """
+        An institution instructor accessing his/her course information
+    """
+    def _get_course(self, request):
+        """ Get the course that is accessed """
+        institution = super()._get_user_institution(request)
+        if institution is None:
+            return None
+        url_pattern = '/api/{}/institution/{}/course/'.format(request.version, institution.id)
+        if request.path.startswith(url_pattern):
+            course_part = request.path.split(url_pattern)
+            if len(course_part) != 2:
+                return None
+            course_id_str = course_part[1].split('/')[0]
+            try:
+                course_id = int(course_id_str)
+                return Course.objects.filter(vle__institution=institution).get(id=course_id)
+            except TypeError:
+                return None
+            except Course.DoesNotExist:
+                return None
+        return None
+
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            course = self._get_course(request)
+            if course is None:
+                return False
+            try:
+                return course.instructors.filter(id=request.user.id).count() == 1
+            except Exception:
+                return False
+        return False
+
+
+class InstitutionCourseInstructorReadOnlyPermission(InstitutionCourseInstructorPermission):
+    """
+        An institution instructor accessing his/her course information in read only mode
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return super().has_permission(request, view)
+        return False
+
+
+class InstitutionCourseLearnerPermission(InstitutionMemberPermission):
+    """
+        An institution learner accessing his/her course information
+    """
+    def _get_course(self, request):
+        """ Get the course that is accessed """
+        institution = super()._get_user_institution(request)
+        if institution is None:
+            return None
+        url_pattern = '/api/{}/institution/{}/course/'.format(request.version, institution.id)
+        if request.path.startswith(url_pattern):
+            course_part = request.path.split(url_pattern)
+            if len(course_part) != 2:
+                return None
+            course_id_str = course_part[1].split('/')[0]
+            try:
+                course_id = int(course_id_str)
+                return Course.objects.filter(vle__institution=institution).get(id=course_id)
+            except TypeError:
+                return None
+            except Course.DoesNotExist:
+                return None
+        return None
+
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            course = self._get_course(request)
+            if course is None:
+                return False
+            try:
+                return course.learners.filter(id=request.user.id).count() == 1
+            except Exception:
+                return False
+        return False
+
+
+class InstitutionCourseLearnerReadOnlyPermission(InstitutionCourseLearnerPermission):
     """
         An institution learner accessing his/her information in read only mode
     """

@@ -144,6 +144,22 @@ institution_course_router = institution_router.register(r'course',
                                                         parents_query_lookups=['vle__institution_id']
                                                         )
 
+institution_course_learner_router = institution_course_router.register(r'learner',
+                                                                       views.InstitutionCourseLearnerViewSet,
+                                                                       basename='institution-course-learner',
+                                                                       parents_query_lookups=[
+                                                                           'vle__institution_id',
+                                                                           'id'
+                                                                       ])
+
+institution_course_instructor_router = institution_course_router.register(r'instructor',
+                                                                          views.InstitutionCourseInstructorViewSet,
+                                                                          basename='institution-course-instructor',
+                                                                          parents_query_lookups=[
+                                                                              'vle__institution_id',
+                                                                              'id'
+                                                                          ])
+
 institution_course_activity_router = institution_course_router.register(r'activity',
                                                                         views.InstitutionCourseActivityViewSet,
                                                                         basename='institution-course-activity',
@@ -167,6 +183,16 @@ institution_course_activity_report_router = institution_course_activity_router.r
     parents_query_lookups=['activity__vle__institution_id',
                            'activity__course_id',
                            'activity_id']
+)
+
+institution_course_activity_report_requests_router = institution_course_activity_report_router.register(
+    r'request',
+    views.InstitutionCourseActivityReportRequestViewSet,
+    basename='institution-course-activity-report-request',
+    parents_query_lookups=['activity__vle__institution_id',
+                           'activity__course_id',
+                           'activity_id',
+                           'id']
 )
 
 # VLE router
