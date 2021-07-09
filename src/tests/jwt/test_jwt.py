@@ -18,10 +18,9 @@ from tesla_ce.lib import TeslaVaultException
 
 
 @pytest.mark.django_db
-def test_create_learner_token(api_client, lapi_client, dashboards_client, institution_course_test_case):
+def test_create_learner_token(api_client, lapi_client, institution_course_test_case):
     assert api_client is not None
     assert lapi_client is not None
-    assert dashboards_client is not None
 
     learner = institution_course_test_case['learner']
     if learner is None:
@@ -48,12 +47,6 @@ def test_create_learner_token(api_client, lapi_client, dashboards_client, instit
     assert isinstance(validation_lapi, dict)
     assert validation_lapi['group'] == 'learners'
 
-    # Check that this token is valid for Dashboards
-    validation_dash = dashboards_client.validate_token(token['access_token'])
-    assert validation_dash is not None
-    assert isinstance(validation_dash, dict)
-    assert validation_dash['group'] == 'learners'
-
     # Ensure that lapi cannot create learner tokens
     try:
         lapi_client.get_learner_token_pair(learner, scope='/api/*')
@@ -61,19 +54,11 @@ def test_create_learner_token(api_client, lapi_client, dashboards_client, instit
     except TeslaVaultException:
         pass
 
-    # Ensure that dashboards cannot create learner tokens
-    try:
-        dashboards_client.get_learner_token_pair(learner, scope='/api/*')
-        pytest.fail('Dashboards Module is able to generate learner tokens')
-    except TeslaVaultException:
-        pass
-
 
 @pytest.mark.django_db
-def test_create_instructor_token(api_client, lapi_client, dashboards_client, institution_course_test_case):
+def test_create_instructor_token(api_client, lapi_client, institution_course_test_case):
     assert api_client is not None
     assert lapi_client is not None
-    assert dashboards_client is not None
 
     instructor = institution_course_test_case['instructor']
     if instructor is None:
@@ -95,12 +80,6 @@ def test_create_instructor_token(api_client, lapi_client, dashboards_client, ins
     assert isinstance(validation_api, dict)
     assert validation_api['group'] == 'instructors'
 
-    # Check that this token is valid for Dashboards
-    validation_dash = dashboards_client.validate_token(token)
-    assert validation_dash is not None
-    assert isinstance(validation_dash, dict)
-    assert validation_dash['group'] == 'instructors'
-
     # Ensure that lapi cannot create instructor tokens
     try:
         lapi_client.get_instructor_token(instructor.email, scope)
@@ -108,19 +87,11 @@ def test_create_instructor_token(api_client, lapi_client, dashboards_client, ins
     except TeslaVaultException:
         pass
 
-    # Ensure that dashboards cannot create instructor tokens
-    try:
-        dashboards_client.get_instructor_token(instructor.email, scope)
-        pytest.fail('Dashboards Module is able to generate instructor tokens')
-    except TeslaVaultException:
-        pass
-
 
 @pytest.mark.django_db
-def test_create_user_token(api_client, lapi_client, dashboards_client, institution_test_case):
+def test_create_user_token(api_client, lapi_client, institution_test_case):
     assert api_client is not None
     assert lapi_client is not None
-    assert dashboards_client is not None
 
     user = institution_test_case['user'].institutionuser
     if user is None:
@@ -140,12 +111,6 @@ def test_create_user_token(api_client, lapi_client, dashboards_client, instituti
     assert isinstance(validation_api, dict)
     assert validation_api['group'] == 'users'
 
-    # Check that this token is valid for Dashboards
-    validation_dash = dashboards_client.validate_token(token['access_token'])
-    assert validation_dash is not None
-    assert isinstance(validation_dash, dict)
-    assert validation_dash['group'] == 'users'
-
     # Ensure that lapi cannot create users tokens
     try:
         lapi_client.get_user_token_pair(user=user, scope=scope)
@@ -153,19 +118,11 @@ def test_create_user_token(api_client, lapi_client, dashboards_client, instituti
     except TeslaVaultException:
         pass
 
-    # Ensure that dashboards cannot create user tokens
-    try:
-        dashboards_client.get_user_token_pair(user=user, scope=scope)
-        pytest.fail('Dashboards Module is able to generate user tokens')
-    except TeslaVaultException:
-        pass
-
 
 @pytest.mark.django_db
-def test_create_module_token(api_client, lapi_client, dashboards_client):
+def test_create_module_token(api_client, lapi_client):
     assert api_client is not None
     assert lapi_client is not None
-    assert dashboards_client is not None
 
     scope = {
     }
@@ -188,12 +145,6 @@ def test_create_module_token(api_client, lapi_client, dashboards_client):
     except TeslaVaultException:
         pass
 
-    try:
-        dashboards_client.get_module_token(scope)
-        pytest.fail('Dashboards Module is able to generate module tokens')
-    except TeslaVaultException:
-        pass
-
     # Generate the token for LAPI
     lapi_token = api_client.get_module_token(scope, module_id='lapi')
 
@@ -210,21 +161,3 @@ def test_create_module_token(api_client, lapi_client, dashboards_client):
     assert isinstance(validation_lapi, dict)
     assert validation_lapi['group'].startswith('module_')
     assert validation_lapi['sub'] == 'lapi'
-
-    # Generate the token for Dashboards
-    dash_token = api_client.get_module_token(scope, module_id="dashboards")
-    assert dash_token is not None
-
-    # Check that this token is valid for API
-    validation_dash = api_client.validate_token(dash_token)
-    assert validation_dash is not None
-    assert isinstance(validation_dash, dict)
-    assert validation_dash['group'].startswith('module_')
-    assert validation_dash['sub'] == 'dashboards'
-
-    # Check that this token is valid for Dashboards
-    validation_dash = dashboards_client.validate_token(dash_token)
-    assert validation_dash is not None
-    assert isinstance(validation_dash, dict)
-    assert validation_dash['group'].startswith('module_')
-    assert validation_dash['sub'] == 'dashboards'

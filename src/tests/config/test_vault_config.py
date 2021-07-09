@@ -26,9 +26,3 @@ def test_module_configuration_api(api_client):
 def test_module_configuration_lapi(lapi_client):
     conf = lapi_client.config.get_module_config()
     assert conf is not None
-
-
-@pytest.mark.django_db
-def test_module_configuration_dashboards(dashboards_client):
-    conf = dashboards_client.config.get_module_config()
-    assert conf is not None

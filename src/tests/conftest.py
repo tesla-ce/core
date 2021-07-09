@@ -144,11 +144,6 @@ def lapi_client(admin_client):
 
 
 @pytest.fixture
-def dashboards_client(admin_client):
-    return create_module_client(admin_client, 'dashboards')
-
-
-@pytest.fixture
 def rest_api_client(admin_client, monkeypatch):
     from rest_framework.test import APIClient
     client = APIClient()
