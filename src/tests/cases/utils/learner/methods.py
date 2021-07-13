@@ -21,6 +21,12 @@ from django.utils import timezone
 from tests import auth_utils
 from tests.conftest import get_random_string
 
+# List of submitted samples
+samples_list = {}
+
+# List of submitted requests
+requests_list = {}
+
 
 def api_learner_accept_ic(launcher):
     """
@@ -161,6 +167,9 @@ def api_lapi_perform_enrolment(launcher, instruments):
                 )
                 assert data_sent_resp.status_code == 200
                 assert data_sent_resp.data['status'] == 'OK'
+                if learn_id not in samples_list:
+                    samples_list[learn_id] = []
+                samples_list[learn_id].append(data_sent_resp.data['path'])
 
     # Run storage tasks
     with mock.patch('tesla_ce.tasks.requests.enrolment.validate_request.apply_async', validate_request_test):
@@ -178,6 +187,54 @@ def api_lapi_perform_enrolment(launcher, instruments):
 
     # Return pending provider validation tasks
     return pending_provider_tasks_validation
+
+
+def lapi_check_requests_status(launcher, expected_status):
+    """
+        The learner check the status of sent requests using LAPI
+        :param launcher: Learner launcher object
+        :param expected_status: The expected status for requests
+    """
+    lapi_check_sample_status(launcher, expected_status, requests_list)
+
+
+def lapi_check_sample_status(launcher, expected_status, input_list=None):
+    """
+        The learner check the status of sent samples using LAPI
+        :param launcher: Learner launcher object
+        :param expected_status: The expected status for samples
+        :param input_list: List of samples to check
+    """
+    if isinstance(expected_status, str):
+        expected_status = [expected_status]
+
+    if input_list is None:
+        input_list = samples_list
+
+    # Authenticate with learner launcher credentials
+    client = auth_utils.client_with_launcher_credentials(launcher)
+
+    # Get the user profile
+    profile = auth_utils.get_profile(client)
+    assert "LEARNER" in profile['roles']
+
+    # Get learner data (it is injected with the JS script)
+    inst_id = profile['institution']['id']
+    learner_data_resp = client.get('/api/v2/institution/{}/learner/{}/'.format(inst_id, profile['id']))
+    assert learner_data_resp.status_code == 200
+    learn_id = learner_data_resp.data['learner_id']
+
+    # Check that this learner have sent data
+    assert learn_id in input_list
+    status_resp = client.post('/lapi/v1/status/{}/{}/'.format(inst_id, learn_id),
+                              data={
+                                  'samples': input_list[learn_id],
+                                  'learner_id': learn_id,
+                              }, format='json')
+    assert status_resp.status_code == 200
+    assert len(input_list[learn_id]) == len(status_resp.data)
+    for stat in status_resp.data:
+        assert stat['status'] in expected_status
 
 
 def get_data_object_from_session(assessment_session):
@@ -292,6 +349,9 @@ def lapi_learner_perform_activity(assessment_session):
                     )
                     assert data_sent_resp.status_code == 200
                     assert data_sent_resp.data['status'] == 'OK'
+                    if learner_id not in requests_list:
+                        requests_list[learner_id] = []
+                    requests_list[learner_id].append(data_sent_resp.data['path'])
 
             # Learner can refresh the token
             new_token = auth_utils.refresh_token(session_data['token']['access_token'],

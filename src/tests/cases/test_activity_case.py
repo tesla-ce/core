@@ -145,6 +145,14 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     )
 
     # The VLE creates a launcher for the learners to check enrolments
+    launcher_stats1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_stats2 = utils.vle.vle_create_launcher(vle, learners[1])
+
+    # The learner check the status of sent enrolment samples
+    utils.learner.lapi_check_sample_status(launcher_stats1, 'PENDING')
+    utils.learner.lapi_check_sample_status(launcher_stats2, 'PENDING')
+
+    # The VLE creates a launcher for the learners to check enrolments
     launcher_enrol_pre_val1 = utils.vle.vle_create_launcher(vle, learners[0])
     launcher_enrol_pre_val2 = utils.vle.vle_create_launcher(vle, learners[1])
 
@@ -227,6 +235,14 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # Worker compute validation summary from individual validations
     enrolment_tasks = utils.worker.worker_validation_summary(validation_summary_tasks)
 
+    # The VLE creates a launcher for the learners to check the status of their enrolment samples
+    launcher_stats1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_stats2 = utils.vle.vle_create_launcher(vle, learners[1])
+
+    # The learner check the status of sent enrolment samples
+    utils.learner.lapi_check_sample_status(launcher_stats1, ['VALID', 'ERROR'])
+    utils.learner.lapi_check_sample_status(launcher_stats2, ['VALID', 'ERROR'])
+
     # Worker distribute enrolment tasks among providers
     provider_enrolment_tasks = utils.worker.worker_enrol_learner(enrolment_tasks)
 
@@ -288,6 +304,14 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # VLE send the activity
     provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session1, activity_doc1)
     provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session2, activity_doc2)
+
+    # The VLE creates a launcher for the learners to check the status of their requests
+    launcher_stats1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_stats2 = utils.vle.vle_create_launcher(vle, learners[1])
+
+    # The learner check the status of sent requests
+    utils.learner.lapi_check_requests_status(launcher_stats1, 'VALID')
+    utils.learner.lapi_check_requests_status(launcher_stats2, 'VALID')
 
     # Provider perform verification process on data collected during the activity
     reporting_tasks = utils.provider.provider_verify_request(providers, provider_verification_tasks)
