@@ -15,7 +15,6 @@
 """ TeSLA CE Activity use case test """
 import pytest
 
-from . import case_methods
 from . import utils
 
 from tesla_ce.models.learner import get_missing_enrolment
