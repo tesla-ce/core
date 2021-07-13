@@ -15,9 +15,9 @@
 """ TeSLA CE Activity use case test """
 import pytest
 
-from . import utils
-
 from tesla_ce.models.learner import get_missing_enrolment
+
+from . import utils
 
 
 @pytest.mark.django_db(transaction=False)
@@ -286,8 +286,8 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     provider_verification_tasks += tasks
 
     # VLE send the activity
-    provider_verification_tasks += case_methods.vle_send_activity(vle, assessment_session1, activity_doc1)
-    provider_verification_tasks += case_methods.vle_send_activity(vle, assessment_session2, activity_doc2)
+    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session1, activity_doc1)
+    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session2, activity_doc2)
 
     # Provider perform verification process on data collected during the activity
     reporting_tasks = utils.provider.provider_verify_request(providers, provider_verification_tasks)
