@@ -82,11 +82,12 @@ def api_configure_activity(launcher, activity, providers):
     assert inst_list_response.data['count'] == 3
 
 
-def api_instructor_report(launcher, activity):
+def api_instructor_report(launcher, activity, filters=None):
     """
         Instructor review the results for the activity
         :param launcher: Instructor launcher object
         :param activity: Activity object
+        :param filters: Filter reports
     """
     # Authenticate with instructor launcher credentials
     client = auth_utils.client_with_launcher_credentials(launcher)
@@ -100,8 +101,13 @@ def api_instructor_report(launcher, activity):
     course_id = activity['course']['id']
     activity_id = activity['id']
 
+    # Apply filters if provided
+    url = '/api/v2/institution/{}/course/{}/activity/{}/report/'
+    if filters is not None:
+        url += '?{}'.format(filters)
+
     # Get the list of reports from the activity
-    activity_reports_resp = client.get('/api/v2/institution/{}/course/{}/activity/{}/report/'.format(
+    activity_reports_resp = client.get(url.format(
         institution_id,
         course_id,
         activity_id

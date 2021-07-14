@@ -362,6 +362,23 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     reports_vle = utils.vle.vle_activity_report(vle, activity)
     assert len(reports_vle) == 2
 
+    # Instructor review the results for the activity using filters
+    launcher_report2 = utils.vle.vle_create_launcher(vle, instructors[0])
+    reports2 = utils.instructor.api_instructor_report(launcher_report2,
+                                                      activity,
+                                                      filters='identity_level=2&content_level=2')
+    assert len(reports2) == 2
+    launcher_report3 = utils.vle.vle_create_launcher(vle, instructors[0])
+    reports3 = utils.instructor.api_instructor_report(launcher_report3,
+                                                      activity,
+                                                      filters='identity_level=2')
+    assert len(reports3) == 2
+    launcher_report4 = utils.vle.vle_create_launcher(vle, instructors[0])
+    reports4 = utils.instructor.api_instructor_report(launcher_report4,
+                                                      activity,
+                                                      filters='identity_level=3')
+    assert len(reports4) == 0
+
     # Legal admin updates Informed consent status with minor change
     utils.inst_admin.api_create_ic(legal_admin, '1.0.1')
 
@@ -389,3 +406,9 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # The learner 1 continues with the activity => Report update
 
     # The learner 2 continues with the activity and providers detect some issue => Report update + alerts
+
+    # The learner 2 rejects the informed consent
+
+    # Data admin check the list of rejected informed consents
+
+    # Data admin remove all data of a learner

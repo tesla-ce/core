@@ -36,6 +36,6 @@ class InstitutionCourseActivityReportViewSet(NestedViewSetMixin, DetailSerialize
     serializer_detail_class = InstitutionCourseActivityReportExtendedSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     search_fields = ['learner__first_name', 'learner__last_name', 'learner__email',
-                     'identity_level', 'authorship_level', 'cheating_level']
-    # filterset_fields = ['learner__first_name', 'learner__last_name', 'learner__email',
-    #                    'identity_level', 'authorship_level', 'cheating_level']
+                     'identity_level', 'content_level', 'integrity_level']
+    filterset_fields = ['learner__first_name', 'learner__last_name', 'learner__email',
+                        'identity_level', 'content_level', 'integrity_level']
