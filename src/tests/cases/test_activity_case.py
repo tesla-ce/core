@@ -15,9 +15,9 @@
 """ TeSLA CE Activity use case test """
 import pytest
 
-from . import case_methods
-
 from tesla_ce.models.learner import get_missing_enrolment
+
+from . import utils
 
 
 @pytest.mark.django_db(transaction=False)
@@ -28,130 +28,136 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         :param user_global_admin: Global administrator object
     """
 
-    #case_methods.worker_test()
-
     # A global administrator register the providers
-    providers = case_methods.api_register_providers(user_global_admin)
+    providers = utils.global_admin.api_register_providers(user_global_admin)
 
     # A global administrator creates a new institution
-    institution = case_methods.api_create_institution(user_global_admin)
+    institution = utils.global_admin.api_create_institution(user_global_admin)
 
     # A global administrator creates a new user for the institution and assign administration rights
-    inst_admin = case_methods.api_create_institution_admin(user_global_admin, institution)
+    inst_admin = utils.global_admin.api_create_institution_admin(user_global_admin, institution)
 
     # Institution administrator creates a new legal admin
-    legal_admin = case_methods.api_create_institution_legal_admin(inst_admin)
+    legal_admin = utils.inst_admin.api_create_institution_legal_admin(inst_admin)
 
     # Institution administrator creates a new SEND admin
-    send_admin = case_methods.api_create_institution_send_admin(inst_admin)
+    send_admin = utils.inst_admin.api_create_institution_send_admin(inst_admin)
 
     # A legal administrator of the institution creates the Informed Consent using the API
-    case_methods.api_create_ic(legal_admin)
+    utils.inst_admin.api_create_ic(legal_admin)
 
     # A SEND administrator of the institution defines the SEND categories using the API
     ks_id = providers['ks']['instrument']['id']
-    send_category = case_methods.api_create_send_categories(send_admin, [ks_id])
+    send_category = utils.inst_admin.api_create_send_categories(send_admin, [ks_id])
 
     # Institution enables direct learners and instructors registration by VLE
-    case_methods.api_enable_direct_registration_vle(inst_admin)
+    utils.inst_admin.api_enable_direct_registration_vle(inst_admin)
 
     # Institution administrator register a new VLE
-    vle = case_methods.api_register_vle(inst_admin)
+    vle = utils.inst_admin.api_register_vle(inst_admin)
 
     # The VLE creates a new course
-    course = case_methods.vle_create_course(vle)
+    course = utils.vle.vle_create_course(vle)
 
     # The VLE enrolls course learners and instructors
-    instructors, learners = case_methods.vle_enrol_users(vle, course)
+    instructors, learners = utils.vle.vle_enrol_users(vle, course)
 
     # The VLE creates a new activity
-    activity = case_methods.vle_create_activity(vle, course)
+    activity = utils.vle.vle_create_activity(vle, course)
 
     # The VLE creates a launcher for the instructor
-    instructor_launcher = case_methods.vle_create_launcher(vle, instructors[0])
+    instructor_launcher = utils.vle.vle_create_launcher(vle, instructors[0])
 
     # An instructor configures the activity using the API
-    case_methods.api_configure_activity(instructor_launcher, activity, providers)
+    utils.instructor.api_configure_activity(instructor_launcher, activity, providers)
 
     for learner in learners:
         # VLE check the status of the Informed Consent of the learner
-        case_methods.vle_check_learner_ic(vle, course, learner, missing=True)
+        utils.vle.vle_check_learner_ic(vle, course, learner, missing=True)
 
         # The VLE fails to create an assessment session because IC is missing
-        case_methods.vle_create_assessment_session(vle, learner, activity, ic=False)
+        utils.vle.vle_create_assessment_session(vle, learner, activity, ic=False)
 
         # The VLE creates a launcher for the learner to accept IC
-        launcher_ic = case_methods.vle_create_launcher(vle, learner)
+        launcher_ic = utils.vle.vle_create_launcher(vle, learner)
 
         # The learner accepts the IC using the API
-        case_methods.api_learner_accept_ic(launcher_ic)
+        utils.learner.api_learner_accept_ic(launcher_ic)
 
         # VLE check the status of the Informed Consent of the learner
-        case_methods.vle_check_learner_ic(vle, course, learner, missing=False)
+        utils.vle.vle_check_learner_ic(vle, course, learner, missing=False)
 
         # The VLE fails to create an assessment session because of enrolment
-        case_methods.vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=False)
+        utils.vle.vle_create_assessment_session(vle, learner, activity, ic=True, enrolment=False)
 
     # The SEND admin assigns send category to the learner
-    case_methods.api_set_learner_send(send_admin, send_category, learners[1])
+    utils.inst_admin.api_set_learner_send(send_admin, send_category, learners[1])
 
     # Invalidate cache to avoid refresh time due to send status change
     get_missing_enrolment.invalidate(learners[1]['id'], activity['id'])
 
     # The VLE creates a launcher for the learners to check enrolments
-    launcher_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
-    launcher_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+    launcher_enrol1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_enrol2 = utils.vle.vle_create_launcher(vle, learners[1])
 
     # A learner check their enrolment status via API
-    l1_enrolment = case_methods.api_learner_enrolment(launcher_enrol1)
+    l1_enrolment = utils.learner.api_learner_enrolment(launcher_enrol1)
     assert len(l1_enrolment) == 0
-    l2_enrolment = case_methods.api_learner_enrolment(launcher_enrol2)
+    l2_enrolment = utils.learner.api_learner_enrolment(launcher_enrol2)
     assert len(l2_enrolment) == 0
 
     # The VLE creates a launcher for the learners to check enrolments required for activity
-    launcher_act_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
-    launcher_act_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+    launcher_act_enrol1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_act_enrol2 = utils.vle.vle_create_launcher(vle, learners[1])
 
     # A learner check missing enrolments for an activity via API
-    l1_missing_enrolment = case_methods.api_learner_missing_enrolment(launcher_act_enrol1, activity, missing=True)
+    l1_missing_enrolment = utils.learner.api_learner_missing_enrolment(launcher_act_enrol1, activity, missing=True)
     assert providers['fr']['instrument']['id'] not in l1_missing_enrolment['instruments']  # Alternative instrument
     assert providers['ks']['instrument']['id'] in l1_missing_enrolment['instruments']  # Primary instrument
     assert providers['plag']['instrument']['id'] not in l1_missing_enrolment['instruments']  # No enrolment
 
-    l2_missing_enrolment = case_methods.api_learner_missing_enrolment(launcher_act_enrol2, activity, missing=True)
+    l2_missing_enrolment = utils.learner.api_learner_missing_enrolment(launcher_act_enrol2, activity, missing=True)
     assert providers['fr']['instrument']['id'] in l2_missing_enrolment['instruments']  # Enabled as primary is disabled
     assert providers['ks']['instrument']['id'] not in l2_missing_enrolment['instruments']  # Disabled by SEND
     assert providers['plag']['instrument']['id'] not in l2_missing_enrolment['instruments']  # No enrolment
 
     # The VLE checks the enrolment status for the learner (missing is expected as is new learner)
-    missing1 = case_methods.vle_create_assessment_session(vle, learners[0], activity, enrolment=False)
+    missing1 = utils.vle.vle_create_assessment_session(vle, learners[0], activity, enrolment=False)
     assert providers['fr']['instrument']['id'] not in missing1['enrolments']['instruments']  # Alternative instrument
     assert providers['ks']['instrument']['id'] in missing1['enrolments']['instruments']  # Primary instrument
     assert providers['plag']['instrument']['id'] not in missing1['enrolments']['instruments']  # No enrolment
-    missing2 = case_methods.vle_create_assessment_session(vle, learners[1], activity, enrolment=False)
+    missing2 = utils.vle.vle_create_assessment_session(vle, learners[1], activity, enrolment=False)
     assert providers['fr']['instrument']['id'] in missing2['enrolments']['instruments']  # Enabled as disabled primary
     assert providers['ks']['instrument']['id'] not in missing2['enrolments']['instruments']  # Disabled by SEND
     assert providers['plag']['instrument']['id'] not in missing2['enrolments']['instruments']  # No enrolment
 
     # The VLE creates a launcher for the learner to perform the enrolment
-    launcher_enrol1 = case_methods.vle_create_launcher(vle, learners[0])
-    launcher_enrol2 = case_methods.vle_create_launcher(vle, learners[1])
+    launcher_enrol1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_enrol2 = utils.vle.vle_create_launcher(vle, learners[1])
 
     # The learner perform enrolment for missing instruments, sending data using LAPI
     provider_validation_tasks = []
-    provider_validation_tasks += case_methods.api_lapi_perform_enrolment(
+    provider_validation_tasks += utils.learner.api_lapi_perform_enrolment(
         launcher_enrol1, list(missing1['enrolments']['instruments'].keys())
     )
-    provider_validation_tasks += case_methods.api_lapi_perform_enrolment(
+    provider_validation_tasks += utils.learner.api_lapi_perform_enrolment(
         launcher_enrol2, list(missing2['enrolments']['instruments'].keys())
     )
 
     # The VLE creates a launcher for the learners to check enrolments
-    launcher_enrol_pre_val1 = case_methods.vle_create_launcher(vle, learners[0])
-    launcher_enrol_pre_val2 = case_methods.vle_create_launcher(vle, learners[1])
+    launcher_stats1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_stats2 = utils.vle.vle_create_launcher(vle, learners[1])
+
+    # The learner check the status of sent enrolment samples
+    utils.learner.lapi_check_sample_status(launcher_stats1, 'PENDING')
+    utils.learner.lapi_check_sample_status(launcher_stats2, 'PENDING')
+
+    # The VLE creates a launcher for the learners to check enrolments
+    launcher_enrol_pre_val1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_enrol_pre_val2 = utils.vle.vle_create_launcher(vle, learners[1])
 
     # A learner check their enrolment status via API
-    l1_enrolment_pre_val = case_methods.api_learner_enrolment(launcher_enrol_pre_val1)
+    l1_enrolment_pre_val = utils.learner.api_learner_enrolment(launcher_enrol_pre_val1)
     assert len(l1_enrolment_pre_val) == 1
     assert l1_enrolment_pre_val[0]['instrument_id'] == providers['ks']['instrument']['id']
     assert len(l1_enrolment_pre_val[0]['not_validated']) == 1
@@ -160,7 +166,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert l1_enrolment_pre_val[0]['not_validated'][0]['count'] == providers['ks']['instrument']['id'] * 4
     assert len(l1_enrolment_pre_val[0]['pending']) == 0
 
-    l2_enrolment_pre_val = case_methods.api_learner_enrolment(launcher_enrol_pre_val2)
+    l2_enrolment_pre_val = utils.learner.api_learner_enrolment(launcher_enrol_pre_val2)
     assert len(l2_enrolment_pre_val) == 1
     assert l2_enrolment_pre_val[0]['instrument_id'] == providers['fr']['instrument']['id']
     assert len(l2_enrolment_pre_val[0]['not_validated']) == 2
@@ -180,21 +186,23 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert len(l2_enrolment_pre_val[0]['pending']) == 0
 
     # Providers validate samples in their queues
-    validation_summary_tasks = case_methods.provider_validate_samples(providers, provider_validation_tasks)
+    validation_summary_tasks = utils.provider.provider_validate_samples(providers, provider_validation_tasks)
 
     # As we have deferred providers, some of the validations are postponed via notifications.
-    notification_tasks = case_methods.worker_send_notifications()
+    notification_tasks = utils.worker.worker_send_notifications()
     assert len(notification_tasks) > 0
 
     # Providers process their notifications to generate final validation results
-    validation_summary_tasks += case_methods.provider_process_notifications(providers, notification_tasks, 'validation')
+    validation_summary_tasks += utils.provider.provider_process_notifications(providers,
+                                                                              notification_tasks,
+                                                                              'validation')
 
     # The VLE creates a launcher for the learners to check enrolments
-    launcher_enrol_post_val1 = case_methods.vle_create_launcher(vle, learners[0])
-    launcher_enrol_post_val2 = case_methods.vle_create_launcher(vle, learners[1])
+    launcher_enrol_post_val1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_enrol_post_val2 = utils.vle.vle_create_launcher(vle, learners[1])
 
     # A learner check their enrolment status via API
-    l1_enrolment_post_val = case_methods.api_learner_enrolment(launcher_enrol_post_val1)
+    l1_enrolment_post_val = utils.learner.api_learner_enrolment(launcher_enrol_post_val1)
     assert len(l1_enrolment_post_val) == 1
     assert l1_enrolment_post_val[0]['instrument_id'] == providers['ks']['instrument']['id']
     assert len(l1_enrolment_post_val[0]['not_validated']) == 0
@@ -204,7 +212,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert l1_enrolment_post_val[0]['pending'][0]['instrument_id'] == providers['ks']['instrument']['id']
     assert abs(1.0 - float(l1_enrolment_post_val[0]['pending'][0]['pending_contribution'])) < 0.0001
 
-    l2_enrolment_post_val = case_methods.api_learner_enrolment(launcher_enrol_post_val2)
+    l2_enrolment_post_val = utils.learner.api_learner_enrolment(launcher_enrol_post_val2)
     assert len(l2_enrolment_post_val) == 1
     assert l2_enrolment_post_val[0]['instrument_id'] == providers['fr']['instrument']['id']
     assert len(l2_enrolment_post_val[0]['not_validated']) == 0
@@ -225,27 +233,35 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
         assert abs(1.0 - float(l2_enrolment_post_val[0]['pending'][1]['pending_contribution'])) < 0.0001
 
     # Worker compute validation summary from individual validations
-    enrolment_tasks = case_methods.worker_validation_summary(validation_summary_tasks)
+    enrolment_tasks = utils.worker.worker_validation_summary(validation_summary_tasks)
+
+    # The VLE creates a launcher for the learners to check the status of their enrolment samples
+    launcher_stats1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_stats2 = utils.vle.vle_create_launcher(vle, learners[1])
+
+    # The learner check the status of sent enrolment samples
+    utils.learner.lapi_check_sample_status(launcher_stats1, ['VALID', 'ERROR'])
+    utils.learner.lapi_check_sample_status(launcher_stats2, ['VALID', 'ERROR'])
 
     # Worker distribute enrolment tasks among providers
-    provider_enrolment_tasks = case_methods.worker_enrol_learner(enrolment_tasks)
+    provider_enrolment_tasks = utils.worker.worker_enrol_learner(enrolment_tasks)
 
     # Provider perform learners enrolment
-    case_methods.provider_enrol_learners(providers, provider_enrolment_tasks)
+    utils.provider.provider_enrol_learners(providers, provider_enrolment_tasks)
 
     # As we have deferred providers, some of the enrolments are postponed via notifications.
-    notification_tasks = case_methods.worker_send_notifications()
+    notification_tasks = utils.worker.worker_send_notifications()
     assert len(notification_tasks) > 0
 
     # Providers process their notifications to generate final enrolment results
-    provider_enrolment_tasks += case_methods.provider_process_notifications(providers, notification_tasks, 'enrolment')
+    provider_enrolment_tasks += utils.provider.provider_process_notifications(providers, notification_tasks, 'enrolment')
 
     # The VLE creates a launcher for the learners to check enrolments
-    launcher_enrol_end1 = case_methods.vle_create_launcher(vle, learners[0])
-    launcher_enrol_end2 = case_methods.vle_create_launcher(vle, learners[1])
+    launcher_enrol_end1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_enrol_end2 = utils.vle.vle_create_launcher(vle, learners[1])
 
     # A learner check their enrolment status via API
-    l1_enrolment_end = case_methods.api_learner_enrolment(launcher_enrol_end1)
+    l1_enrolment_end = utils.learner.api_learner_enrolment(launcher_enrol_end1)
     assert len(l1_enrolment_end) == 1
     assert l1_enrolment_end[0]['instrument_id'] == providers['ks']['instrument']['id']
     assert len(l1_enrolment_end[0]['not_validated']) == 0
@@ -256,7 +272,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     assert l1_enrolment_end[0]['can_analyse__max']
     assert l1_enrolment_end[0]['not_validated_count'] == 0
 
-    l2_enrolment_end = case_methods.api_learner_enrolment(launcher_enrol_end2)
+    l2_enrolment_end = utils.learner.api_learner_enrolment(launcher_enrol_end2)
     assert len(l2_enrolment_end) == 1
     assert l2_enrolment_end[0]['instrument_id'] == providers['fr']['instrument']['id']
     assert len(l2_enrolment_end[0]['not_validated']) == 0
@@ -275,36 +291,44 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     vle_options = {
         'floating_menu_initial_pos': 'top-right'
     }
-    assessment_session1 = case_methods.vle_create_assessment_session(vle, learners[0], activity, vle_options)
-    assessment_session2 = case_methods.vle_create_assessment_session(vle, learners[1], activity)
+    assessment_session1 = utils.vle.vle_create_assessment_session(vle, learners[0], activity, vle_options)
+    assessment_session2 = utils.vle.vle_create_assessment_session(vle, learners[1], activity)
 
     # The learner perform the activity, sending information from sensors using the LAPI
     provider_verification_tasks = []
-    tasks, activity_doc1 = case_methods.lapi_learner_perform_activity(assessment_session1)
+    tasks, activity_doc1 = utils.learner.lapi_learner_perform_activity(assessment_session1)
     provider_verification_tasks += tasks
-    tasks, activity_doc2 = case_methods.lapi_learner_perform_activity(assessment_session2)
+    tasks, activity_doc2 = utils.learner.lapi_learner_perform_activity(assessment_session2)
     provider_verification_tasks += tasks
 
     # VLE send the activity
-    provider_verification_tasks += case_methods.vle_send_activity(vle, assessment_session1, activity_doc1)
-    provider_verification_tasks += case_methods.vle_send_activity(vle, assessment_session2, activity_doc2)
+    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session1, activity_doc1)
+    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session2, activity_doc2)
+
+    # The VLE creates a launcher for the learners to check the status of their requests
+    launcher_stats1 = utils.vle.vle_create_launcher(vle, learners[0])
+    launcher_stats2 = utils.vle.vle_create_launcher(vle, learners[1])
+
+    # The learner check the status of sent requests
+    utils.learner.lapi_check_requests_status(launcher_stats1, 'VALID')
+    utils.learner.lapi_check_requests_status(launcher_stats2, 'VALID')
 
     # Provider perform verification process on data collected during the activity
-    reporting_tasks = case_methods.provider_verify_request(providers, provider_verification_tasks)
+    reporting_tasks = utils.provider.provider_verify_request(providers, provider_verification_tasks)
 
     # As we have deferred providers, some of the verifications are postponed via notifications.
-    notification_tasks = case_methods.worker_send_notifications()
+    notification_tasks = utils.worker.worker_send_notifications()
     assert len(notification_tasks) > 0
 
     # Providers process their notifications to generate final verification results
-    reporting_tasks += case_methods.provider_process_notifications(providers, notification_tasks, 'verification')
+    reporting_tasks += utils.provider.provider_process_notifications(providers, notification_tasks, 'verification')
 
     # Worker process verification results to create the reports
-    case_methods.worker_create_reports(reporting_tasks)
+    utils.worker.worker_create_reports(reporting_tasks)
 
     # Instructor review the results for the activity
-    launcher_report = case_methods.vle_create_launcher(vle, instructors[0])
-    reports = case_methods.api_instructor_report(launcher_report, activity)
+    launcher_report = utils.vle.vle_create_launcher(vle, instructors[0])
+    reports = utils.instructor.api_instructor_report(launcher_report, activity)
     assert len(reports) == 2
     for report in reports:
         assert report['identity_level'] == 2  # OK
