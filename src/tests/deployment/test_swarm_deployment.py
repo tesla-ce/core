@@ -99,9 +99,9 @@ def test_swarm_core_deployment(tesla_ce_system):
 
             gen_files = os.listdir(tmp_dir)
 
-        assert 'secrets' in gen_files
-        assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
-        assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
+            assert 'secrets' in gen_files
+            assert os.path.isdir(os.path.join(tmp_dir, 'secrets'))
+            assert len(os.listdir(os.path.join(tmp_dir, 'secrets'))) > 0
 
         assert 'tesla_lb.yml' in gen_files
         assert 'tesla_core.yml' in gen_files
