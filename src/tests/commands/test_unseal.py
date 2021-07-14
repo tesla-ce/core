@@ -16,6 +16,7 @@
 """ Vault unseal script management tests """
 import os
 import pytest
+import mock
 
 from io import StringIO
 
@@ -24,7 +25,7 @@ from django.core.management import call_command
 
 def test_unseal(tesla_ce_system):
 
-    pytest.skip("Not valid with Vault in dev mode. TODO: Start test service for Vault in production mode")
+    #pytest.skip("Not valid with Vault in dev mode. TODO: Start test service for Vault in production mode")
 
     assert tesla_ce_system is not None
 
@@ -36,10 +37,10 @@ def test_unseal(tesla_ce_system):
         # Write the configuration file to disk
         with open('tesla-ce.cfg', 'w') as out_fh:
             tesla_ce_system.config.config.write(out_fh)
-
-    call_command(
-        'unseal',
-        stdout=out,
-        stderr=err,
-        local=True
-    )
+    with mock.patch('tesla_ce.management.base.TeslaCommand.get_client', return_value=tesla_ce_system):
+        call_command(
+            'unseal',
+            stdout=out,
+            stderr=err,
+            local=True
+        )
