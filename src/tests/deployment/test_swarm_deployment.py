@@ -16,10 +16,11 @@
 """ Swarm deployment scripts management tests """
 import os
 import tempfile
+import mock
 
 from io import StringIO
 
-# from django.core.management import call_command
+from django.core.management import call_command
 import pytest
 
 
@@ -43,15 +44,15 @@ def test_swarm_services_deployment(tesla_ce_system):
     # Enable with services flag
     with tempfile.TemporaryDirectory() as tmp_dir:
         assert tmp_dir is not None
-        pytest.skip('TODO')
-        #call_command(
-        #    'deploy_services',
-        #    stdout=out,
-        #    stderr=err,
-        #    out=tmp_dir,
-        #    mode='swarm'
-        #)
-        tesla_ce_system.export_services_scripts(output=tmp_dir, mode='swarm')
+        with mock.patch('tesla_ce.management.base.TeslaCommand.get_client', return_value=tesla_ce_system):
+            call_command(
+                'deploy_services',
+                stdout=out,
+                stderr=err,
+                out=tmp_dir,
+                mode='swarm'
+            )
+        #tesla_ce_system.export_services_scripts(output=tmp_dir, mode='swarm')
 
         gen_files = os.listdir(tmp_dir)
 
