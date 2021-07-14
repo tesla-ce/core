@@ -44,7 +44,7 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     send_admin = utils.inst_admin.api_create_institution_send_admin(inst_admin)
 
     # A legal administrator of the institution creates the Informed Consent using the API
-    utils.inst_admin.api_create_ic(legal_admin)
+    utils.inst_admin.api_create_ic(legal_admin, '1.0.0')
 
     # A SEND administrator of the institution defines the SEND categories using the API
     ks_id = providers['ks']['instrument']['id']
@@ -359,11 +359,33 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
             assert report['detail'][1]['integrity_level'] == 1
 
     # VLE get the results for the activity for integration
+    reports_vle = utils.vle.vle_activity_report(vle, activity)
+    assert len(reports_vle) == 2
 
-    # Legal admin updates Informed consent status
+    # Legal admin updates Informed consent status with minor change
+    utils.inst_admin.api_create_ic(legal_admin, '1.0.1')
+
+    # Learners IC status is still valid
+    utils.vle.vle_check_learner_ic(vle, course, learners[0], missing=False)
+    utils.vle.vle_check_learner_ic(vle, course, learners[1], missing=False)
+
+    # Legal admin updates Informed consent status with major change
+    utils.inst_admin.api_create_ic(legal_admin, '1.1.0')
 
     # Learners IC status is not valid
+    utils.vle.vle_check_learner_ic(vle, course, learners[0], missing=True)
+    utils.vle.vle_check_learner_ic(vle, course, learners[1], missing=True)
 
     # Learner accepts new IC
+    launcher_new_ic1 = utils.vle.vle_create_launcher(vle, learners[0])
+    utils.learner.api_learner_accept_ic(launcher_new_ic1)
+    launcher_new_ic2 = utils.vle.vle_create_launcher(vle, learners[1])
+    utils.learner.api_learner_accept_ic(launcher_new_ic2)
 
     # Learner IC status is valid again
+    utils.vle.vle_check_learner_ic(vle, course, learners[0], missing=False)
+    utils.vle.vle_check_learner_ic(vle, course, learners[1], missing=False)
+
+    # The learner 1 continues with the activity => Report update
+
+    # The learner 2 continues with the activity and providers detect some issue => Report update + alerts

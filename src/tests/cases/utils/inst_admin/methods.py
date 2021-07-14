@@ -109,10 +109,11 @@ def api_create_institution_send_admin(inst_admin):
     }
 
 
-def api_create_ic(admin):
+def api_create_ic(admin, version):
     """
         A legal administrator of the institution creates the Informed Consent using the API
         :param admin: Credentials for a user with legal administration rights
+        :param version: Version of the Informed Consent
     """
     # Authenticate with admin credentials
     client = auth_utils.client_with_user_credentials(admin['email'], admin['password'])
@@ -123,7 +124,7 @@ def api_create_ic(admin):
     # Create an IC
     institution_id = profile['institution']['id']
     ic_data = {
-        'version': '1.0.0',
+        'version': version,
         'valid_from': timezone.now() - timezone.timedelta(days=1),
     }
     ic_create_resp = client.post('/api/v2/institution/{}/ic/'.format(institution_id),

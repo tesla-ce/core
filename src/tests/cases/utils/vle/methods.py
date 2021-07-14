@@ -326,3 +326,59 @@ def vle_send_activity(vle, assessment_session, document):
             verify_request(task[1][0][0])
 
     return pending_provider_tasks_verification
+
+
+def vle_activity_report(vle, activity):
+    """
+        VLE request the results for the activity
+        :param vle: VLE object
+        :param activity: Activity object
+    """
+    # Authenticate using VLE credentials
+    client, config = auth_utils.client_with_approle_credentials(vle['role_id'], vle['secret_id'])
+
+    # Get required data
+    vle_id = config['vle_id']
+
+    # Get required data
+    course_id = activity['course']['id']
+    activity_id = activity['id']
+
+    # Get the list of reports from the activity
+    activity_reports_resp = client.get('/api/v2/vle/{}/course/{}/activity/{}/report/'.format(
+        vle_id,
+        course_id,
+        activity_id
+    ))
+    assert activity_reports_resp.status_code == 200
+    reports = activity_reports_resp.data['results']
+
+    # Get the detail for each report
+    for report in reports:
+        reports_detail_resp = client.get('/api/v2/vle/{}/course/{}/activity/{}/report/{}/'.format(
+            vle_id,
+            course_id,
+            activity_id,
+            report['id']
+        ))
+        assert reports_detail_resp.status_code == 200
+        report['detailed_report'] = reports_detail_resp.data
+
+        request_list = []
+        final = False
+        while not final:
+            report_requests = client.get(
+                '/api/v2/vle/{}/course/{}/activity/{}/learner/{}/request/?offset={}'.format(
+                    vle_id,
+                    course_id,
+                    activity_id,
+                    report['learner']['id'],
+                    len(request_list)
+            ))
+            assert report_requests.status_code == 200
+            request_list += report_requests.data['results']
+            if len(request_list) >= report_requests.data['count']:
+                final = True
+        report['detailed_report']['requests'] = request_list
+
+    return reports
