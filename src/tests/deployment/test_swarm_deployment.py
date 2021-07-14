@@ -42,7 +42,8 @@ def test_swarm_services_deployment(tesla_ce_system):
         assert conf.config.get('VAULT_TOKEN') is not None
 
     # Enable with services flag
-    pytest.skip('TODO')
+    deploy_services = tesla_ce_system.config.get('DEPLOYMENT_SERVICES')
+    tesla_ce_system.config.set('DEPLOYMENT_SERVICES', True)
     with tempfile.TemporaryDirectory() as tmp_dir:
         assert tmp_dir is not None
         with mock.patch('tesla_ce.management.base.TeslaCommand.get_client', return_value=tesla_ce_system):
@@ -67,7 +68,8 @@ def test_swarm_services_deployment(tesla_ce_system):
 
         assert 'tesla_lb.yml' in gen_files
         assert 'tesla_services.yml' in gen_files
-
+    tesla_ce_system.config.set('DEPLOYMENT_SERVICES', deploy_services)
+    
 
 def test_swarm_core_deployment(tesla_ce_system):
 
@@ -95,7 +97,6 @@ def test_swarm_core_deployment(tesla_ce_system):
                 out=tmp_dir,
                 mode='swarm'
             )
-            #tesla_ce_system.export_deployment_scripts(output=tmp_dir, mode='swarm')
 
             gen_files = os.listdir(tmp_dir)
 
