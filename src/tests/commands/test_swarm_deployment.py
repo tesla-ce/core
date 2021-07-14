@@ -26,6 +26,8 @@ import pytest
 
 def test_swarm_services_deployment(tesla_ce_system):
 
+    pytest.skip('TODO')
+
     out = StringIO()
     err = StringIO()
 
