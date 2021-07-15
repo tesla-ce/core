@@ -40,6 +40,7 @@ from .monitor import Monitor
 from .provider import Provider
 from .provider_notification import ProviderNotification
 from .report_activity import ReportActivity
+from .report_activity_session import ReportActivitySession
 from .report_activity_instrument import ReportActivityInstrument
 from .request import Request
 from .request_provider_result import RequestProviderResult
@@ -91,6 +92,7 @@ __all__ = [
     'UIOption',
     'User',
     'ReportActivity',
+    'ReportActivitySession',
     'ReportActivityInstrument',
     'HistogramActivityInstrument',
     'HistogramActivityProvider',

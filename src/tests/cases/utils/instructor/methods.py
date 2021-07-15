@@ -13,6 +13,7 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ TeSLA CE Instructor actions for Use Case tests """
+import requests
 from tests import auth_utils
 
 
@@ -125,6 +126,10 @@ def api_instructor_report(launcher, activity, filters=None):
         ))
         assert reports_detail_resp.status_code == 200
         report['detailed_report'] = reports_detail_resp.data
+
+        report_data_resp = requests.get(report['detailed_report']['data'], verify=False)
+        assert report_data_resp.status_code == 200
+        report['detailed_report']['data'] = report_data_resp.json()
 
         request_list = []
         final = False
