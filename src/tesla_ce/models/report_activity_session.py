@@ -17,27 +17,20 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .activity import Activity
+from .assessment_session import AssessmentSession
 from .base_model import BaseModel
-from .learner import Learner
-
-REPORT_ALERT_LEVEL = (
-    (0, _('Pending')),
-    (1, _('No Information')),
-    (2, _('Ok')),
-    (3, _('Warning')),
-    (4, _('Alert')),
-)
+from .report_activity import ReportActivity
+from .report_activity import REPORT_ALERT_LEVEL
 
 
-class ReportActivity(BaseModel):
-    """ Report Activity model. """
+class ReportActivitySession(BaseModel):
+    """ Report for an Activity Assessment Session model. """
 
-    learner = models.ForeignKey(Learner, null=False, blank=False, on_delete=models.CASCADE,
-                                help_text=_('Learner related to this report.'))
+    report = models.ForeignKey(ReportActivity, null=False, blank=False, on_delete=models.CASCADE,
+                               help_text=_('Related Activity Report.'))
 
-    activity = models.ForeignKey(Activity, null=False, blank=False, on_delete=models.CASCADE,
-                                 help_text=_('Activity related to this report.'))
+    session = models.ForeignKey(AssessmentSession, null=False, blank=False, on_delete=models.CASCADE, unique=True,
+                                help_text=_('Assessment Session related to this report.'))
 
     identity_level = models.SmallIntegerField(choices=REPORT_ALERT_LEVEL, null=False, default=0,
                                               help_text=_('Alert level for learner identity.'))
@@ -46,15 +39,23 @@ class ReportActivity(BaseModel):
     integrity_level = models.SmallIntegerField(choices=REPORT_ALERT_LEVEL, null=False, default=0,
                                                help_text=_('Alert level for system integrity.'))
 
-    data = models.FileField(max_length=250, null=True, blank=False,
+    total_requests = models.IntegerField(null=False, default=0,
+                                         help_text=_('Number of requests on this session.'))
+    pending_requests = models.IntegerField(null=False, default=0,
+                                           help_text=_('Number of pending requests on this session.'))
+    valid_requests = models.IntegerField(null=False, default=0,
+                                         help_text=_('Number of valid requests on this session.'))
+    processed_requests = models.IntegerField(null=False, default=0,
+                                             help_text=_('Number of processed requests on this session.'))
+
+    data = models.FileField(max_length=250, null=True, blank=False, default=None,
                             help_text=_("Path to the content of this report."))
+
+    closed_at = models.DateTimeField(null=True, default=None, help_text=_('When the session report was closed'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        unique_together = (('activity', 'learner'),)
-
     def __repr__(self):
-        return "<ReportActivity(id='%r', learner_id='%r' activity_id='%r')>" % (
-            self.id, self.learner_id, self.activity_id)
+        return "<ReportActivitySession(id='%r', session_id='%r', learner_id='%r' activity_id='%r')>" % (
+            self.id, self.session.id, self.session.learner.learner_id, self.session.activity_id)

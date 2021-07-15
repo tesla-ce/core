@@ -13,13 +13,124 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Assessment results report tasks module """
+import json
 from celery.exceptions import Reject
+
+from django.core.files.base import ContentFile
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Avg
 from django.db.models import Max
 from django.db.models import Min
+from django.db.models import Count
 
 from tesla_ce import celery_app
 from tesla_ce import models
+
+
+@celery_app.task(ignore_result=True, bind=True)
+def update_learner_activity_session_report(self, learner_id, activity_id, session_id):
+    # Get the report
+    try:
+        report = models.ReportActivity.objects.get(
+            activity_id=activity_id,
+            learner_id=learner_id
+        )
+    except models.ReportActivity.DoesNotExist:
+        report = models.ReportActivity.objects.create(
+            activity_id=activity_id,
+            learner_id=learner_id
+        )
+
+    # Get the session report
+    try:
+        session_report = models.ReportActivitySession.objects.get(
+            session_id=session_id
+        )
+    except models.ReportActivitySession.DoesNotExist:
+        session_report = models.ReportActivitySession.objects.create(
+            session_id=session_id,
+            report=report,
+            integrity_level=0,
+            identity_level=0,
+            content_level=0
+        )
+
+    # Get session requests statistics
+    session_report.total_requests = models.Request.objects.filter(session_id=session_id).count()
+    session_report.valid_requests = models.Request.objects.filter(session_id=session_id, status=3).count()
+    session_report.pending_requests = models.Request.objects.filter(session_id=session_id, status__lt=3).count()
+    session_report.processed_requests = models.Request.objects.filter(session_id=session_id, status__gt=3).count()
+
+    # If all the data for this session is processed, compute session detail
+    if session_report.pending_requests == 0:
+        results_qs = models.RequestResult.objects.filter(request__session_id=session_id,
+                                                         request__learner_id=learner_id)
+        data = {}
+        results_stats = results_qs.filter(status=1).values('instrument').annotate(Max('code'),
+                                                                                  Avg('result'),
+                                                                                  Count('instrument'))
+        for value in results_stats:
+            if value['instrument'] not in data:
+                data[value['instrument']] = {
+                    'total': 0,
+                    'valid': 0,
+                    'confidence': None,
+                    'result': None,
+                    'code': None,
+                }
+            if value['code__max'] > 0:
+                data[value['instrument']]['code'] = value['code__max'] + 1
+            else:
+                data[value['instrument']]['code'] = value['code__max']
+            data[value['instrument']]['result'] = value['result__avg']
+        num_requests = results_qs.values('instrument').annotate(Count('instrument'))
+        for value in num_requests:
+            if value['instrument'] not in data:
+                data[value['instrument']] = {
+                    'total': 0,
+                    'valid': 0,
+                    'confidence': None,
+                    'result': None,
+                    'code': None,
+                }
+            data[value['instrument']]['total'] = value['instrument__count']
+
+        valid_requests = results_qs.filter(status=1).values('instrument').annotate(Count('instrument'))
+        for value in valid_requests:
+            if value['instrument'] not in data:
+                data[value['instrument']] = {
+                    'total': 0,
+                    'valid': 0,
+                    'confidence': None,
+                    'result': None,
+                    'code': None,
+                }
+            data[value['instrument']]['valid'] = value['instrument__count']
+        for inst_id in data:
+            if data[inst_id]['total'] > 0:
+                data[inst_id]['confidence'] = data[inst_id]['valid'] / data[inst_id]['total']
+            data[inst_id]['requests'] = json.dumps(
+                list(results_qs.values_list('created_at', 'result').order_by('created_at')),
+                cls=DjangoJSONEncoder)
+
+        session_data = {
+            'instruments': list(results_qs.values_list('instrument', flat=True).distinct()),
+            'alerts': json.dumps(
+                list(models.Alert.objects.filter(session_id=session_id).order_by('created_at')),
+                cls=DjangoJSONEncoder),
+            'data': data
+        }
+        data_path = '{}/results/{}/{}/{}/session_{}.json'.format(
+                session_report.session.activity.vle.institution_id,
+                session_report.session.learner.learner_id,
+                session_report.session.activity.course.id,
+                session_report.session.activity.id,
+                session_id
+            )
+        session_report.data.save(data_path,
+                                 ContentFile(json.dumps(session_data, cls=DjangoJSONEncoder).encode('utf-8')))
+
+    session_report.save()
 
 
 @celery_app.task(ignore_result=True, bind=True)
@@ -119,6 +230,44 @@ def update_learner_activity_report(learner_id, activity_id):
     report.content_level = stats['content_level__max']
     report.integrity_level = stats['integrity_level__max']
 
+    # Update sessions' results
+    sessions = models.AssessmentSession.objects.filter(
+        activity_id=activity_id,
+        learner_id=learner_id
+    ).values_list('id', flat=True)
+    for session_id in list(sessions):
+        update_learner_activity_session_report(learner_id=learner_id, activity_id=activity_id, session_id=session_id)
+
+    report_data = {
+        'sessions': [],
+        'facts': []
+    }
+
+    for session in report.reportactivitysession_set.all().order_by('created_at'):
+        closed_at = None
+        if session.closed_at is not None:
+            closed_at = session.closed_at.isoformat()
+        report_data['sessions'].append({
+            'id': session.id,
+            'pending_requests': session.pending_requests,
+            'valid_requests': session.valid_requests,
+            'processed_requests': session.processed_requests,
+            'total_requests': session.total_requests,
+            'created_at': session.created_at.isoformat(),
+            'closed_at': closed_at,
+            'identity_level': session.identity_level,
+            'integrity_level': session.integrity_level,
+            'content_level': session.content_level,
+            'data': json.loads(session.data.read())
+        })
+    data_path = '{}/results/{}/{}/{}/report.json'.format(
+        report.activity.vle.institution_id,
+        report.learner.learner_id,
+        report.activity.course.id,
+        report.activity.id
+    )
+    report.data.save(data_path,
+                     ContentFile(json.dumps(report_data, cls=DjangoJSONEncoder).encode('utf-8')))
     report.save()
 
 

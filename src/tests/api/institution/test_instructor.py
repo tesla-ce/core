@@ -22,6 +22,9 @@ import tests.utils
 
 @pytest.mark.django_db
 def test_api_institution_instructor(rest_api_client, institution_course_test_case):
+    # Institution users need mail domain validation
+    institution_course_test_case['institution'].mail_domain = 'tesla-ce.eu'
+    institution_course_test_case['institution'].save()
     institution_user = institution_course_test_case['user'].institutionuser
     institution_id = institution_course_test_case['institution'].id
 
@@ -43,10 +46,17 @@ def test_api_institution_instructor(rest_api_client, institution_course_test_cas
 
     # 666 IntegrityError(1048, "Column 'last_name' cannot be null")
     str_data = {'uid': 'INSTRUCTOR_UID_TEST', 'first_name': 'INSTRUCTOR FIRST NAME',
-                'last_name': 'INSTRUCTOR LAST NAME', 'email': 'email@email.com'}
+                'last_name': 'INSTRUCTOR LAST NAME', 'email': 'email@tesla-ce.eu'}
     new_instructor_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
                                                          'Add a new Instructor to an institution',
                                                          'RESPONSE: ', 201)
+
+    #  Status 400: Validating email domain
+    str_data = {'uid': 'INSTRUCTOR_UID_TEST', 'first_name': 'INSTRUCTOR FIRST NAME',
+                'last_name': 'INSTRUCTOR LAST NAME', 'email': 'email@email.com'}
+    tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
+                                     'Add a new Instructor to an institution',
+                                     'RESPONSE: ', 400)
 
     # Ensure number of instructors has increased
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
@@ -63,8 +73,8 @@ def test_api_institution_instructor(rest_api_client, institution_course_test_cas
     # Update Instructor information
     logging.info('\n4) Update Instructor information --------------------------------------')
 
-    str_data = {'uid': 'CHANGED_INSTRUCTOR_UID_TEST', 'first_name': 'CHANGED_INSTRUCTOR FIRST NAME',
-                'last_name': 'CHANGED_INSTRUCTOR LAST NAME', 'email': 'CHANGED_email@email.com'}
+    str_data = {'uid': 'INSTRUCTOR_UID_TEST', 'first_name': 'CHANGED_INSTRUCTOR FIRST NAME',
+                'last_name': 'CHANGED_INSTRUCTOR LAST NAME', 'email': 'CHANGED_email@tesla-ce.eu'}
     tests.utils.put_rest_api_client(rest_api_client, str_path, str_data,
                                     'Update Instructor Information', str_response, 200)
 

@@ -180,7 +180,8 @@ class InstitutionCourseActivityReportExtendedSerializer(serializers.ModelSeriali
     """Activity Report serialize model module."""
     learner = InstitutionCourseActivityReportLearnerSerializer()
     detail = InstitutionCourseActivityReportExtendedDetailSerializer(source='reportactivityinstrument_set', many=True)
+    data = serializers.FileField(read_only=True)
 
     class Meta:
         model = ReportActivity
-        fields = ["id", "learner", "detail", "identity_level", "content_level", "integrity_level"]
+        fields = ["id", "learner", "detail", "identity_level", "content_level", "integrity_level", "data"]
