@@ -23,7 +23,7 @@ from tests.utils import getting_variables
 
 
 @pytest.mark.django_db
-def test_api_institution_learner(rest_api_client, institution_course_test_case):
+def test_api_institution_new_learner(rest_api_client, institution_course_test_case):
     """
 
     INSTITUTION TEST: LEARNER
@@ -31,20 +31,15 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
        2) Create a new learner
        3) Read new learner information
        4) Update new learner
-       5) Accept an informed consent for a learner
-       6) Reject current Informed Consent of a learner
-       7) Read SEND categories assigned to a learner
-       8) Add SEND category to a learner
-       9) Remove a SEND Category from a learner
-       10) Delete new learner
+       5) Delete new learner
     """
+    # Institution users need mail domain validation
+    institution_course_test_case['institution'].mail_domain = 'tesla-ce.eu'
+    institution_course_test_case['institution'].save()
     institution_user = institution_course_test_case['user'].institutionuser
     institution_id = institution_course_test_case['institution'].id
-    learner = institution_course_test_case['learner']
-    learner_user = learner.institutionuser
-    learner_user_id = learner_user.id
 
-    logging.info('\nTESTING INSTITUTIONS: Learners *********************************************')
+    logging.info('\nTESTING INSTITUTIONS: New Learner *********************************************')
 
     # Get the list of Institutions
     """ ---------------------------------------------------------------------
@@ -95,7 +90,6 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
             404 Not Found – Institution not found
     Request Headers: Authorization - JWT with Institution Admin privileges
     """
-    # pytest.skip('TODO: Adapt to learners API permissions')
     institution_user.inst_admin = True
     institution_user.save()
     rest_api_client.force_authenticate(user=institution_user)
@@ -107,17 +101,17 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
     new_learner_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
                                                       'Create a new learner', 'RESPONSE: ', 201)
 
-    #  # Ensure number of learners has increased
+    # Ensure number of learners has increased
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'List learners', 'RESPONSE:', 200)
     assert n_learners + 1 == body['count']
 
-    # Status 400: Validating email domain
-    # str_data = {'uid': 'LEARNER_UID_2', 'email': 'mail_test@mail.com',
-    #             'first_name': 'TEST_LEARNER_NAME',
-    #             'last_name': 'TEST_LEARNER_LASTNAME'}
-    # tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
-    #                                  'Create a new learner', 'RESPONSE: ', 400)
+    #  Status 400: Validating email domain
+    str_data = {'uid': 'LEARNER_UID_2', 'email': 'mail_test@mail.com',
+                'first_name': 'TEST_LEARNER_NAME',
+                'last_name': 'TEST_LEARNER_LASTNAME'}
+    tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
+                                     'Create a new learner', 'RESPONSE: ', 400)
 
     # Status 400: Validating unique email
     tests.utils.post_rest_api_client(rest_api_client, str_path,
@@ -170,13 +164,60 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
 
     str_data = {'uid': 'LEARNER_UID_UPDATED', 'email': 'mail_test_UPDATED@tesla-ce.eu',
                 'first_name': 'TEST_LEARNER_NAME_UPDATED',
-                'last_name': 'TEST_LEARNER_LASTNAME_UDPATED'}
+                'last_name': 'TEST_LEARNER_LASTNAME_UPDATED'}
     tests.utils.put_rest_api_client(rest_api_client, str_path, str_data,
                                     'Update Learner', 'RESPONSE: ', 200)
 
     # TODO? Update Learner errors
 
-    # 5) Accept an informed consent for a learner
+    # 5) Delete learner
+    """ ---------------------------------------------------------------------
+    DELETE LEARNER:
+        DELETE /api/v2/institution/(int: institution_id)/learner/(int: learner_id)/
+        Status Codes:
+            200 OK – Ok
+            400 Bad Request – Invalid information provided. The response contains the description of the errors.
+            404 Not Found – Institution not found
+            404 Not Found – Learner not found
+    Request Headers: Authorization - JWT with Institution Admin/Data privileges
+    """
+    institution_user.inst_admin = True
+    # 666 TODO: Add authorization for deleting learner by an Institution Data admin user?
+    # institution_user.data_admin = True
+    institution_user.save()
+    rest_api_client.force_authenticate(user=institution_user)
+
+    logging.info('\n5) DELETE LEARNER --------------------------------------')
+
+    str_path = '/api/v2/institution/{}/learner/{}/'.format(institution_id, new_learner_id)
+    tests.utils.delete_rest_api_client(rest_api_client, str_path,
+                                       'Delete Learner', "RESPONSE: ", 204)
+
+    # Ensure number of learners has decreased
+    str_path = '/api/v2/institution/{}/learner/'.format(institution_id)
+    str_message = 'RESPONSE institution_id:{}'.format(institution_id)
+    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
+                                           'List learners', str_message, 200)
+    assert body['count'] == n_learners
+
+
+@pytest.mark.django_db
+def test_api_institution_learner_ic(rest_api_client, institution_course_test_case):
+    """
+
+    INSTITUTION TEST: LEARNER'S INFORMED CONSENT
+       1) Accept an informed consent for a learner
+       2) Reject current Informed Consent of a learner
+    """
+    institution_user = institution_course_test_case['user'].institutionuser
+    institution_id = institution_course_test_case['institution'].id
+    learner = institution_course_test_case['learner']
+    learner_user = learner.institutionuser
+    learner_user_id = learner_user.id
+
+    logging.info('\nTESTING INSTITUTIONS: Learner\'s Informed Consent *********************************************')
+
+    # 1) Accept an informed consent for a learner
     """ ---------------------------------------------------------------------
     ACCEPT INFORMED CONSENT FOR A LEARNER:
         POST /api/v2/institution/(int: institution_id)/learner/(int: learner_id)/ic/
@@ -188,11 +229,9 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
             404 Not Found – Learner not found
     Request Headers: Authorization - JWT with LEARNER privileges (only own learner)
     """
-    logging.info('\n5) ACCEPT INFORMED CONSENT FOR A LEARNER --------------------------------------')
+    logging.info('\n1) ACCEPT INFORMED CONSENT FOR A LEARNER --------------------------------------')
     rest_api_client.force_authenticate(user=learner_user)
-    # institution_user.inst_admin = True
-    # institution_user.save()
-    # rest_api_client.force_authenticate(user=institution_user)
+
     # Getting valid informed consent for current institution
     ic_str_path = '/api/v2/institution/{}/ic/'.format(learner_user_id)
     ic_str_response = 'RESPONSE institution_id={}:'.format(institution_id)
@@ -221,6 +260,8 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
                                          'Accept Informed Consent for a Learner',
                                          'RESPONSE: ', 200)
 
+    institution_user.inst_admin = True
+    institution_user.save()
     rest_api_client.force_authenticate(user=institution_user)
     str_path = '/api/v2/institution/{}/learner/{}/'.format(institution_id, learner_user_id)
     str_response = 'RESPONSE Learner ID={}:'.format(learner_user_id)
@@ -228,7 +269,7 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
                                            'Read Learner Information', str_response, 200)
     assert body['consent'] is not None
 
-    # 6) Reject current Informed Consent of a learner
+    # 2) Reject current Informed Consent of a learner
     """ ---------------------------------------------------------------------
     REJECT CURRENT INFORMED CONSENT OF A LEARNER:
         DELETE /api/v2/institution/(int: institution_id)/learner/(int: learner_id)/ic/
@@ -239,7 +280,7 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
             404 Not Found – Learner not found
     Request Headers: Authorization - JWT with LEARNER privileges
     """
-    logging.info('\n6) REJECT INFORMED CONSENT FOR A LEARNER --------------------------------------')
+    logging.info('\n2) REJECT INFORMED CONSENT FOR A LEARNER --------------------------------------')
     rest_api_client.force_authenticate(user=learner_user)
     str_path = '/api/v2/institution/{}/learner/{}/ic/'.format(institution_id, learner_user_id)
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
@@ -252,7 +293,25 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
                                            'Read Learner Information', str_response, 200)
     assert body['consent_rejected'] is not None
 
-    # 7) Read SEND categories assigned to a learner
+
+@pytest.mark.django_db
+def test_api_institution_learner_send(rest_api_client, institution_course_test_case):
+    """
+
+    INSTITUTION TEST: LEARNER'S SEND CATEGORY
+       1) Read SEND categories assigned to a learner
+       2) Add SEND category to a learner
+       3) Remove a SEND Category from a learner
+    """
+    institution_user = institution_course_test_case['user'].institutionuser
+    institution_id = institution_course_test_case['institution'].id
+    learner = institution_course_test_case['learner']
+    learner_user = learner.institutionuser
+    learner_user_id = learner_user.id
+
+    logging.info('\nTESTING INSTITUTIONS: Learner\'s SEND category *********************************************')
+
+    # 1) Read SEND categories assigned to a learner
     """ ---------------------------------------------------------------------
     Read SEND categories assigned to a learner:
         GET /api/v2/institution/(int: institution_id)/learner/(int: learner_id)/send/
@@ -263,27 +322,21 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
             404 Not Found – Learner not found
     Request Headers: Authorization - JWT with Institution Admin/SEND privileges
     """
-    '''
-    # 666 TODO: fix issue READ. GET request returns status 500 and does not identify institution_id:
-    # FieldError("Cannot resolve keyword 'institution_id' into field. Choices are: category, category_id, 
-    # created_at, expires_at, id, learner, learner_id, updated_at")
-    
-    logging.info('\n7) Read SEND categories assigned to a learner --------------------------------------')
+    logging.info('\n1) Read SEND categories assigned to a learner --------------------------------------')
     institution_user.inst_admin = False
     institution_user.send_admin = True
     institution_user.save()
     rest_api_client.force_authenticate(user=institution_user)
 
-    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, new_learner_id)
-    str_response = 'RESPONSE Learner ID={}:'.format(new_learner_id)
+    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, learner_user_id)
+    str_response = 'RESPONSE Learner ID={}:'.format(learner_user_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'Read SEND categories assigned to a learner',
                                            str_response, 200)
     # No SEND category for a new learner
     assert body['count'] == 0
-    '''
 
-    # 8) Add SEND category to a learner
+    # 2) Add SEND category to a learner
     """ ---------------------------------------------------------------------
     Add SEND category to a learner:
         POST /api/v2/institution/(int: institution_id)/learner/(int: learner_id)/send/
@@ -299,7 +352,7 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
             404 Not Found – SEND Category not found
     Request Headers: Authorization - JWT with Institution Admin/SEND privileges
     """
-    logging.info('\n8) Add SEND category to a learner --------------------------------------')
+    logging.info('\n2) Add SEND category to a learner --------------------------------------')
     institution_user.send_admin = True
     institution_user.save()
     rest_api_client.force_authenticate(user=institution_user)
@@ -311,23 +364,26 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
     str_data = {'parent': '',
                 'description': 'SEND Category for TESTING purposes',
                 'data': data}
-    new_send_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
-                                                   'Create a new SEND Category', 'RESPONSE: ', 201)
+    new_send_category_id = tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
+                                                            'Create a new SEND Category',
+                                                            'RESPONSE: ', 201)
 
-    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, new_learner_id)
-    str_data = {'category': new_send_id}
+    # Add the new SEND category to tester learner user.
+    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, learner_user_id)
+    str_data = {'category': new_send_category_id}
     tests.utils.post_rest_api_client(rest_api_client, str_path, str_data,
                                      'Add SEND category to a learner',
                                      'RESPONSE: ', 201)
-    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, new_learner_id)
-    str_response = 'RESPONSE Learner ID={}:'.format(new_learner_id)
+    # Assert SEND categories has increased.
+    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, learner_user_id)
+    str_response = 'RESPONSE Learner ID={}:'.format(learner_user_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'Read SEND categories assigned to a learner',
                                            str_response, 200)
     assert body['count'] == 1
     new_send_assignment_id = body['results'][0]['id']
 
-    # 9) Remove a SEND Category from a learner
+    # 3) Remove a SEND Category from a learner
     """ ---------------------------------------------------------------------
     Remove a SEND Category from a learner:
         DELETE /api/v2/institution/(int: institution_id)/learner/(int: learner_id)/send/(int: send_assig_id)/
@@ -339,53 +395,25 @@ def test_api_institution_learner(rest_api_client, institution_course_test_case):
             404 Not Found – SEND Category not found
     Request Headers: Authorization - JWT with Institution Admin/SEND privileges
     """
-    logging.info('\n9) Remove a SEND Category from a learner --------------------------------------')
+    logging.info('\n3) Remove a SEND Category from a learner --------------------------------------')
     institution_user.send_admin = True
     institution_user.save()
     rest_api_client.force_authenticate(user=institution_user)
 
     str_path = '/api/v2/institution/{}/learner/{}/send/{}/'.format(institution_id,
-                                                                   new_learner_id,
+                                                                   learner_user_id,
                                                                    new_send_assignment_id)
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
                                        'Remove a SEND Category from a learner', "RESPONSE: ", 204)
 
     # Delete SEND Category for testing purposes
-    str_path = '/api/v2/institution/{}/send/{}/'.format(institution_id, new_send_id)
+    str_path = '/api/v2/institution/{}/send/{}/'.format(institution_id, new_send_category_id)
     tests.utils.delete_rest_api_client(rest_api_client, str_path,
                                        'Delete SEND Category', "RESPONSE: ", 204)
 
-    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, new_learner_id)
-    str_response = 'RESPONSE Learner ID={}:'.format(new_learner_id)
+    str_path = '/api/v2/institution/{}/learner/{}/send/'.format(institution_id, learner_user_id)
+    str_response = 'RESPONSE Learner ID={}:'.format(learner_user_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path,
                                            'Read SEND categories assigned to a learner',
                                            str_response, 200)
     assert body['count'] == 0
-
-    # 10) Delete learner
-    """ ---------------------------------------------------------------------
-    DELETE LEARNER:
-        DELETE /api/v2/institution/(int: institution_id)/learner/(int: learner_id)/
-        Status Codes:
-            200 OK – Ok
-            400 Bad Request – Invalid information provided. The response contains the description of the errors.
-            404 Not Found – Institution not found
-            404 Not Found – Learner not found
-    Request Headers: Authorization - JWT with Institution Admin/Data privileges
-    """
-    institution_user.data_admin = True
-    institution_user.save()
-    rest_api_client.force_authenticate(user=institution_user)
-
-    logging.info('\n10) DELETE LEARNER --------------------------------------')
-
-    str_path = '/api/v2/institution/{}/learner/{}/'.format(institution_id, new_learner_id)
-    tests.utils.delete_rest_api_client(rest_api_client, str_path,
-                                       'Delete Learner', "RESPONSE: ", 204)
-
-    # Ensure number of learners has decreased
-    str_path = '/api/v2/institution/{}/learner/'.format(institution_id)
-    str_message = 'RESPONSE institution_id:{}'.format(institution_id)
-    body = tests.utils.get_rest_api_client(rest_api_client, str_path,
-                                           'List learners', str_message, 200)
-    assert body['count'] == n_learners

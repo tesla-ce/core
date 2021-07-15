@@ -22,18 +22,15 @@ import tests.utils
 from tests.utils import getting_variables
 
 
-def test_api_institution_learners(rest_api_client, user_global_admin, institution_course_test_case):
-    # TODO Learners
-    # TODO List learners
-    # TODO Create a new Learner
-    # TODO Read learner information
-    # TODO Update learner
-    # TODO Delete learner
-    # TODO Accept an Informed Consent for a learner
-    # TODO Reject current Informed Consent of a learner
+def test_api_institution_course_learners(rest_api_client, user_global_admin, institution_course_test_case):
+    # TODO Course Learners
+    # TODO List learners from a course
+    # TODO Create a new Learner: add learner to a course (institution admin)
+    # TODO Delete learner: remove from course but not from system (institution admin)
+    # TODO a learner can list instructors from her own course
+    # TODO a learner can read her own information
 
-    # TODO Add SEND category to a learner
-    # TODO Read SEND categories assigned to a learner
-    # TODO Remove a SEND Category from a learner
+
+
 
     pytest.skip('TODO')

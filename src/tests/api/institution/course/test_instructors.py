@@ -22,7 +22,12 @@ import tests.utils
 from tests.utils import getting_variables
 
 
-def test_api_institution_instructors(rest_api_client, user_global_admin, institution_course_test_case):
-    # TODO Instructors
-    # TODO --> TO BE DONE!
+def test_api_institution_course_instructors(rest_api_client, user_global_admin, institution_course_test_case):
+    # TODO Course Instructors
+    # TODO List learners from a course
+    # TODO List instructors from a course
+    # TODO Create a new Learner: add learner to a course (from instructor)
+    # TODO Delete learner: remove a learner from course but not from system (from instructor)
+    # TODO Add existing user as a instructor to a course (from instructor)
+
     pytest.skip('TODO')
