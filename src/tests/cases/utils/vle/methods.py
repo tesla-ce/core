@@ -400,7 +400,7 @@ def vle_close_assessment_session(vle, assessment_session):
     close_session_resp = client.post(
         '/api/v2/vle/{}/assessment/'.format(vle_id),
         data={
-            'session_idl': assessment_session['id'],
+            'session_id': assessment_session['id'],
             'close': True
         },
         format='json'
