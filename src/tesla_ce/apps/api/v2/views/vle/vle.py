@@ -57,7 +57,7 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     '''
 
-    @action(detail=True, methods=['POST', ],
+    @action(detail=True, methods=['POST',],
             serializer_class=VLENewAssessmentSessionSerializer)
     def assessment(self, request, pk):
         """
@@ -68,20 +68,24 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            if serializer.data['session_id'] is not None:
+                assessment_session = AssessmentSession.objects.get(id=serializer.data['session_id'])
+
+                # Close the session
+                if serializer.data['close'] is not None and serializer.data['close']:
+                    if not assessment_session.is_active:
+                        raise ValidationError('Cannot close a closed session')
+                    assessment_session.close(auto=False, close_related=True)
+                elif not assessment_session.is_active:
+                    raise ValidationError('Closed session')
+
+                resp = self.serializer_class(assessment_session)
+                return Response(resp.data)
             vle = VLE.objects.get(pk=pk)
             activity = Activity.objects.get(vle=vle, vle_activity_type=serializer.data['vle_activity_type'],
                                             vle_activity_id=serializer.data['vle_activity_id'])
             learner = Learner.objects.get(institution=vle.institution, uid=serializer.data['vle_learner_uid'])
 
-            if serializer.data['session_id'] is not None:
-                assessment_session = AssessmentSession.objects.get(id=serializer.data['session_id'])
-                # Check session data
-                if assessment_session.activity != activity:
-                    raise ValidationError('Provided session does not match with the activity')
-                if assessment_session.learner != learner:
-                    raise ValidationError('Provided session does not match with the learner')
-                resp = self.serializer_class(assessment_session)
-                return Response(resp.data)
         except VLE.DoesNotExist:
             return Response("VLE not found", status=status.HTTP_404_NOT_FOUND)
         except Activity.DoesNotExist:

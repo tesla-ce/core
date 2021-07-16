@@ -382,3 +382,31 @@ def vle_activity_report(vle, activity):
         report['detailed_report']['requests'] = request_list
 
     return reports
+
+
+def vle_close_assessment_session(vle, assessment_session):
+    """
+        The VLE creates an assessment session.
+        :param vle: VLE object
+        :param assessment_session: The assessment session to close
+    """
+    # Authenticate using VLE credentials
+    client, config = auth_utils.client_with_approle_credentials(vle['role_id'], vle['secret_id'])
+
+    # Get the VLE ID from configuration
+    vle_id = config['vle_id']
+
+    # Get an evaluation session
+    close_session_resp = client.post(
+        '/api/v2/vle/{}/assessment/'.format(vle_id),
+        data={
+            'session_id': assessment_session['id'],
+            'close': True
+        },
+        format='json'
+    )
+    assert close_session_resp.status_code == 200
+    assert close_session_resp.data['closed_at'] is not None
+
+    # Check missing instruments
+    return close_session_resp.data

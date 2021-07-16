@@ -14,6 +14,7 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Assessment session model module."""
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .activity import Activity
@@ -35,6 +36,8 @@ class AssessmentSession(BaseModel):
                                       help_text=_('Last time this assessment session has been checked'))
     closed_at = models.DateTimeField(null=True, blank=True,
                                      help_text=_('Date the assessment session has been closed'))
+    auto_closed = models.BooleanField(null=True, default=None,
+                                      help_text=_('Whether this session has been automatically closed'))
 
     @property
     def is_active(self):
@@ -45,6 +48,26 @@ class AssessmentSession(BaseModel):
             :rtype: bool
         """
         return self.closed_at is None
+
+    def close(self, auto=False, close_related=True):
+        """
+            Close an activity session
+
+            :param auto: Whether this close action has been automatically triggered
+            :param close_related: Close open sessions for same learner and activity
+        """
+        # Close this session
+        self.closed_at = timezone.now()
+        self.auto_closed = auto
+        self.save()
+
+        # Close related sessions
+        if close_related:
+            for session in AssessmentSession.objects.filter(activity=self.activity,
+                                                            learner=self.learner,
+                                                            started_at__lt=self.started_at,
+                                                            closed_at=None):
+                session.close(auto=True, close_related=False)
 
     def __repr__(self):
         return "<AssessmentSession(activity_id='%r',learner_id='%r', is_active='%r')>" % (
