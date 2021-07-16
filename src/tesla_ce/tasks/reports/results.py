@@ -256,7 +256,7 @@ def update_learner_activity_report(learner_id, activity_id):
         if session.closed_at is not None:
             closed_at = session.closed_at.isoformat()
         session_data = None
-        if session.data is not None:
+        if session.data is not None and session.data.readable():
             session_data = json.loads(session.data.read())
         report_data['sessions'].append({
             'id': session.id,
