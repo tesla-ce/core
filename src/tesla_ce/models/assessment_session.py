@@ -65,6 +65,7 @@ class AssessmentSession(BaseModel):
         if close_related:
             for session in AssessmentSession.objects.filter(activity=self.activity,
                                                             learner=self.learner,
+                                                            started_at__lt=self.started_at,
                                                             closed_at=None):
                 session.close(auto=True, close_related=False)
 
