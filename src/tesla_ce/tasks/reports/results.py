@@ -28,7 +28,15 @@ from tesla_ce import models
 
 
 @celery_app.task(ignore_result=True, bind=True)
-def update_learner_activity_session_report(self, learner_id, activity_id, session_id):
+def update_learner_activity_session_report(self, learner_id, activity_id, session_id, force_update=False):
+    """
+        Create a report for an assessment session
+        :param self: Task object
+        :param learner_id: Learner id
+        :param activity_id: Activity id
+        :param session_id: Assessment session id
+        :param force_update: If True, compute data even if there are pending requests, otherwise is skiped
+    """
     # Get the report
     try:
         report = models.ReportActivity.objects.get(
@@ -62,7 +70,7 @@ def update_learner_activity_session_report(self, learner_id, activity_id, sessio
     session_report.processed_requests = models.Request.objects.filter(session_id=session_id, status__gt=3).count()
 
     # If all the data for this session is processed, compute session detail
-    if session_report.pending_requests == 0:
+    if session_report.pending_requests == 0 or force_update:
         results_qs = models.RequestResult.objects.filter(request__session_id=session_id,
                                                          request__learner_id=learner_id)
         data = {}
@@ -247,6 +255,9 @@ def update_learner_activity_report(learner_id, activity_id):
         closed_at = None
         if session.closed_at is not None:
             closed_at = session.closed_at.isoformat()
+        session_data = None
+        if session.data is not None:
+            session_data = json.loads(session.data.read())
         report_data['sessions'].append({
             'id': session.id,
             'pending_requests': session.pending_requests,
@@ -258,7 +269,7 @@ def update_learner_activity_report(learner_id, activity_id):
             'identity_level': session.identity_level,
             'integrity_level': session.integrity_level,
             'content_level': session.content_level,
-            'data': json.loads(session.data.read())
+            'data': session_data
         })
     data_path = '{}/results/{}/{}/{}/report.json'.format(
         report.activity.vle.institution_id,
