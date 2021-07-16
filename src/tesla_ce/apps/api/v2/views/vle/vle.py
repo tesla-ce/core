@@ -57,7 +57,7 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     '''
 
-    @action(detail=True, methods=['POST', ],
+    @action(detail=True, methods=['POST',],
             serializer_class=VLENewAssessmentSessionSerializer)
     def assessment(self, request, pk):
         """
@@ -80,6 +80,15 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
                     raise ValidationError('Provided session does not match with the activity')
                 if assessment_session.learner != learner:
                     raise ValidationError('Provided session does not match with the learner')
+
+                # Close the session
+                if serializer.data['close'] is not None and serializer.data['close']:
+                    if not assessment_session.is_active:
+                        raise ValidationError('Cannot close a closed session')
+                    assessment_session.close(auto=False, close_related=True)
+                elif not assessment_session.is_active:
+                    raise ValidationError('Closed session')
+
                 resp = self.serializer_class(assessment_session)
                 return Response(resp.data)
         except VLE.DoesNotExist:

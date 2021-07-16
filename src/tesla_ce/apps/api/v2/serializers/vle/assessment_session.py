@@ -31,6 +31,7 @@ class VLENewAssessmentSessionBodySerializer(serializers.Serializer):
     redirect_reject_url = serializers.URLField(required=False, allow_null=True, default=None)
     reject_message = serializers.CharField(required=False, allow_null=True, default=None)
     options = JSONField(required=False, allow_null=True, default=True)
+    close = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         fields = ["vle_activity_type", "vle_activity_id", "vle_learner_uid", "locale", "max_ttl",

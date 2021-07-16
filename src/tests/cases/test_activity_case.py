@@ -412,3 +412,8 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     # Data admin check the list of rejected informed consents
 
     # Data admin remove all data of a learner
+
+
+    # The VLE closes the sessions
+    utils.vle.vle_close_assessment_session(vle, assessment_session1)
+    utils.vle.vle_close_assessment_session(vle, assessment_session2)
