@@ -54,9 +54,10 @@ class InstitutionCourseLearnerViewSet(NestedViewSetMixin, DetailSerializerMixin,
 
     def get_queryset(self):
         queryset = self.filter_queryset_by_parents_lookups(Course.objects)
+        is_instructor = self.request.user in queryset.get().instructors.all()
         queryset = queryset.get().learners
         if not is_global_admin(self.request.user):
             inst_user = get_institution_user(self.request.user)
-            if not inst_user.inst_admin and not inst_user.legal_admin and not inst_user.data_admin:
+            if not inst_user.inst_admin and not inst_user.legal_admin and not inst_user.data_admin and not is_instructor:
                 queryset = queryset.filter(id=inst_user.id)
         return queryset.all().order_by('id')

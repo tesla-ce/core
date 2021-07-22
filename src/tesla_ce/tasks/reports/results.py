@@ -35,7 +35,7 @@ def update_learner_activity_session_report(self, learner_id, activity_id, sessio
         :param learner_id: Learner id
         :param activity_id: Activity id
         :param session_id: Assessment session id
-        :param force_update: If True, compute data even if there are pending requests, otherwise is skiped
+        :param force_update: If True, compute data even if there are pending requests, otherwise is skipped
     """
     # Get the report
     try:
@@ -217,7 +217,13 @@ def update_learner_activity_instrument_report(self, learner_id, activity_id, ins
 
 
 @celery_app.task(ignore_result=True)
-def update_learner_activity_report(learner_id, activity_id):
+def update_learner_activity_report(learner_id, activity_id, force_update=False):
+    """
+        Update the report for an activity and learner
+        :param learner_id: Learner id
+        :param activity_id: Activity id
+        :param force_update: If True, compute data even if there are pending requests, otherwise is skipped
+    """
     # Skip update if no new data is present
     try:
         report = models.ReportActivity.objects.get(
@@ -227,7 +233,10 @@ def update_learner_activity_report(learner_id, activity_id):
     except models.ReportActivity.DoesNotExist:
         # This task is executed always after instrument results tasks. It is not possible that report does not exist
         raise Reject('Report does not exists')
-    if report.updated_at > report.reportactivityinstrument_set.aggregate(Max('updated_at'))['updated_at__max']:
+
+    # Check if there are new results
+    if report.updated_at > report.reportactivityinstrument_set.aggregate(
+            Max('updated_at'))['updated_at__max'] and not force_update:
         raise Reject('No new results')
 
     stats = report.reportactivityinstrument_set.aggregate(Max('identity_level'),
@@ -247,8 +256,7 @@ def update_learner_activity_report(learner_id, activity_id):
         update_learner_activity_session_report(learner_id=learner_id, activity_id=activity_id, session_id=session_id)
 
     report_data = {
-        'sessions': [],
-        'facts': []
+        'sessions': []
     }
 
     for session in report.reportactivitysession_set.all().order_by('created_at'):

@@ -58,13 +58,14 @@ class InstitutionCourseActivityReportExtendedDetailSerializer(serializers.ModelS
     prob_context = serializers.SerializerMethodField()
     h_prob_learner = serializers.SerializerMethodField()
     h_prob_context = serializers.SerializerMethodField()
+    facts = serializers.SerializerMethodField()
 
     class Meta:
         model = ReportActivityInstrument
         fields = ["instrument", "enrolment", "confidence", "result", "identity_level", "instrument_acronym",
                   "content_level", "integrity_level", "learner_histogram", "activity_histogram",
                   "instrument_id", "instrument_polarity", "result_bean", "thresholds",
-                  "prob_learner", "prob_context", "h_prob_learner", "h_prob_context"]
+                  "prob_learner", "prob_context", "h_prob_learner", "h_prob_context", "facts"]
 
     @staticmethod
     def get_activity_histogram(instance):
@@ -73,8 +74,7 @@ class InstitutionCourseActivityReportExtendedDetailSerializer(serializers.ModelS
             :param instance: Report Activity Instrument
             :return: Histogram
         """
-        return list(instance.instrument.histogramactivityinstrument_set.values_list(
-            'b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9').first())
+        return instance.get_activity_histogram()
 
     @staticmethod
     def get_learner_histogram(instance):
@@ -83,87 +83,83 @@ class InstitutionCourseActivityReportExtendedDetailSerializer(serializers.ModelS
             :param instance: Report Activity Instrument
             :return: Histogram
         """
-        return list(instance.report.learner.histogramlearnerinstrument_set.filter(
-            instrument=instance.instrument
-        ).values_list('b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9').first())
+        return instance.get_learner_histogram()
 
     @staticmethod
     def get_instrument_polarity(instance):
-        return 2 * int(not instance.instrument.provider_set.first().inverted_polarity) - 1
+        """
+            Return the instrument polarity
+            :param instance: Report Activity Instrument
+            :return: 1 for normal polarity and -1 if inverted polarity
+        """
+        return instance.get_instrument_polarity()
 
     @staticmethod
     def get_result_bean(instance):
-        return min(int(instance.result/10), 9)
+        """
+            Get the histogram bin where current result is included
+            :param instance: Report Activity Instrument
+            :return: Bin number
+        """
+        return instance.get_result_bean()
 
     @staticmethod
     def get_thresholds(instance):
+        """
+            Get the reference thresholds for current instrument
+            :param instance: Report Activity Instrument
+            :return: Reference thresholds
+        """
         prov_thr = instance.instrument.provider_set.first()
         return {
             "warning_below": prov_thr.warning_below,
             "alert_below": prov_thr.alert_below
         }
 
-    def get_prob_learner(self, instance):
+    @staticmethod
+    def get_prob_learner(instance):
         """
             Compute the probability to have current value for the learner
             :param instance: Report Activity Instrument
             :return: Probability value
         """
-        hist_bin = self.get_result_bean(instance)
-        hist = self.get_learner_histogram(instance)
-        acc = hist[hist_bin]
-        if hist_bin > 0:
-            acc += hist[hist_bin - 1] / 2.0
-        if hist_bin < 9:
-            acc += hist[hist_bin + 1] / 2.0
+        return instance.get_prob_learner()
 
-        return acc / sum(hist)
-
-    def get_prob_context(self, instance):
+    @staticmethod
+    def get_prob_context(instance):
         """
             Compute the probability to have current value in the context
             :param instance: Report Activity Instrument
             :return: Probability value
         """
-        hist_bin = self.get_result_bean(instance)
-        hist = self.get_activity_histogram(instance)
-        acc = hist[hist_bin]
-        if hist_bin > 0:
-            acc += hist[hist_bin - 1] / 2.0
-        if hist_bin < 9:
-            acc += hist[hist_bin + 1] / 2.0
+        return instance.get_prob_context()
 
-        return acc / sum(hist)
-
-    def get_h_prob_learner(self, instance):
+    @staticmethod
+    def get_h_prob_learner(instance):
         """
             Compute the probability to have better value for the learner
             :param instance: Report Activity Instrument
             :return: Probability value
         """
-        hist_bin = self.get_result_bean(instance)
-        hist = self.get_learner_histogram(instance)
-        if self.get_instrument_polarity(instance) > 0:
-            acc = sum(hist[hist_bin + 1: 10])
-        else:
-            acc = sum(hist[0:hist_bin])
+        return instance.get_h_prob_learner()
 
-        return acc / sum(hist)
-
-    def get_h_prob_context(self, instance):
+    @staticmethod
+    def get_h_prob_context(instance):
         """
             Compute the probability to have better value in the context
             :param instance: Report Activity Instrument
             :return: Probability value
         """
-        hist_bin = self.get_result_bean(instance)
-        hist = self.get_activity_histogram(instance)
-        if self.get_instrument_polarity(instance) > 0:
-            acc = sum(hist[hist_bin + 1: 10])
-        else:
-            acc = sum(hist[0:hist_bin])
+        return instance.get_h_prob_context()
 
-        return acc / sum(hist)
+    @staticmethod
+    def get_facts(instance):
+        """
+            Get facts from results
+            :param instance: Report Activity Instrument
+            :return: Dictionary with facts
+        """
+        return instance.get_facts()
 
 
 class InstitutionCourseActivityReportSerializer(serializers.ModelSerializer):

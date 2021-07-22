@@ -65,7 +65,7 @@ def get_rest_api_client(rest_api_client, str_path, module, message, status):
     @param status: Testing status (example: 200, 404...)
     @return: response body
     """
-    response = rest_api_client.get(str_path)
+    response = rest_api_client.get(str_path, format='json')
     body = response.json()
     str_log = [[module], ['Expected Status:', status],
                ['Received Status:', response.status_code], [message, body]]
