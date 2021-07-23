@@ -47,9 +47,9 @@ def test_api_institution_course_learners(rest_api_client, user_global_admin, ins
     # Get the list of courses for a learner user and select her course_id
     rest_api_client.force_authenticate(user=learner_user)
     str_module = 'List of Learner\'s Courses (Learner user privileges)'
-    str_message = 'RESPONSE institution_id:{} learner_user_id:{}'.format(institution_id, learner_user_id)
+    str_message_learner = 'RESPONSE institution_id:{} learner_user_id:{}'.format(institution_id, learner_user_id)
     courses_list = tests.utils.get_rest_api_client(rest_api_client, courses_url,
-                                                   str_module, str_message, 200)
+                                                   str_module, str_message_learner, 200)
     n_courses = courses_list['count']
     assert n_courses == 1
     # Select first course
@@ -62,11 +62,11 @@ def test_api_institution_course_learners(rest_api_client, user_global_admin, ins
     tests.utils.post_rest_api_client(rest_api_client, str_path_learner, str_data,
                                      'Add new instructor to a course', 'RESPONSE: ', 201)
     str_module = 'List learners from a course (Instructor user privileges)'
-    str_message = 'RESPONSE institution_id:{} course_id:{} instructor_user_id:{}'.format(institution_id,
-                                                                                         course_id,
-                                                                                         instructor_user_id)
+    str_message_instructor = 'RESPONSE institution_id:{} course_id:{} instructor_user_id:{}'.format(institution_id,
+                                                                                                    course_id,
+                                                                                                    instructor_user_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path_learner,
-                                           str_module, str_message, 200)
+                                           str_module, str_message_instructor, 200)
     n_learners = body['count']
     assert n_learners == 2
 
@@ -79,11 +79,8 @@ def test_api_institution_course_learners(rest_api_client, user_global_admin, ins
 
     # Learner can read only her own information: List learners from a course (learner user privileges)
     str_module = 'List learners from a course (Learner user privileges)'
-    str_message = 'RESPONSE institution_id:{} course_id:{} learner_user_id:{}'.format(institution_id,
-                                                                                      course_id,
-                                                                                      learner_user_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path_learner,
-                                           str_module, str_message, 200)
+                                           str_module, str_message_learner, 200)
     assert body['count'] == 1
     assert body['results'][0]['id'] == learner_user_id
 
@@ -94,11 +91,8 @@ def test_api_institution_course_learners(rest_api_client, user_global_admin, ins
     tests.utils.post_rest_api_client(rest_api_client, str_path_instructor, str_data,
                                      'Add new instructor to a course', 'RESPONSE: ', 201)
     str_module = 'List instructor from a course (Instructor user privileges)'
-    str_message = 'RESPONSE institution_id:{} course_id:{} instructor_user_id:{}'.format(institution_id,
-                                                                                         course_id,
-                                                                                         instructor_user_id)
     body = tests.utils.get_rest_api_client(rest_api_client, str_path_instructor,
-                                           str_module, str_message, 200)
+                                           str_module, str_message_instructor, 200)
     n_instructors = body['count']
     assert n_instructors == 2
 
@@ -110,11 +104,8 @@ def test_api_institution_course_learners(rest_api_client, user_global_admin, ins
 
     # Learner can read only her own information: List instructors from a course (learner user privileges)
     str_module = 'List of Course\'s Instructors (Learner user privileges)'
-    str_message = 'RESPONSE institution_id:{} course_id:{} learner_user_id:{}'.format(institution_id,
-                                                                                      course_id,
-                                                                                      learner_user_id)
     instructors_list = tests.utils.get_rest_api_client(rest_api_client, str_path_instructor,
-                                                       str_module, str_message, 200)
+                                                       str_module, str_message_learner, 200)
     assert n_instructors == instructors_list['count']
 
     # TODO Delete learner: remove from course but not from system (institution admin)
