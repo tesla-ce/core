@@ -47,8 +47,8 @@ class InstitutionCourseInstructorSerializer(serializers.ModelSerializer):
             :rtype: dict
         """
         # Add predefined fields
-        attrs['institution_id'] = self.context['view'].kwargs['parent_lookup_institution_id']
-        attrs['course_id'] = self.context['view'].kwargs['parent_lookup_course_id']
+        attrs['institution_id'] = self.context['view'].kwargs['parent_lookup_vle__institution_id']
+        attrs['course_id'] = self.context['view'].kwargs['parent_lookup_id']
 
         # Apply validators
         for validator in self.get_validators():

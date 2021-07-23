@@ -1,7 +1,7 @@
 version: '3.5'
 services:
   moodle:
-    image: registry.sunai.uoc.edu/tesla-ce/teslace-moodle-plugin:latest
+    image: teslace/frontend-angular:latest
     deploy:
       restart_policy:
         condition: on-failure
