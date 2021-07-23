@@ -63,7 +63,7 @@ def test_api_institution_course_instructors(rest_api_client, user_global_admin, 
 
     # TODO Add a Learner to a Course (from instructor privileges)
     # 666 STATUS 500 + KeyError('parent_lookup_institution_id')
-    ''''''
+    '''
     str_data = {'uid': institution_user.uid}
     new_learner_id = tests.utils.post_rest_api_client(rest_api_client, str_path_learner, str_data,
                                                       'Add new learner to a course', 'RESPONSE: ', 201)
@@ -72,7 +72,7 @@ def test_api_institution_course_instructors(rest_api_client, user_global_admin, 
     body = tests.utils.get_rest_api_client(rest_api_client, str_path_learner,
                                            'List learners from a course', 'RESPONSE:', 200)
     assert n_learners + 1 == body['count']
-    ''''''
+    '''
 
     # Check learner user can only list herself
     rest_api_client.force_authenticate(user=learner_user)
