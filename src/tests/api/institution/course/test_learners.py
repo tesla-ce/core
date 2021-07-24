@@ -34,6 +34,8 @@ def test_api_institution_course_learners(rest_api_client, user_global_admin, ins
     learner_user = learner.institutionuser
     learner_user_id = learner_user.id
 
+    pytest.skip('TODO')
+
     # Get the list of courses for a normal Institution User not belonging to any course
     institution_user.inst_admin = False
     institution_user.data_admin = False

@@ -308,8 +308,8 @@ class UserDataSerializer(serializers.Serializer):
             :param instance: User instance
             :return: Institutions list
         """
-        if self.is_admin:
-            institutions = []
+        institutions = []
+        if 'GLOBAL_ADMIN' in self.get_roles(instance):
             for institution in Institution.objects.all().order_by('acronym'):
                 institutions.append({
                     "id": institution.id,
@@ -318,13 +318,12 @@ class UserDataSerializer(serializers.Serializer):
                     "roles": ['GLOBAL_ADMIN'],
                     "locale": None,
                 })
-            return institutions
         else:
             default_institution = self.get_institution(instance)
             if default_institution is not None:
-                return [default_institution]
+                institutions.append(default_institution)
 
-        return []
+        return institutions
 
     def get_roles(self, instance):
         """
