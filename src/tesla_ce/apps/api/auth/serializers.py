@@ -17,6 +17,7 @@ import json
 
 from rest_framework import serializers
 
+from tesla_ce.models import Institution
 from tesla_ce.models import Provider
 from tesla_ce.models import VLE
 from tesla_ce.models.user import get_institution_roles
@@ -307,9 +308,21 @@ class UserDataSerializer(serializers.Serializer):
             :param instance: User instance
             :return: Institutions list
         """
-        default_institution = self.get_institution(instance)
-        if default_institution is not None:
-            return [default_institution]
+        if self.is_admin:
+            institutions = []
+            for institution in Institution.objects.all().order_by('acronym'):
+                institutions.append({
+                    "id": institution.id,
+                    "acronym": institution.acronym,
+                    "uid": None,
+                    "roles": ['GLOBAL_ADMIN'],
+                    "locale": None,
+                })
+            return institutions
+        else:
+            default_institution = self.get_institution(instance)
+            if default_institution is not None:
+                return [default_institution]
 
         return []
 
