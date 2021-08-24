@@ -204,7 +204,7 @@ class JWTAuthentication(BaseAuthentication):
         user = UnauthenticatedUser()
         try:
             payload = self._client.validate_token(token=token)
-            if len(settings.DATABASES) > 0 or settings.DATABASES['default']['ENGINE'] == 'django.db.backends.dummy':
+            if len(settings.DATABASES) > 0 and settings.DATABASES['default']['ENGINE'] != 'django.db.backends.dummy':
                 user = self._get_user_model(payload)
             else:
                 user = AuthenticatedUser()
