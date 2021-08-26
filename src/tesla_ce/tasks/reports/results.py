@@ -67,7 +67,7 @@ def update_learner_activity_session_report(self, learner_id, activity_id, sessio
     session_report.total_requests = models.Request.objects.filter(session_id=session_id).count()
     session_report.valid_requests = models.Request.objects.filter(session_id=session_id, status=3).count()
     session_report.pending_requests = models.Request.objects.filter(session_id=session_id, status__lt=3).count()
-    session_report.processed_requests = models.Request.objects.filter(session_id=session_id, status__gt=3).count()
+    session_report.processed_requests = models.Request.objects.filter(session_id=session_id, status__gte=3).count()
 
     # If all the data for this session is processed, compute session detail
     if session_report.pending_requests == 0 or force_update:
