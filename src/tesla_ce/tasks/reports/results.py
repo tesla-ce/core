@@ -264,8 +264,12 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
         if session.closed_at is not None:
             closed_at = session.closed_at.isoformat()
         session_data = None
-        if session.data is not None and session.data.readable():
-            session_data = json.loads(session.data.read())
+        try:
+            if session.data is not None:
+                session_data = json.loads(session.data.read())
+        except Exception:
+            # If there is any error reading the session data, just left it as None
+            pass
         report_data['sessions'].append({
             'id': session.id,
             'pending_requests': session.pending_requests,
