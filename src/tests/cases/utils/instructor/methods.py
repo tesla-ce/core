@@ -130,6 +130,8 @@ def api_instructor_report(launcher, activity, filters=None):
         report_data_resp = requests.get(report['detailed_report']['data'], verify=False)
         assert report_data_resp.status_code == 200
         report['detailed_report']['data'] = report_data_resp.json()
+        assert 'data' in report['detailed_report']
+        assert 'sessions' in report['detailed_report']['data']
 
         request_list = []
         final = False
