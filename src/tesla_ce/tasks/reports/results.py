@@ -266,7 +266,7 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
         session_data = None
         try:
             if session.data is not None:
-                session_data = json.loads(session.data.read())
+                session_data = json.loads(session.data.read().decode())
         except Exception:
             # If there is any error reading the session data, just left it as None
             pass
