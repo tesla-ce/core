@@ -53,6 +53,7 @@ from .vle import VLECourseActivityLearnerSerializer
 from .vle import VLECourseActivityReportExtendedSerializer
 from .vle import VLECourseActivityReportSerializer
 from .vle import VLECourseActivitySerializer
+from .vle import VLECourseActivityAttachmentSerializer
 from .vle import VLECourseInstructorSerializer
 from .vle import VLECourseLearnerSerializer
 from .vle import VLECourseSerializer
@@ -78,6 +79,7 @@ __all__ = [
     "VLECourseLearnerSerializer",
     "VLECourseActivityLearnerSerializer",
     "VLECourseActivityLearnerRequestSerializer",
+    "VLECourseActivityAttachmentSerializer",
     "VLECourseInstructorSerializer",
     "VLENewAssessmentSessionSerializer",
     "VLENewAssessmentSessionBodySerializer",

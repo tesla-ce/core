@@ -291,11 +291,11 @@ def vle_send_activity(vle, assessment_session, document):
     # Make a submission of the document
     with mock.patch('tesla_ce.tasks.requests.verification.create_request.apply_async', create_request_test):
         data_sent_resp = client.post(
-            '/lapi/v1/verification/{}/{}/'.format(institution_id, learner_id),
+            '/api/v2/vle/{}/course/{}/activity/{}/attachment/{}/'.format(
+                vle_id, course_id, activity_id, learner_id
+            ),
+            #'/lapi/v1/verification/{}/{}/'.format(institution_id, learner_id),
             data={
-                'learner_id': learner_id,
-                'course_id': session_data['activity']['course']['id'],
-                'activity_id': session_data['activity']['id'],
                 'session_id': session_data['session_id'],
                 'instruments': instruments,
                 'metadata': {
