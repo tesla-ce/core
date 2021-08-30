@@ -20,6 +20,7 @@ from .activity_report import VLECourseActivityReportExtendedSerializer
 from .activity_report import VLECourseActivityReportSerializer
 from .assessment_session import VLENewAssessmentSessionBodySerializer
 from .assessment_session import VLENewAssessmentSessionSerializer
+from .attachment import VLECourseActivityAttachmentSerializer
 from .course import VLECourseSerializer
 from .instructor import VLECourseInstructorSerializer
 from .instruments import VLEInstrumentSerializer
@@ -35,6 +36,7 @@ __all__ = [
     "VLECourseSerializer",
     "VLECourseActivitySerializer",
     "VLECourseActivityInstrumentSerializer",
+    "VLECourseActivityAttachmentSerializer",
     "VLECourseLearnerSerializer",
     "VLECourseActivityLearnerSerializer",
     "VLECourseActivityLearnerRequestSerializer",
