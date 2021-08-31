@@ -25,7 +25,7 @@ from tesla_ce.models import Activity
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionCourseActivityViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+class InstitutionCourseActivityViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows activity in a course to be viewed or edited.
     """
