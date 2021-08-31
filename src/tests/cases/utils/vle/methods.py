@@ -239,12 +239,13 @@ def vle_create_launcher(vle, user, session=None):
     return launcher
 
 
-def vle_send_activity(vle, assessment_session, document):
+def vle_send_activity(vle, assessment_session, document, omit_session=False):
     """
         The VLE send the submission performed by learner to TeSLA if required
         :param vle: VLE object
         :param assessment_session: Assessment session object
         :param document: Submitted document
+        :param omit_session: If True, activity is sent without session
         :return: Pending tasks
     """
     # List simulating the storage queue
@@ -277,7 +278,6 @@ def vle_send_activity(vle, assessment_session, document):
     # Get required data
     vle_id = config['vle_id']
     learner_id = session_data['learner']['learner_id']
-    institution_id = session_data['learner']['institution_id']
     course_id = session_data['activity']['course']['id']
     activity_id = session_data['activity']['id']
 
@@ -288,14 +288,8 @@ def vle_send_activity(vle, assessment_session, document):
     assert activity_instruments_resp.status_code == 200
     instruments = [inst['instrument'] for inst in activity_instruments_resp.data]
 
-    # Make a submission of the document
-    with mock.patch('tesla_ce.tasks.requests.verification.create_request.apply_async', create_request_test):
-        data_sent_resp = client.post(
-            '/api/v2/vle/{}/course/{}/activity/{}/attachment/{}/'.format(
-                vle_id, course_id, activity_id, learner_id
-            ),
-            #'/lapi/v1/verification/{}/{}/'.format(institution_id, learner_id),
-            data={
+    # Create the document data
+    document_data = {
                 'session_id': session_data['session_id'],
                 'instruments': instruments,
                 'metadata': {
@@ -305,7 +299,17 @@ def vle_send_activity(vle, assessment_session, document):
                     'context': {}
                 },
                 'data': document['content']
-            },
+            }
+    if omit_session:
+        del document_data['session_id']
+
+    # Make a submission of the document
+    with mock.patch('tesla_ce.tasks.requests.verification.create_request.apply_async', create_request_test):
+        data_sent_resp = client.post(
+            '/api/v2/vle/{}/course/{}/activity/{}/attachment/{}/'.format(
+                vle_id, course_id, activity_id, learner_id
+            ),
+            data=document_data,
             format='json'
         )
         assert data_sent_resp.status_code == 200
