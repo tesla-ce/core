@@ -247,6 +247,12 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
     report.content_level = stats['content_level__max']
     report.integrity_level = stats['integrity_level__max']
 
+    # Create the report data
+    report_data = {
+        'sessions': [],
+        'documents': []
+    }
+
     # Update sessions' results
     sessions = models.AssessmentSession.objects.filter(
         activity_id=activity_id,
@@ -254,10 +260,6 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
     ).values_list('id', flat=True)
     for session_id in list(sessions):
         update_learner_activity_session_report(learner_id=learner_id, activity_id=activity_id, session_id=session_id)
-
-    report_data = {
-        'sessions': []
-    }
 
     for session in report.reportactivitysession_set.all().order_by('created_at'):
         closed_at = None
@@ -283,6 +285,27 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
             'content_level': session.content_level,
             'data': session_data
         })
+
+    # Add results for attachments without session
+    documents = models.Request.objects.filter(learner_id=learner_id,
+                                              activity_id=activity_id,
+                                              session__isnull=True).all()
+    for doc in documents:
+        doc_data = {}
+        instruments = []
+        for doc_res in doc.requestresult_set.values_list('instrument_id', 'status', 'result'):
+            instruments.append(doc_res[0])
+            doc_data[doc_res[0]] = {
+                'status': doc_res[1],
+                'result': doc_res[2]
+            }
+        report_data['documents'].append({
+            'instruments': instruments,
+            'results': doc_data,
+            'created_at': doc.created_at.isoformat()
+        })
+
+    # Store report data
     data_path = '{}/results/{}/{}/{}/report.json'.format(
         report.activity.vle.institution_id,
         report.learner.learner_id,
