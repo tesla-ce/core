@@ -150,4 +150,18 @@ def api_instructor_report(launcher, activity, filters=None):
                 final = True
         report['detailed_report']['requests'] = request_list
 
+        # Get audit data for each instrument
+        report['audit'] = {}
+        for instrument in report['detail']:
+            audit_resp = client.get(
+                '/api/v2/institution/{}/course/{}/activity/{}/report/{}/audit/{}/'.format(
+                    institution_id,
+                    course_id,
+                    activity_id,
+                    report['id'],
+                    instrument['instrument_id']
+            ))
+            assert audit_resp.status_code == 200
+            report['audit'][instrument['instrument_id']] = audit_resp.data
+
     return reports

@@ -18,6 +18,7 @@ from .activity_report import InstitutionCourseActivityReportDetailSerializer
 from .activity_report import InstitutionCourseActivityReportExtendedSerializer
 from .activity_report import InstitutionCourseActivityReportLearnerSerializer
 from .activity_report import InstitutionCourseActivityReportSerializer
+from .activity_report_audit import InstitutionCourseActivityReportAuditSerializer
 from .course import InstitutionCourseSerializer
 from .course_group import InstitutionCourseGroupCourseSerializer
 from .course_group import InstitutionCourseGroupSerializer
@@ -42,6 +43,7 @@ __all__ = [
     "InstitutionCourseSerializer",
     "InstitutionCourseActivitySerializer",
     "InstitutionCourseActivityReportSerializer",
+    "InstitutionCourseActivityReportAuditSerializer",
     "InstitutionCourseActivityReportDetailSerializer",
     "InstitutionCourseActivityReportExtendedSerializer",
     "InstitutionCourseActivityReportLearnerSerializer",

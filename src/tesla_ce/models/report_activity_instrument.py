@@ -14,7 +14,10 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Report Activity Instrument model module."""
 from enum import Enum
+import json
 
+from django.core.files.base import ContentFile
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -22,6 +25,8 @@ from .base_model import BaseModel
 from .instrument import Instrument
 from .report_activity import REPORT_ALERT_LEVEL
 from .report_activity import ReportActivity
+from .request_provider_result import RequestProviderResult
+from .enrolment import Enrolment
 
 
 class ResultFacts(Enum):
@@ -58,6 +63,9 @@ class ReportActivityInstrument(BaseModel):
                                              help_text=_('Alert level for content authorship.'))
     integrity_level = models.SmallIntegerField(choices=REPORT_ALERT_LEVEL, null=False, default=0,
                                                help_text=_('Alert level for system integrity.'))
+
+    audit_data = models.FileField(max_length=250, null=True, blank=False,
+                                  help_text=_("Path to the audit data."))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -214,3 +222,102 @@ class ReportActivityInstrument(BaseModel):
                 facts['positive'].append(ResultFacts.POSITIVE_LEARNER_RESULT_FREQUENT.name)
 
         return facts
+
+    def update_audit(self):
+        """
+            Update the audit data for this report
+        """
+        if self.instrument.id == 1:
+            # Build audit data for Face Recognition
+            audit = self._build_fr_audit()
+        else:
+            # Other instruments will have no audit data
+            audit = None
+
+        audit_path = '{}/results/{}/{}/{}/report_audit_{}.json'.format(
+            self.report.activity.vle.institution_id,
+            self.report.learner.learner_id,
+            self.report.activity.course.id,
+            self.report.activity.id,
+            self.instrument.acronym
+        )
+
+        if audit is not None:
+            # Save the audit data
+            self.audit_data.save(audit_path,
+                                 ContentFile(json.dumps(audit, cls=DjangoJSONEncoder).encode('utf-8')))
+        else:
+            self.audit_data = None
+
+        self.save()
+
+    def _build_fr_audit(self):
+        """
+            Build audit data for Face Recognition instrument
+            :return: Audit data object
+        """
+        provider_results = RequestProviderResult.objects.filter(provider__instrument=self.instrument,
+                                                                request__learner=self.report.learner,
+                                                                request__activity=self.report.activity
+                                                                ).all().order_by('request__created_at', 'provider_id')
+        audit = {
+            'providers': {},
+            'requests': {},
+            'enrolment_samples': {},
+        }
+
+        # Add results for each of the requests
+        for result in provider_results:
+            if result.provider.id not in audit['providers']:
+                audit['providers'][result.provider.id] = {
+                    'id': result.provider.id,
+                    'acronym': result.provider.acronym,
+                    'name': result.provider.name,
+                    'enrolment_samples': []
+                }
+            if result.request.id not in audit['requests']:
+                audit['requests'][result.request.id] = {
+                    'id': result.request.id,
+                    'created_at': result.request.created_at,
+                    'error_message': result.request.error_message,
+                    'message_code': None,
+                    'session': result.request.session.id,
+                    'results': {},
+                }
+                if result.request.message_code is not None:
+                    audit['requests'][result.request.id]['message_code'] = result.request.message_code
+
+                try:
+                    request_data = json.loads(result.request.data.read().decode())
+                    audit['requests'][result.request.id]['data'] = request_data['data']
+                    audit['requests'][result.request.id]['metadata'] = request_data['metadata']
+                except Exception:
+                    audit['requests'][result.request.id]['data'] = None
+                    audit['requests'][result.request.id]['metadata'] = None
+
+            # Read the audit for this request
+            try:
+                provider_audit = json.loads(result.audit.read().decode())
+            except Exception:
+                provider_audit = None
+
+            audit['requests'][result.request.id]['results'][result.provider.id] = {
+                'status': result.status,
+                'result': result.result,
+                'audit': provider_audit
+            }
+
+        # Add enrolment data
+        for provider_id in audit['providers']:
+            enrolment = Enrolment.objects.get(provider_id=provider_id, learner=self.report.learner)
+            for sample in enrolment.model_samples.filter(status=1).all():
+                if sample.id not in audit['enrolment_samples']:
+                    try:
+                        sample_data = json.loads(sample.data.read().decode())
+                    except Exception:
+                        sample_data = None
+                    audit['enrolment_samples'][sample.id] = sample_data
+                audit['providers'][provider_id]['enrolment_samples'].append(sample.id)
+                audit['providers'][provider_id]['enrolment_percentage'] = enrolment.percentage
+
+        return audit

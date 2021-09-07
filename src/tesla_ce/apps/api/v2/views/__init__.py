@@ -20,6 +20,7 @@ from .admin import InstrumentViewSet
 from .admin import UIOptionViewSet
 from .institution import InstitutionCourseActivityInstrumentViewSet
 from .institution import InstitutionCourseActivityReportViewSet
+from .institution import InstitutionCourseActivityReportAuditViewSet
 from .institution import InstitutionCourseActivityViewSet
 from .institution import InstitutionCourseGroupCourseViewSet
 from .institution import InstitutionCourseGroupViewSet
@@ -80,6 +81,7 @@ __all__ = [
     "InstitutionCourseGroupCourseViewSet",
     "InstitutionCourseActivityViewSet",
     "InstitutionCourseActivityReportViewSet",
+    "InstitutionCourseActivityReportAuditViewSet",
     "InstitutionCourseActivityInstrumentViewSet",
     "InstitutionLearnerViewSet",
     "InstitutionCourseLearnerViewSet",

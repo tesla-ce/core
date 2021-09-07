@@ -185,6 +185,16 @@ institution_course_activity_report_router = institution_course_activity_router.r
                            'activity_id']
 )
 
+institution_course_activity_report_audit_router = institution_course_activity_report_router.register(
+    r'audit',
+    views.InstitutionCourseActivityReportAuditViewSet,
+    basename='institution-course-activity-report-audit',
+    parents_query_lookups=['report__activity__vle__institution_id',
+                           'report__activity__course_id',
+                           'report__activity_id',
+                           'report_id']
+)
+
 institution_course_activity_report_requests_router = institution_course_activity_report_router.register(
     r'request',
     views.InstitutionCourseActivityReportRequestViewSet,
