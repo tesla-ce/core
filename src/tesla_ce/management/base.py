@@ -35,6 +35,9 @@ class TeslaCommand(BaseCommand):
     # Execution options
     _options = None
 
+    # Enable if configuration file is required
+    _conf_file_required = True
+
     @staticmethod
     def get_client(config_file=None, options=None):
         """
@@ -91,13 +94,24 @@ class TeslaCommand(BaseCommand):
             Check if the defined configuration file exists
         """
         # Check if file exists or not
-        if os.path.exists(self.conf_file):
-            self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
-                                                                         self.style.SUCCESS('[OK]')))
+        if self._conf_file is None:
+            if self._conf_file_required:
+                raise CommandError('Configuration file not found')
+            else:
+                self.stdout.write('Configuration file not found: {}'.format(self.style.WARNING('[WARINING]')))
         else:
-            self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
-                                                                         self.style.ERROR('[ERROR]')))
-            raise CommandError('Configuration file not found')
+            if os.path.exists(self.conf_file):
+                self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
+                                                                             self.style.SUCCESS('[OK]')))
+            else:
+                if self._conf_file_required:
+                    self.stdout.write('Reading configuration from {}: {}'.format(self.conf_file,
+                                                                                 self.style.ERROR('[ERROR]')))
+                    raise CommandError('Configuration file not found')
+                else:
+                    self.stdout.write('Error reading configuration from {}: {}'.format(self.conf_file,
+                                                                                       self.style.WARINING('[WARNING]'))
+                                      )
 
     def handle(self, *args, **options):
         """
