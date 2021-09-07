@@ -87,11 +87,18 @@ class Command(TeslaDeployCommand):
 
         # Filter processed
         if not self._options['include_processed']:
-            requests = requests.filter(status=[0, 1, 2, 5, 6])  # Valid and error samples are not included
+            requests = requests.filter(status__in=[0, 1, 2, 5, 6])  # Valid and error samples are not included
 
         requests_count = 0
+        error_count = 0
         for request in requests.all():
-            tasks.requests.verification.verify_request(request.id)
+            try:
+                tasks.requests.verification.verify_request(request.id)
+            except Exception:
+                error_count += 1
             requests_count += 1
 
-        self.stdout.write(self.style.SUCCESS('{} requests sent'.format(requests_count)))
+        if error_count == 0:
+            self.stdout.write(self.style.SUCCESS('{} requests sent'.format(requests_count)))
+        else:
+            self.stdout.write(self.style.ERROR('{} requests sent with {} errors'.format(requests_count, error_count)))

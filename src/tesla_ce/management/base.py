@@ -36,7 +36,7 @@ class TeslaCommand(BaseCommand):
     _options = None
 
     # Enable if configuration file is required
-    _conf_file_required = True
+    _conf_file_required = False
 
     @staticmethod
     def get_client(config_file=None, options=None):
@@ -141,6 +141,8 @@ class TeslaCommand(BaseCommand):
 
 class TeslaConfigCommand(TeslaCommand):
     """ Base Configuration Command class for TeSLA CE """
+
+    _conf_file_required = True
 
     @staticmethod
     def get_config_file(options=None):
