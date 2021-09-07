@@ -237,6 +237,11 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
         # This task is executed always after instrument results tasks. It is not possible that report does not exist
         raise Reject('Report does not exists')
 
+    # If updated is forced, build instrument results
+    if force_update:        
+        for inst_report in report.reportactivityinstrument_set.all():
+            update_learner_activity_instrument_report(learner_id, activity_id, inst_report.instrument.id)
+
     # Check if there are new results
     last_update = report.reportactivityinstrument_set.aggregate(Max('updated_at'))['updated_at__max']
     if last_update is not None and report.updated_at > last_update and not force_update:
