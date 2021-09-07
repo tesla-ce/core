@@ -37,6 +37,12 @@ class Institution(BaseModel):
                                                           help_text=_('If enabled, VLE cannot create instructors'))
     disable_vle_user_creation = models.BooleanField(null=None, default=False,
                                                     help_text=_('If enabled, VLE cannot create institution users'))
+    allow_learner_report = models.BooleanField(null=None, default=False,
+                                               help_text=_('Learners can access their reports'))
+    allow_learner_audit = models.BooleanField(null=None, default=False,
+                                              help_text=_('Learners can access the audit data of their reports'))
+    allow_valid_audit = models.BooleanField(null=None, default=False,
+                                            help_text=_('Audit data is available even when results are valid'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

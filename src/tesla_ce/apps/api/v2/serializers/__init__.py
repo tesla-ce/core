@@ -23,6 +23,7 @@ from .institution import InstitutionCourseActivityReportDetailSerializer
 from .institution import InstitutionCourseActivityReportExtendedSerializer
 from .institution import InstitutionCourseActivityReportLearnerSerializer
 from .institution import InstitutionCourseActivityReportSerializer
+from .institution import InstitutionCourseActivityReportAuditSerializer
 from .institution import InstitutionCourseActivitySerializer
 from .institution import InstitutionCourseGroupCourseSerializer
 from .institution import InstitutionCourseGroupSerializer
@@ -92,6 +93,7 @@ __all__ = [
     "InstitutionSerializer",
     "InstitutionCourseActivitySerializer",
     "InstitutionCourseActivityReportSerializer",
+    "InstitutionCourseActivityReportAuditSerializer",
     "InstitutionCourseActivityReportDetailSerializer",
     "InstitutionCourseActivityReportExtendedSerializer",
     "InstitutionCourseActivityReportLearnerSerializer",

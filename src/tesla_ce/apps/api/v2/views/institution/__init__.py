@@ -16,6 +16,7 @@
 from .activity import InstitutionCourseActivityViewSet
 from .activity_instrument import InstitutionCourseActivityInstrumentViewSet
 from .activity_report import InstitutionCourseActivityReportViewSet
+from .activity_report_audit import InstitutionCourseActivityReportAuditViewSet
 from .course import InstitutionCourseViewSet
 from .course_learner import InstitutionCourseLearnerViewSet
 from .course_instructor import InstitutionCourseInstructorViewSet
@@ -44,6 +45,7 @@ __all__ = [
     "InstitutionCourseGroupCourseViewSet",
     "InstitutionLearnerViewSet",
     "InstitutionCourseActivityReportRequestViewSet",
+    "InstitutionCourseActivityReportAuditViewSet",
     "InstitutionCourseLearnerViewSet",
     "InstitutionCourseInstructorViewSet",
     "InstitutionInstructorViewSet",

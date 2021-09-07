@@ -212,6 +212,9 @@ def update_learner_activity_instrument_report(self, learner_id, activity_id, ins
         ).aggregate(Min('percentage'))['percentage__min'] * 100)
     instrument_report.save()
 
+    # Update the audit data
+    instrument_report.update_audit()
+
     # Update the report
     update_learner_activity_report.apply_async((learner_id, activity_id,))
 
