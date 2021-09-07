@@ -238,8 +238,8 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
         raise Reject('Report does not exists')
 
     # Check if there are new results
-    if report.updated_at > report.reportactivityinstrument_set.aggregate(
-            Max('updated_at'))['updated_at__max'] and not force_update:
+    last_update = report.reportactivityinstrument_set.aggregate(Max('updated_at'))['updated_at__max']
+    if last_update is not None and report.updated_at > last_update and not force_update:
         raise Reject('No new results')
 
     stats = report.reportactivityinstrument_set.aggregate(Max('identity_level'),
