@@ -66,12 +66,19 @@ class Command(TeslaDeployCommand):
             activities = activities.filter(course_id=self._options['course_id'])
 
         report_count = 0
+        error_count = 0
         for activity in activities.all():
             learners = activity.course.learners
             if self._options['user_id'] is not None:
                 learners = learners.filter(id=self._options['user_id'])
             for learner in learners.all():
-                tasks.reports.update_learner_activity_report(learner.id, activity.id, force_update=True)
+                try:
+                    tasks.reports.update_learner_activity_report(learner.id, activity.id, force_update=True)
+                except Exception:
+                    error_count += 1
                 report_count += 1
 
-        self.stdout.write(self.style.SUCCESS('{} reports generated'.format(report_count)))
+        if error_count == 0:
+            self.stdout.write(self.style.SUCCESS('{} reports generated'.format(report_count)))
+        else:
+            self.stdout.write(self.style.ERROR('{} reports generated with {} errors'.format(report_count, error_count)))
