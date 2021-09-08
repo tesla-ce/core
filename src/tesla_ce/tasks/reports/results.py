@@ -238,7 +238,7 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
         raise Reject('Report does not exists')
 
     # If updated is forced, build instrument results
-    if force_update:        
+    if force_update:
         for inst_report in report.reportactivityinstrument_set.all():
             update_learner_activity_instrument_report(learner_id, activity_id, inst_report.instrument.id)
 

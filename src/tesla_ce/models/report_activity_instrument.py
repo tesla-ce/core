@@ -276,12 +276,30 @@ class ReportActivityInstrument(BaseModel):
                     'enrolment_samples': []
                 }
             if result.request.id not in audit['requests']:
+                req_result = result.request.requestresult_set.first()
+                req_result_value = None
+                req_result_status = None
+                req_result_error_message = None
+                req_result_message_code = None
+                req_result_code = None
+                if req_result is not None:
+                    req_result_value = req_result.result
+                    req_result_status = req_result.status
+                    req_result_error_message = req_result.error_message
+                    req_result_code = req_result.code
+                    if req_result.message_code is not None:
+                        req_result_message_code = req_result.message_code.code
+
                 audit['requests'][result.request.id] = {
                     'id': result.request.id,
                     'created_at': result.request.created_at,
                     'error_message': result.request.error_message,
-                    'message_code': None,
                     'session': result.request.session.id,
+                    'result': req_result_value,
+                    'status': req_result_status,
+                    'error_message_res': req_result_error_message,
+                    'message_code': req_result_message_code,
+                    'code': req_result_code,
                     'results': {},
                 }
                 if result.request.message_code is not None:
