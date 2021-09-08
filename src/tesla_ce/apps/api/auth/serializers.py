@@ -291,6 +291,10 @@ class UserDataSerializer(serializers.Serializer):
 
         if hasattr(instance, "institutionuser"):
             roles = get_institution_roles(instance)
+            try:
+                learner_id = str(instance.institutionuser.learner.learner_id)
+            except Exception:
+                learner_id = None
 
             return {
                 "id": instance.institutionuser.institution.id,
@@ -298,6 +302,7 @@ class UserDataSerializer(serializers.Serializer):
                 "uid": instance.institutionuser.uid,
                 "roles": roles,
                 "locale": instance.institutionuser.locale,
+                "learner_id": learner_id
             }
 
         return None
