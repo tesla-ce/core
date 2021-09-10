@@ -85,7 +85,7 @@ def get_lapi_properties():
             'django': ['django/config'],
             'redis': ['redis/config'],
             'storage': ['storage/config'],
-            'vault': ['vault/jwt/learners/validate'],
+            'vault': ['vault/jwt/learners/validate', 'vault/jwt/users/validate'],
             'celery': ['celery/config', 'celery/queues', 'celery/credentials/lapi'],
         },
         'deployment': {
