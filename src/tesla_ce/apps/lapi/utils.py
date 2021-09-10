@@ -28,7 +28,9 @@ def is_authenticated(request, institution_id, learner_id, data):
         if not request.user.is_authenticated:
             return False
         if isinstance(request.user, AuthenticatedUser):
-            return request.user.type == 'learner' and request.user.sub == str(learner_id)
+            if request.user.type == 'learner' and request.user.sub == str(learner_id):
+                return True
+            return request.user.type == 'user' and request.path in request.user.scopes
         if isinstance(request.user, Learner):
             return str(request.user.learner_id) == str(learner_id) and request.user.institution_id == institution_id
         if isinstance(request.user, InstitutionUser):

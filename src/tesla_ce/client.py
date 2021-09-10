@@ -589,6 +589,23 @@ class Client():
                 scopes.append('/api/v2/institution/{}/ic/*'.format(
                     inst_user.institution_id
                 ))
+            if 'LEARNER' in models.user.get_institution_roles(user):
+                learner_id = str(inst_user.learner.learner_id)
+                scopes.append('/lapi/v1/enrolment/{}/{}/'.format(
+                    inst_user.institution_id,
+                    learner_id
+                ))
+                scopes.append('/lapi/v1/status/{}/{}/'.format(
+                    inst_user.institution_id,
+                    learner_id
+                ))
+                scopes.append('/lapi/v1/alert/{}/{}/'.format(
+                    inst_user.institution_id,
+                    learner_id
+                ))
+                scopes.append('/api/v2/institution/{}/learner/{}/*'.format(
+                    inst_user.institution_id, inst_user.id
+                ))
             token_pair = self.get_user_token_pair(user=inst_user, scope=scopes, ttl=15, max_ttl=24*60)
         else:
             raise TeslaAuthException('Invalid user. Missing Institution or administration rights.')
@@ -792,11 +809,11 @@ class Client():
         # Get the learner token
         token = self.get_learner_token_pair(learner,
                                             [
-                                                '/lapi/v1/verification/{}/{}'.format(
+                                                '/lapi/v1/verification/{}/{}/'.format(
                                                     learner.institution_id, learner.learner_id),
-                                                '/lapi/v1/status/{}/{}'.format(
+                                                '/lapi/v1/status/{}/{}/'.format(
                                                     learner.institution_id, learner.learner_id),
-                                                '/lapi/v1/alert/{}/{}'.format(
+                                                '/lapi/v1/alert/{}/{}/'.format(
                                                     learner.institution_id, learner.learner_id)
                                             ], ttl=15, max_ttl=max_ttl,
                                             filters={
