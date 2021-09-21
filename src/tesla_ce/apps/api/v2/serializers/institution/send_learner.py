@@ -16,16 +16,18 @@
 from rest_framework import serializers
 
 from tesla_ce.models import SENDLearner
+from .send_category import InstitutionSENDCategorySerializer
 
 
 class InstitutionSENDLearnerSerializer(serializers.ModelSerializer):
     """SENDLearner serialize model module."""
 
     learner_id = serializers.HiddenField(default=None, allow_null=True)
+    info = InstitutionSENDCategorySerializer(source='category', read_only=True, many=False)
 
     class Meta:
         model = SENDLearner
-        fields = ["id", "expires_at", "category", "learner_id"]
+        fields = ["id", "expires_at", "category", "learner_id", "info"]
         validators = [serializers.UniqueTogetherValidator(
             queryset=SENDLearner.objects.all(),
             fields=['learner_id', 'category']
