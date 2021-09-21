@@ -19,6 +19,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivityInstrumentSerializer
 from tesla_ce.models import ActivityInstrument
 
@@ -33,5 +34,9 @@ class InstitutionCourseActivityInstrumentViewSet(NestedViewSetMixin, viewsets.Mo
     queryset = ActivityInstrument.objects
     # filterset_fields = ['instrument_id']
     # search_fields = ['instrument_id']
-
-
+    permission_classes = [
+        permissions.GlobalAdminReadOnlyPermission |
+        permissions.InstitutionAdminPermission |
+        permissions.InstitutionCourseInstructorPermission |
+        permissions.InstitutionCourseLearnerReadOnlyPermission
+    ]
