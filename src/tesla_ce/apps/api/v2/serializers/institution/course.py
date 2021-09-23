@@ -29,7 +29,21 @@ class InstitutionCourseSerializer(serializers.ModelSerializer):
     description = serializers.CharField(read_only=True)
     start = serializers.DateTimeField(read_only=True)
     end = serializers.DateTimeField(read_only=True)
+    user_roles = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Course
         exclude = ["learners", "instructors"]
+
+    def get_user_roles(self, instance):
+        """
+            Get the list of roles for a user in this course
+            :param instance: Course instance
+            :return: List of roles
+        """
+        roles = []
+        if instance.learners.filter(id=self.context['request'].user.id).count() > 0:
+            roles.append('LEARNER')
+        if instance.instructors.filter(id=self.context['request'].user.id).count() > 0:
+            roles.append('INSTRUCTOR')
+        return roles
