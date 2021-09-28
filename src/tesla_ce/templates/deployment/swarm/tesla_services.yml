@@ -79,7 +79,7 @@ services:
         - "traefik.http.routers.minio.rule=Host(`storage.{{ TESLA_DOMAIN }}`)"
         - "traefik.http.routers.minio.entrypoints=https"
         - "traefik.http.routers.minio.tls.certresolver=tesla-tlschallenge"
-        - "traefik.http.services.minio-service.loadbalancer.server.port=9001"
+        - "traefik.http.services.minio-service.loadbalancer.server.port=9000"
         - "traefik.http.routers.minio.service=minio-service"
         - "traefik.http.routers.minio-console.rule=Host(`storage-console.{{ TESLA_DOMAIN }}`)"
         - "traefik.http.routers.minio-console.entrypoints=https"
