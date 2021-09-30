@@ -2,6 +2,7 @@ version: '3.5'
 services:
   database:
     image: mariadb
+    command: --innodb-read-only-compressed=OFF
     deploy:
       restart_policy:
         condition: on-failure
