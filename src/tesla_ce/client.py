@@ -269,7 +269,7 @@ class Client():
             config.set('DEPLOYMENT_SERVICES', True)
 
             # Generate TeSLA Database configuration
-            config.set('DB_HOST', domain)
+            config.set('DB_HOST', 'database')
             config.set('DB_NAME', 'tesla')
             config.set('DB_USER', 'tesla')
             config.set('DB_ROOT_PASSWORD', uuid.uuid4().__str__())
@@ -283,7 +283,7 @@ class Client():
             config.set('VAULT_DB_PASSWORD', uuid.uuid4().__str__())
 
             # Generate Redis configuration
-            config.set('REDIS_HOST', domain)
+            config.set('REDIS_HOST', 'redis')
             config.set('REDIS_PASSWORD', uuid.uuid4().__str__())
 
             # Generate MinIO configuration
@@ -297,7 +297,7 @@ class Client():
             config.set('RABBITMQ_ADMIN_PASSWORD', uuid.uuid4().__str__())
 
             # Generate Celery configuration
-            config.set('CELERY_BROKER_HOST', domain)
+            config.set('CELERY_BROKER_HOST', 'rabbitmq')
             config.set('CELERY_BROKER_PORT', config.get('RABBITMQ_PORT'))
             config.set('CELERY_BROKER_USER', config.get('RABBITMQ_ADMIN_USER'))
             config.set('CELERY_BROKER_PASSWORD', config.get('RABBITMQ_ADMIN_PASSWORD'))
@@ -308,7 +308,7 @@ class Client():
             config.set('MOODLE_DEPLOY', True)
 
             # Generate Moodle Database configuration
-            config.set('MOODLE_DB_HOST', domain)
+            config.set('MOODLE_DB_HOST', config.get('DB_HOST'))
             config.set('MOODLE_DB_PASSWORD', uuid.uuid4().__str__())
 
             # Generate Moodle administrator password
