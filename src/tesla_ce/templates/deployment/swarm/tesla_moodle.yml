@@ -1,7 +1,7 @@
 version: '3.5'
 services:
   moodle:
-    image: teslace/frontend-angular:latest
+    image: teslace/moodle-plugin:latest
     deploy:
       restart_policy:
         condition: on-failure
