@@ -239,6 +239,18 @@ jobs:
           build-args: TESLA_CE_VERSION=${{ steps.vars.outputs.tag }}
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Login to TeSLA CE Registry
+        uses: docker/login-action@v1
+        with:
+            username: ${{ secrets.TESLA_CE_REGISTRY_USERNAME }}
+            password: ${{ secrets.TESLA_CE_REGISTRY_TOKEN }}
+            registry: registry.tesla-ce.eu
+      - name: Push to TeSLA CE registry
+        run: |
+          - docker tag teslace/core:${{ steps.vars.outputs.tag }} registry.tesla-ce.eu/tesla-ce/core:${{ steps.vars.outputs.tag }}
+          - docker push registry.tesla-ce.eu/tesla-ce/core:${{ steps.vars.outputs.tag }}
+          - docker tag teslace/core:${{ steps.vars.outputs.tag }} registry.tesla-ce.eu/tesla-ce/core:latest
+          - docker push registry.tesla-ce.eu/tesla-ce/core:latest
 
   docker_edge:
     needs: build
@@ -272,6 +284,16 @@ jobs:
           # Build and publish
           docker build -t teslace/core:edge -f docker/Dockerfile.edge --build-arg TESLA_CE_VERSION=${{ steps.vars.outputs.version }} .
           docker push teslace/core:edge
+      - name: Login to TeSLA CE Registry
+        uses: docker/login-action@v1
+        with:
+            username: ${{ secrets.TESLA_CE_REGISTRY_USERNAME }}
+            password: ${{ secrets.TESLA_CE_REGISTRY_TOKEN }}
+            registry: registry.tesla-ce.eu
+      - name: Push to TeSLA CE registry
+        run: |
+          - docker tag teslace/core:edge registry.tesla-ce.eu/tesla-ce/core:edge
+          - docker push registry.tesla-ce.eu/tesla-ce/core:edge
 
   deploy_demo:
     needs: docker_edge
