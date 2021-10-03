@@ -28,6 +28,7 @@ if os.getenv('SENTRY_ENABLED') in ['1', 1, 'True', 'yes', 'true'] and os.getenv(
         debug=os.getenv('DEBUG', '0') in ['1', 1, 'True', 'yes', 'true'],
         release=open(os.path.join(os.path.dirname(__file__), 'data', 'VERSION'), 'r').read(),
         environment=os.getenv('SENTRY_ENVIRONMENT', 'production'),
+        server_name=os.getenv('SENTRY_SERVER_NAME', None),
         integrations=[DjangoIntegration()],
         attach_stacktrace=True,
 
