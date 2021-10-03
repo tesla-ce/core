@@ -34,7 +34,7 @@ class Command(BaseCommand):
             help='If the Provider already exist, update the information and generate new credentials',
         )
         parser.add_argument(
-            'provider_file',
+            '--provider_file',
             help='Provider description file',
         )
 
@@ -50,24 +50,45 @@ class Command(BaseCommand):
                                                                          self.style.ERROR('[ERROR]')))
             raise CommandError('Configuration file not found')
 
-        provider_file = options['provider_file']
-        if os.path.exists(provider_file):
-            try:
-                with open(provider_file, 'r') as fd_provider:
-                    provider_desc = json.load(fd_provider)
-                    self.stdout.write('Reading provider description from {}: {}'.format(provider_file,
-                                                                                        self.style.SUCCESS('[OK]')))
-            except Exception as exc:
-                self.stdout.write('Reading provider description from {}: {}: {}'.format(provider_file,
-                                                                                        self.style.ERROR('[ERROR]'),
-                                                                                        exc))
-        else:
-            self.stdout.write('Reading configuration from {}: {}'.format(config_file,
-                                                                         self.style.ERROR('[ERROR]')))
-            raise CommandError('Configuration file not found')
-
         # Create a client
         client = Client(config=settings.TESLA_CONFIG, use_vault=False, use_env=False, enable_management=True)
+
+        # Check if a provider description file is provided
+        provider_file = options['provider_file']
+        if provider_file is not None:
+            if os.path.exists(provider_file):
+                try:
+                    with open(provider_file, 'r') as fd_provider:
+                        provider_desc = json.load(fd_provider)
+                        self.stdout.write('Reading provider description from {}: {}'.format(provider_file,
+                                                                                            self.style.SUCCESS('[OK]')))
+                except Exception as exc:
+                    self.stdout.write('Reading provider description from {}: {}: {}'.format(provider_file,
+                                                                                            self.style.ERROR('[ERROR]'),
+                                                                                            exc))
+            else:
+                self.stdout.write('Reading configuration from {}: {}'.format(config_file,
+                                                                             self.style.ERROR('[ERROR]')))
+                raise CommandError('Configuration file not found')
+        else:
+            # List registered providers
+            providers = client.get_registered_providers()
+            if len(providers) == 0:
+                raise CommandError('Cannot find public registered providers on repository')
+            provider_desc = None
+            while provider_desc is None:
+                self.stdout.write('Enter the acronym of the provider to be registered')
+                available_options = []
+                descriptions = {}
+                for provider in providers:
+                    self.stdout.write('  [{}] {}'.format(provider['acronym'], provider['name']))
+                    available_options.append(provider['acronym'])
+                    descriptions[provider['acronym']] = provider
+                selected_provider = input('Enter the acronym of the provider to be registered')
+                if selected_provider not in available_options:
+                    self.stdout.write('{}'.format(self.style.ERROR('Invalid option')))
+                else:
+                    provider_desc = descriptions[selected_provider]
 
         # Get arguments
         force_update = options['force_update']
@@ -75,7 +96,7 @@ class Command(BaseCommand):
         # Register the new VLE
         provider_info = client.register_provider(provider_desc, force_update)
 
-        self.stdout.write('Provider registered. Use this configuration: {}'.format(
-            json.dumps(provider_info, indent=4, sort_keys=True),
-            self.style.SUCCESS('[OK]'))
+        self.stdout.write('{}. Use this configuration: {}'.format(
+            self.style.SUCCESS('Provider registered'),
+            json.dumps(provider_info, indent=4, sort_keys=True))
         )

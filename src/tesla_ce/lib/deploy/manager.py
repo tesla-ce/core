@@ -13,6 +13,8 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Deployment Manager Module"""
+import requests
+from simplejson.errors import JSONDecodeError
 from .deployment import BaseDeployment
 
 
@@ -89,3 +91,35 @@ class DeploymentManager:
             instance = BaseDeployment.get_instance(self._client, orchestrator)
             return instance.get_vle_scripts(vle)
         return self._deploy.get_vle_scripts(vle)
+
+    @staticmethod
+    def get_registered_providers(repository="tesla-ce/core", version="main"):
+        """
+            Get the list of registered providers
+
+            :param repository: The repository in GitHub
+            :type repository: str
+            :param version: The branch on the repository
+            :type version: str
+            :return: List of registered providers
+            :rtype: list
+        """
+        # Read registry of providers on the repository
+        response = requests.get('https://raw.githubusercontent.com/{}/{}/providers/registry.json'.format(repository,
+                                                                                                         version))
+        if response.status_code != 200:
+            return []
+
+        resp_providers = response.json()
+
+        providers = []
+        for provider in resp_providers:
+            provider_info_resp = requests.get(provider['url'])
+            if provider_info_resp.status_code == 200:
+                try:
+                    providers.append(provider_info_resp.json())
+                except JSONDecodeError:
+                    # When fails to parse, do not include in the list
+                    pass
+
+        return providers

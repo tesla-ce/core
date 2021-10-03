@@ -1,7 +1,7 @@
 version: '3.5'
 services:
   dashboards:
-    image: teslace/frontend-angular:latest
+    image: teslace/frontend-angular:{{ DEPLOYMENT_VERSION }}
     deploy:
       replicas: 1
       restart_policy:
@@ -9,11 +9,11 @@ services:
       {% if DEPLOYMENT_LB == "traefik" %}
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.{{ service.module }}.rule=Host(`{{ TESLA_DOMAIN }}`) && PathPrefix(`/{{ service.deployment.base_path }}`)"
-        - "traefik.http.routers.{{ service.module }}.entrypoints=https"
-        - "traefik.http.routers.{{ service.module }}.tls.certresolver=tesla-tlschallenge"
-        - "traefik.http.services.{{ service.module }}-service.loadbalancer.server.port=80"
-        - "traefik.http.routers.{{ service.module }}.service={{ service.module }}-service"
+        - "traefik.http.routers.dashboard.rule=Host(`{{ TESLA_DOMAIN }}`) && PathPrefix(`/ui/`)"
+        - "traefik.http.routers.dashboard.entrypoints=https"
+        - "traefik.http.routers.dashboard.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.dashboard-service.loadbalancer.server.port=80"
+        - "traefik.http.routers.dashboard.service=dashboard-service"
       {% endif %}
     environment:
       API_URL: https://{{ TESLA_DOMAIN }}/api/v2

@@ -2,11 +2,7 @@ version: '3.5'
 services:
   {% for service in services %}
   {{ service.module }}:
-  {% if service.module == "dashboards" %}
-    image: teslace/frontend-angular:latest
-  {% else %}
     image: {{ DEPLOYMENT_IMAGE }}:{{ DEPLOYMENT_VERSION }}
-  {% endif %}
   {% if service.deployment.type == "worker" %}
     command: /venv/bin/celery -A tesla_ce worker -E -l info -P gevent
   {% endif %}
