@@ -1092,3 +1092,16 @@ class Client():
             'id': launcher.id,
             'token': launcher.token.__str__()
         }
+
+    def get_registered_providers(self, repository="tesla-ce/core", version="main"):
+        """
+            Get the list of registered providers
+
+            :param repository: The repository in GitHub
+            :type repository: str
+            :param version: The branch on the repository
+            :type version: str
+            :return: List of registered providers
+            :rtype: list
+        """
+        return self.deploy.get_registered_providers(repository, version)
