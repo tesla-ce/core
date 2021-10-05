@@ -251,6 +251,7 @@ jobs:
             registry: registry.tesla-ce.eu
       - name: Push to TeSLA CE registry
         run: |
+          docker pull teslace/core:${{ steps.vars.outputs.tag }}
           docker tag teslace/core:${{ steps.vars.outputs.tag }} registry.tesla-ce.eu/tesla-ce/core:${{ steps.vars.outputs.tag }}
           docker push registry.tesla-ce.eu/tesla-ce/core:${{ steps.vars.outputs.tag }}
           docker tag teslace/core:${{ steps.vars.outputs.tag }} registry.tesla-ce.eu/tesla-ce/core:latest
