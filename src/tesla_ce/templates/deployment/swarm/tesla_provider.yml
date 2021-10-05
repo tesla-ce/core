@@ -1,7 +1,7 @@
 version: '3.5'
 services:
-  {{ acronym }}_provider:
-    image: {{ image }}
+  {{ provider.acronym }}_provider:
+    image: {{ provider.image }}
     deploy:
       restart_policy:
         condition: on-failure
@@ -19,20 +19,30 @@ services:
       ROLE_ID_FILE: "/run/secrets/ROLE_ID"
       SECRET_ID_FILE: "/run/secrets/SECRET_ID"
       API_URL: "https://{{ TESLA_DOMAIN }}"
+    {% for credential in credentials %}
+      {{ credential|upper }}_FILE: /run/secrets/{{ credential|upper }}
+    {% endfor %}
     secrets:
-      - source: {{ acronym|upper }}_ROLE_ID
+      - source: {{ provider.acronym|upper }}_ROLE_ID
         target: ROLE_ID
-      - source: {{ acronym|upper }}_SECRET_ID
+      - source: {{ provider.acronym|upper }}_SECRET_ID
         target: SECRET_ID
+    {% for credential in credentials %}
+      - source: {{ provider.acronym|upper }}_{{ credential|upper }}
+        target: {{ credential|upper }}
+    {% endfor %}
     networks:
       - tesla_public
       - tesla_private
 secrets:
-  {{ acronym|upper }}_ROLE_ID:
-    file: ./secrets/{{ acronym|upper }}_ROLE_ID
-  {{ acronym|upper }}_SECRET_ID:
-    file: ./secrets/{{ acronym|upper }}_SECRET_ID
-
+  {{ provider.acronym|upper }}_ROLE_ID:
+    file: ./secrets/{{ provider.acronym|upper }}_ROLE_ID
+  {{ provider.acronym|upper }}_SECRET_ID:
+    file: ./secrets/{{ provider.acronym|upper }}_SECRET_ID
+{% for credential in credentials %}
+  {{ provider.acronym|upper }}_{{ credential|upper }}:
+    file: ./secrets/{{ provider.acronym|upper }}_{{ credential|upper }}
+{% endfor %}
 networks:
   tesla_public:
     external: true

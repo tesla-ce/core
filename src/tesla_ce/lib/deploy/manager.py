@@ -92,6 +92,25 @@ class DeploymentManager:
             return instance.get_vle_scripts(vle)
         return self._deploy.get_vle_scripts(vle)
 
+    def get_provider_deployment_scripts(self, provider, orchestrator=None, credentials=None):
+        """
+            Get the provider deployment scripts according to the selected orchestrator
+
+            :param provider: The Provider instance
+            :type provider: tesla_ce.models.Provider
+            :param orchestrator: The orchestrator to be used
+            :type orchestrator: str
+            :param credentials: List of credentials required by this provider
+            :type credentials: list
+            :return: Object with all scripts and required files
+            :rtype: dict
+        """
+        # Generate the VLE deployment scripts
+        if orchestrator is not None:
+            instance = BaseDeployment.get_instance(self._client, orchestrator)
+            return instance.get_provider_scripts(provider, credentials)
+        return self._deploy.get_provider_scripts(provider, credentials)
+
     @staticmethod
     def get_registered_providers(repository="tesla-ce/core", version="main"):
         """
