@@ -17,17 +17,25 @@ import json
 import os
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
 from django.core.management.base import CommandError
 
-from tesla_ce.client import Client
+from ..base import TeslaDeployCommand
 
 
-class Command(BaseCommand):
+class Command(TeslaDeployCommand):
+    """ Command to register Providers and optionally generate their deployment scripts """
     help = 'Register a new Provider to TeSLA CE system'
     requires_system_checks = '__all__'
 
     def add_arguments(self, parser):
+        """
+                    Define custom arguments for this command
+
+                    :param parser: Input command parser instance
+                """
+        # Set default arguments
+        super().add_arguments(parser)
+
         parser.add_argument(
             '--force-update',
             action='store_true',
@@ -37,24 +45,19 @@ class Command(BaseCommand):
             '--provider_file',
             help='Provider description file',
         )
+        parser.add_argument(
+            '--deploy',
+            action='store_true',
+            help='Create deployment script',
+        )
 
-    def handle(self, *args, **options):
-
-        # Check the configuration
-        config_file = settings.TESLA_CONFIG.config.get('TESLA_CONFIG_FILE')
-        if os.path.exists(config_file):
-            self.stdout.write('Reading configuration from {}: {}'.format(config_file,
-                                                                         self.style.SUCCESS('[OK]')))
-        else:
-            self.stdout.write('Reading configuration from {}: {}'.format(config_file,
-                                                                         self.style.ERROR('[ERROR]')))
-            raise CommandError('Configuration file not found')
-
-        # Create a client
-        client = Client(config=settings.TESLA_CONFIG, use_vault=False, use_env=False, enable_management=True)
+    def custom_handle(self):
+        """
+            Custom actions for this command
+        """
 
         # Check if a provider description file is provided
-        provider_file = options['provider_file']
+        provider_file = self._options['provider_file']
         if provider_file is not None:
             if os.path.exists(provider_file):
                 try:
@@ -67,17 +70,17 @@ class Command(BaseCommand):
                                                                                             self.style.ERROR('[ERROR]'),
                                                                                             exc))
             else:
-                self.stdout.write('Reading configuration from {}: {}'.format(config_file,
+                self.stdout.write('Reading configuration from {}: {}'.format(provider_file,
                                                                              self.style.ERROR('[ERROR]')))
                 raise CommandError('Configuration file not found')
         else:
             # List registered providers
-            providers = client.get_registered_providers()
+            providers = self.client.get_registered_providers()
             if len(providers) == 0:
                 raise CommandError('Cannot find public registered providers on repository')
             provider_desc = None
             while provider_desc is None:
-                self.stdout.write('Enter the acronym of the provider to be registered')
+                self.stdout.write('Enter the acronym of the provider to be registered:\n')
                 available_options = []
                 descriptions = {}
                 for provider in providers:
@@ -91,12 +94,38 @@ class Command(BaseCommand):
                     provider_desc = descriptions[selected_provider]
 
         # Get arguments
-        force_update = options['force_update']
+        force_update = self._options['force_update']
 
         # Register the new VLE
-        provider_info = client.register_provider(provider_desc, force_update)
-
+        provider_info = self.client.register_provider(provider_desc, force_update)
         self.stdout.write('{}. Use this configuration: {}'.format(
             self.style.SUCCESS('Provider registered'),
             json.dumps(provider_info, indent=4, sort_keys=True))
         )
+
+        if 'url' in provider_desc:
+            self.stdout.write('Check deployment instructions on {}'.format(provider_desc['url']))
+
+        if self._options['deploy']:
+            # If provider have credentials, request values
+            cred_list = None
+            if 'credentials' in provider_desc and len(provider_desc['credentials']) > 0:
+                cred_list = []
+                self.stdout.write('This provider requires additional configuration. Enter value for:')
+                for credential in provider_desc['credentials']:
+                    req_text = ''
+                    if 'required' in provider_desc and credential in provider_desc['required']:
+                        req_text = '[REQUIRED] '
+                    cred_value = input('{} {}:'.format(req_text, credential.upper()))
+                    cred_list.append({
+                        'name': credential,
+                        'value': cred_value
+                    })
+
+            # Export the deployment scripts
+            self.client.export_provider_scripts(
+                provider_desc['acronym'],
+                credentials=cred_list,
+                output=self._options['out'],
+                mode=self._options['mode'])
+            self.stdout.write(self.style.SUCCESS('Deployment scripts written at {}'.format(self._options['out'])))

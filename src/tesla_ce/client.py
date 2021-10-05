@@ -1105,3 +1105,37 @@ class Client():
             :rtype: list
         """
         return self.deploy.get_registered_providers(repository, version)
+
+    def export_provider_scripts(self, acronym, output, credentials=None, mode=None):
+        """
+            Generates the files required to deploy TeSLA CE VLE on a certain docker orchestrator
+
+            :param acronym: Provider acronym
+            :type type: str
+            :param output: Path to the folder where the scripts will be written
+            :type output: str
+            :param credentials: List of credentials required by this provider
+            :type credentials: list
+            :param mode: The deployment mode (orchestrator) to be used
+            :type mode: str
+        """
+        # Get the orchestrator
+        if mode is None:
+            mode = self.config.config.get('DEPLOYMENT_ORCHESTRATOR')
+
+        # Find Provider
+        try:
+            provider = models.Provider.objects.get(acronym=acronym)
+        except models.Provider.DoesNotExist:
+            raise TeslaConfigException('Invalid provider acronym')
+        files = self.deploy.get_provider_deployment_scripts(provider, mode, credentials=credentials)
+
+        # Write files to disk
+        if not os.path.exists(output):
+            os.makedirs(output)
+        for file in files:
+            out_file = os.path.join(output, file)
+            if not os.path.exists(os.path.dirname(out_file)):
+                os.makedirs(os.path.dirname(out_file))
+            with open(out_file, 'w') as out_fh:
+                out_fh.write(files[file])
