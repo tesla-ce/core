@@ -80,14 +80,14 @@ class Command(TeslaDeployCommand):
                 raise CommandError('Cannot find public registered providers on repository')
             provider_desc = None
             while provider_desc is None:
-                self.stdout.write('Enter the acronym of the provider to be registered:\n')
+                self.stdout.write('Enter the acronym of the provider to be registered: ')
                 available_options = []
                 descriptions = {}
                 for provider in providers:
                     self.stdout.write('  [{}] {}'.format(provider['acronym'], provider['name']))
                     available_options.append(provider['acronym'])
                     descriptions[provider['acronym']] = provider
-                selected_provider = input('Enter the acronym of the provider to be registered')
+                selected_provider = input('Enter the acronym: ')
                 if selected_provider not in available_options:
                     self.stdout.write('{}'.format(self.style.ERROR('Invalid option')))
                 else:
@@ -104,7 +104,7 @@ class Command(TeslaDeployCommand):
         )
 
         if 'url' in provider_desc:
-            self.stdout.write('Check deployment instructions on {}'.format(provider_desc['url']))
+            self.stdout.write('\nCheck deployment instructions on {}\n'.format(provider_desc['url']))
 
         if self._options['deploy']:
             # If provider have credentials, request values
@@ -116,11 +116,19 @@ class Command(TeslaDeployCommand):
                     req_text = ''
                     if 'required' in provider_desc and credential in provider_desc['required']:
                         req_text = '[REQUIRED] '
-                    cred_value = input('{} {}:'.format(req_text, credential.upper()))
-                    cred_list.append({
-                        'name': credential,
-                        'value': cred_value
-                    })
+                    cred_value = None
+                    while cred_value is None:
+                        cred_value = input('{} {}: '.format(req_text, credential.upper()))
+                        if len(cred_value.strip()) == 0 and len(req_text) > 0:
+                            cred_value = None
+                            self.stdout.write('   {} This parameter is required.Use this configuration'.format(
+                                self.style.ERROR('ERROR')
+                            ))
+                    if len(cred_value.strip()) > 0:
+                        cred_list.append({
+                            'name': credential,
+                            'value': cred_value
+                        })
 
             # Export the deployment scripts
             self.client.export_provider_scripts(
