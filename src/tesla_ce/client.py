@@ -26,6 +26,7 @@ from django.templatetags.static import static
 from django.utils import timezone
 
 from . import models
+
 from .lib import ConfigManager
 from .lib import DatabaseManager
 from .lib import DeploymentManager
@@ -41,6 +42,8 @@ from .lib.exception import TeslaInvalidICException
 from .lib.exception import TeslaMissingEnrolmentException
 from .lib.exception import TeslaMissingICException
 from .lib.exception import TeslaVaultException
+
+from .models.user import get_institution_roles
 
 #: Client instance
 _client = None
@@ -1063,13 +1066,24 @@ class Client():
         """
         target_id = None
         token_pair = None
+
+        user_scopes = []
+        user_roles = get_institution_roles(user)
+
+        # Add access to user data
+        user_scopes.append('/api/v2/institution/{}/*'.format(user.institution_id, user.id))
+        if 'LEARNER' in user_roles:
+            # Allow access to LAPI enrolment endpoints
+            user_scopes.append('/lapi/v1/enrolment/{}/{}/'.format(user.institution_id, user.learner.learner_id))
+            user_scopes.append('/lapi/v1/status/{}/{}/'.format(user.institution_id, user.learner.learner_id))
+            user_scopes.append('/lapi/v1/alert/{}/{}/'.format(user.institution_id, user.learner.learner_id))
+
         if target.upper() == 'DASHBOARD':
             target_id = 0
             if ttl is None:
                 ttl = 24 * 60
-            token_pair = self.get_user_token_pair(user=user, scope=['/api/v2/institution/{}/user/{}/*'.format(
-                user.institution_id, user.id
-            )], max_ttl=ttl)
+            token_pair = self.get_user_token_pair(user=user,
+                                                  scope=user_scopes, max_ttl=ttl)
         elif target.upper() == 'LAPI':
             target_id = 1
             if ttl is None:
@@ -1078,7 +1092,8 @@ class Client():
                 learner = user.learner
             except user.learner.RelatedObjectDoesNotExist:
                 raise TeslaAuthException('Provided user is not a learner')
-            token_pair = self.get_learner_token_pair(learner=learner, scope=['/lapi/*'], max_ttl=ttl)
+            token_pair = self.get_learner_token_pair(learner=learner,
+                                                     scope=user_scopes, max_ttl=ttl)
 
         if target_id is None or token_pair is None:
             raise TeslaConfigException('Invalid target type')
