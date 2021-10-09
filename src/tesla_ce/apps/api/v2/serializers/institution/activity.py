@@ -48,7 +48,14 @@ class InstitutionCourseActivityExtendedSerializer(serializers.ModelSerializer):
     description = serializers.ReadOnlyField()
     course = InstitutionCourseSerializer(read_only=True)
     instruments = InstitutionCourseActivityInstrumentSerializer(source='configuration', read_only=True, many=True)
+    user_instruments = serializers.SerializerMethodField()
 
     class Meta:
         model = Activity
         exclude = ["vle"]
+
+    def get_user_instruments(self, instance):
+        """ Instruments for current user """
+        learner = self.context['request'].user.learner
+        return InstitutionCourseActivityInstrumentSerializer(
+            instance.get_learner_instruments(learner), many=True).data
