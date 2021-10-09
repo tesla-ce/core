@@ -16,13 +16,23 @@
 from django.db.models import Q
 from django_filters import rest_framework as filters_dj
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.views import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionUserSerializer
+from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivityExtendedSerializer
 from tesla_ce.models import InstitutionUser
+from tesla_ce.models import Activity
+from tesla_ce.models.user import get_institution_user
+from tesla_ce.models.user import is_global_admin
 
 
 def roles_values():
@@ -88,7 +98,46 @@ class InstitutionUserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     filterset_class = InstitutionUserFilter
     search_fields = ['username', 'first_name', 'last_name', 'email', 'uid']
+    permission_classes = [
+        permissions.GlobalAdminReadOnlyPermission |
+        permissions.InstitutionAdminPermission |
+        permissions.InstitutionLegalAdminReadOnlyPermission |
+        permissions.InstitutionDataAdminReadOnlyPermission |
+        permissions.InstitutionMemberReadOnlyPermission
+    ]
 
     def get_queryset(self):
         queryset = self.filter_queryset_by_parents_lookups(InstitutionUser.objects)
+        if not is_global_admin(self.request.user):
+            inst_user = get_institution_user(self.request.user)
+            if not inst_user.inst_admin and not inst_user.legal_admin and not inst_user.data_admin:
+                queryset = queryset.filter(id=inst_user.id)
         return queryset.all().order_by('id')
+
+    @action(detail=True, methods=['GET'],
+            permission_classes=[permissions.GlobalAdminReadOnlyPermission |
+                                permissions.InstitutionAdminReadOnlyPermission |
+                                permissions.InstitutionLegalAdminReadOnlyPermission |
+                                permissions.InstitutionDataAdminReadOnlyPermission |
+                                permissions.InstitutionMemberReadOnlyPermission]
+            )
+    def activities(self, request, *args, **kwargs):
+        """
+            Manage learner informed consent
+        """
+        # Ensure permissions
+        if not is_global_admin(self.request.user):
+            inst_user = get_institution_user(self.request.user)
+            if not inst_user.inst_admin and not inst_user.legal_admin and not inst_user.data_admin \
+                    and int(kwargs['pk']) != inst_user.id:
+                raise PermissionDenied('You cannot access this information')
+
+        user = get_object_or_404(InstitutionUser, id=kwargs['pk'])
+        qs = Activity.objects.filter(vle__institution_id=kwargs['parent_lookup_institution_id'], enabled=True).filter(
+            Q(course__instructors__id=user.id) | Q(course__learners__id=user.id)
+        ).distinct().filter(
+            Q(start__isnull=True) | Q(start__lte=timezone.now()),
+            Q(end__isnull=True) | Q(end__gte=timezone.now())
+        ).all().order_by('course_id', 'id')
+        serializer = InstitutionCourseActivityExtendedSerializer(qs, many=True, context={'request': self.request})
+        return Response(serializer.data)

@@ -17,10 +17,14 @@ from rest_framework import serializers
 
 from tesla_ce.models import Activity
 
+from .course import InstitutionCourseSerializer
+from .activity_instrument import InstitutionCourseActivityInstrumentSerializer
+
 
 class InstitutionCourseActivitySerializer(serializers.ModelSerializer):
     """Activity serialize model module."""
-
+    course_id = serializers.ReadOnlyField()
+    vle_id = serializers.ReadOnlyField()
     vle_activity_type = serializers.ReadOnlyField()
     vle_activity_id = serializers.ReadOnlyField()
     name = serializers.ReadOnlyField()
@@ -31,3 +35,20 @@ class InstitutionCourseActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
         exclude = ["vle", "course"]
+
+
+class InstitutionCourseActivityExtendedSerializer(serializers.ModelSerializer):
+    """ Activity extended serialize model module. """
+    vle_id = serializers.ReadOnlyField()
+    vle_activity_type = serializers.ReadOnlyField()
+    vle_activity_id = serializers.ReadOnlyField()
+    name = serializers.ReadOnlyField()
+    start = serializers.ReadOnlyField()
+    end = serializers.ReadOnlyField()
+    description = serializers.ReadOnlyField()
+    course = InstitutionCourseSerializer(read_only=True)
+    instruments = InstitutionCourseActivityInstrumentSerializer(source='configuration', read_only=True, many=True)
+
+    class Meta:
+        model = Activity
+        exclude = ["vle"]

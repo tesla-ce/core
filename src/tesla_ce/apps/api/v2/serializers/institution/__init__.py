@@ -13,6 +13,7 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from .activity import InstitutionCourseActivitySerializer
+from .activity import InstitutionCourseActivityExtendedSerializer
 from .activity_instrument import InstitutionCourseActivityInstrumentSerializer
 from .activity_report import InstitutionCourseActivityReportDetailSerializer
 from .activity_report import InstitutionCourseActivityReportExtendedSerializer
@@ -42,6 +43,7 @@ __all__ = [
     "InstitutionSerializer",
     "InstitutionCourseSerializer",
     "InstitutionCourseActivitySerializer",
+    "InstitutionCourseActivityExtendedSerializer",
     "InstitutionCourseActivityReportSerializer",
     "InstitutionCourseActivityReportAuditSerializer",
     "InstitutionCourseActivityReportDetailSerializer",

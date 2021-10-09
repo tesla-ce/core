@@ -25,6 +25,7 @@ from .institution import InstitutionCourseActivityReportLearnerSerializer
 from .institution import InstitutionCourseActivityReportSerializer
 from .institution import InstitutionCourseActivityReportAuditSerializer
 from .institution import InstitutionCourseActivitySerializer
+from .institution import InstitutionCourseActivityExtendedSerializer
 from .institution import InstitutionCourseGroupCourseSerializer
 from .institution import InstitutionCourseGroupSerializer
 from .institution import InstitutionCourseSerializer
@@ -92,6 +93,7 @@ __all__ = [
     # Institution nested serializers
     "InstitutionSerializer",
     "InstitutionCourseActivitySerializer",
+    "InstitutionCourseActivityExtendedSerializer",
     "InstitutionCourseActivityReportSerializer",
     "InstitutionCourseActivityReportAuditSerializer",
     "InstitutionCourseActivityReportDetailSerializer",
