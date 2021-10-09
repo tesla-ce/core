@@ -65,9 +65,6 @@ def client_with_user_credentials(email, password):
     """
     client = APIClient()
 
-    # TODO: Remove fake authentication
-    password = email
-
     auth_resp = client.post('/api/v2/auth/login', data={
         'email': email,
         'password': password
