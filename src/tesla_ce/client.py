@@ -564,8 +564,13 @@ class Client():
             :exception TeslaAuthException: In case the credentials are not valid
         """
         try:
-            user_info = self.vault.verify_user_password(email, password)
-            user = models.User.objects.get(email=user_info['email'])
+            user = models.User.objects.get(email=email)
+            if settings.TESLA_PASSWORD_BACKEND == 'DJANGO' and not user.check_password(password):
+                raise TeslaAuthException('Invalid user credentials')
+            elif settings.TESLA_PASSWORD_BACKEND == 'VAULT':
+                self.vault.verify_user_password(email, password)
+            elif settings.TESLA_PASSWORD_BACKEND == 'DUMMY_EMAIL_PASSWORD' and password != email:
+                raise TeslaAuthException('Invalid user credentials')
         except TeslaVaultException:
             raise TeslaAuthException('Invalid user credentials')
         except models.User.DoesNotExist:
@@ -609,6 +614,8 @@ class Client():
                 scopes.append('/api/v2/institution/{}/learner/{}/*'.format(
                     inst_user.institution_id, inst_user.id
                 ))
+            if not inst_user.inst_admin and not inst_user.login_allowed:
+                raise TeslaAuthException('Login not allowed for this user.')
             token_pair = self.get_user_token_pair(user=inst_user, scope=scopes, ttl=15, max_ttl=24*60)
         else:
             raise TeslaAuthException('Invalid user. Missing Institution or administration rights.')
