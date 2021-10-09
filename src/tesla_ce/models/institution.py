@@ -44,6 +44,9 @@ class Institution(BaseModel):
     allow_valid_audit = models.BooleanField(null=None, default=False,
                                             help_text=_('Audit data is available even when results are valid'))
 
+    allowed_domains = models.TextField(null=True, blank=True, default=None,
+                                       help_text=_('Allowed domains for redirection'))
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

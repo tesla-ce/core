@@ -56,3 +56,11 @@ class Course(BaseModel):
     def __repr__(self):
         return "<Course(id='%r', vle_id='%r', vle_course_id='%r', code='%s')>" % (
             self.id, self.vle_id, self.vle_course_id, self.code)
+
+    @property
+    def enabled(self):
+        """
+            Check if a course is enabled for TeSLA
+            :return: True if it has any enabled activity or false otherwise
+        """
+        return self.activity_set.filter(enabled=True).count() > 0

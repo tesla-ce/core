@@ -24,10 +24,11 @@ class VLECourseSerializer(serializers.ModelSerializer):
 
     vle = VLESerializer(read_only=True)
     vle_id = serializers.HiddenField(default=None, allow_null=True)
+    enabled = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Course
-        exclude = ["learners", "instructors",]
+        exclude = ["learners", "instructors"]
         validators = [serializers.UniqueTogetherValidator(
             queryset=Course.objects.all(),
             fields=['vle_id', 'vle_course_id']

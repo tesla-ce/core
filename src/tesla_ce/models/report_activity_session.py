@@ -29,8 +29,10 @@ class ReportActivitySession(BaseModel):
     report = models.ForeignKey(ReportActivity, null=False, blank=False, on_delete=models.CASCADE,
                                help_text=_('Related Activity Report.'))
 
-    session = models.ForeignKey(AssessmentSession, null=False, blank=False, on_delete=models.CASCADE, unique=True,
-                                help_text=_('Assessment Session related to this report.'))
+    #session = models.ForeignKey(AssessmentSession, null=False, blank=False, on_delete=models.CASCADE, unique=True,
+    #                            help_text=_('Assessment Session related to this report.'))
+    session = models.OneToOneField(AssessmentSession, null=False, blank=False, on_delete=models.CASCADE, unique=True,
+                                   help_text=_('Assessment Session related to this report.'))
 
     identity_level = models.SmallIntegerField(choices=REPORT_ALERT_LEVEL, null=False, default=0,
                                               help_text=_('Alert level for learner identity.'))

@@ -29,8 +29,8 @@ class Activity(BaseModel):
                             help_text=_('Activity VLE.'))
 
     course = models.ForeignKey(Course, null=False, blank=False,
-                            on_delete=models.CASCADE,
-                            help_text=_('Activity VLE.'))
+                               on_delete=models.CASCADE,
+                               help_text=_('Activity VLE.'))
 
     vle_activity_type = models.CharField(max_length=250, null=False, blank=False,
                                          help_text=_("Activity type on the VLE."))

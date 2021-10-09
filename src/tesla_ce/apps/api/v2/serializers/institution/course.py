@@ -30,6 +30,7 @@ class InstitutionCourseSerializer(serializers.ModelSerializer):
     start = serializers.DateTimeField(read_only=True)
     end = serializers.DateTimeField(read_only=True)
     user_roles = serializers.SerializerMethodField(read_only=True)
+    enabled = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Course
