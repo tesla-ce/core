@@ -115,6 +115,7 @@ class InstitutionUserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         return queryset.all().order_by('id')
 
     @action(detail=True, methods=['GET'],
+            serializer_class=InstitutionCourseActivityExtendedSerializer,
             permission_classes=[permissions.GlobalAdminReadOnlyPermission |
                                 permissions.InstitutionAdminReadOnlyPermission |
                                 permissions.InstitutionLegalAdminReadOnlyPermission |
@@ -138,6 +139,12 @@ class InstitutionUserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         ).distinct().filter(
             Q(start__isnull=True) | Q(start__lte=timezone.now()),
             Q(end__isnull=True) | Q(end__gte=timezone.now())
-        ).all().order_by('course_id', 'id')
-        serializer = InstitutionCourseActivityExtendedSerializer(qs, many=True, context={'request': self.request})
-        return Response(serializer.data)
+        )
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            data = self.serializer_class(page, many=True, context={'request': self.request}).data
+            return self.get_paginated_response(data)
+
+        data = self.serializer_class(qs, many=True, context={'request': self.request}).data
+        return Response(self.get_paginated_response(data))
+
