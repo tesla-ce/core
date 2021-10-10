@@ -43,11 +43,12 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                                    ]
                                    )
     institution_id = serializers.HiddenField(default=None)
+    login_allowed = serializers.BooleanField(required=False, allow_null=True, default=False, write_only=True)
 
     class Meta:
         model = InstitutionUser
         exclude = ["is_superuser", "is_staff", "is_active", "date_joined", "groups",
-                   "user_permissions", "institution", "login_allowed"]
+                   "user_permissions", "institution"]
         validators = [serializers.UniqueTogetherValidator(
             queryset=InstitutionUser.objects.all(),
             fields=['institution_id', 'uid']

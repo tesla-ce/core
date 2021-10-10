@@ -565,12 +565,21 @@ class Client():
         """
         try:
             user = models.User.objects.get(email=email)
-            if settings.TESLA_PASSWORD_BACKEND == 'DJANGO' and not user.check_password(password):
-                raise TeslaAuthException('Invalid user credentials')
-            elif settings.TESLA_PASSWORD_BACKEND == 'VAULT':
+            authenticated = False
+            if settings.TESLA_PASSWORD_BACKEND == 'DJANGO':
+                if user.check_password(password):
+                    authenticated = True
+                else:
+                    raise TeslaAuthException('Invalid user credentials')
+            if settings.TESLA_PASSWORD_BACKEND == 'VAULT':
                 self.vault.verify_user_password(email, password)
-            elif settings.TESLA_PASSWORD_BACKEND == 'DUMMY_EMAIL_PASSWORD' and password != email:
-                raise TeslaAuthException('Invalid user credentials')
+                authenticated = True
+            if settings.TESLA_PASSWORD_BACKEND == 'DUMMY_EMAIL_PASSWORD':
+                if password != email:
+                    raise TeslaAuthException('Invalid user credentials')
+                authenticated = True
+            if not authenticated:
+                raise TeslaAuthException('Invalid password backend')
         except TeslaVaultException:
             raise TeslaAuthException('Invalid user credentials')
         except models.User.DoesNotExist:

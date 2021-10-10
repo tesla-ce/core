@@ -139,6 +139,9 @@ class BaseUser(BaseModel, User):
             self.id, self.email, self.is_active
         )
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
 
 class UnauthenticatedUser(AnonymousUser):
     """
