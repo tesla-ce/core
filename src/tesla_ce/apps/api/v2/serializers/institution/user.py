@@ -13,6 +13,8 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """User api serialize module."""
+from django.contrib.auth.models import make_password
+
 from rest_framework import serializers
 from rest_framework import validators
 
@@ -41,11 +43,12 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                                    ]
                                    )
     institution_id = serializers.HiddenField(default=None)
+    login_allowed = serializers.BooleanField(required=False, allow_null=True, default=False, write_only=True)
 
     class Meta:
         model = InstitutionUser
         exclude = ["is_superuser", "is_staff", "is_active", "date_joined", "groups",
-                   "user_permissions", "institution", "login_allowed"]
+                   "user_permissions", "institution"]
         validators = [serializers.UniqueTogetherValidator(
             queryset=InstitutionUser.objects.all(),
             fields=['institution_id', 'uid']
@@ -68,6 +71,8 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Passwords does not match')
             if 'password2' in attrs:
                 del attrs['password2']
+            if 'password' in attrs:
+                attrs['password'] = make_password(attrs['password'])
         else:
             attrs['login_allowed'] = False
 

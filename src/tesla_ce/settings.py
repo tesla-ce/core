@@ -129,7 +129,6 @@ class BaseConfiguration(Configuration):
 
     REST_FRAMEWORK = {
         'DEFAULT_AUTHENTICATION_CLASSES': (
-            #'rest_framework_simplejwt.authentication.JWTTokenUserAuthentication',
             'tesla_ce.lib.auth.JWTAuthentication',
         ),
         'DEFAULT_RENDERER_CLASSES': (
@@ -140,11 +139,15 @@ class BaseConfiguration(Configuration):
         'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
         'DEFAULT_VERSION': 'v2',
         'ALLOWED_VERSIONS': ['v1', 'v2'],
-        #'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-        #'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
         'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesLimitOffsetPagination',
         'PAGE_SIZE': 10
     }
+
+    # TeSLA Password checker
+    # DJANGO: User default DJANGO engine
+    # VAULT: User vault credentials manager
+    #
+    TESLA_PASSWORD_BACKEND = os.getenv('TESLA_PASSWORD_BACKEND', 'DJANGO').upper()
 
     # TeSLA Authentication configuration
     TESLA_JWT_TOKEN = 'JWT'
