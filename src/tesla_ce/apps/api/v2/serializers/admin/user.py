@@ -13,6 +13,7 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """User api serialize module."""
+from django.contrib.auth.models import make_password
 from rest_framework import serializers
 from rest_framework import validators
 
@@ -133,6 +134,8 @@ class UserSerializer(serializers.ModelSerializer):
             del validated_data['uid']
         if 'login_allowed' in validated_data:
             del validated_data['login_allowed']
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
 
         user = super().create(validated_data)
 
