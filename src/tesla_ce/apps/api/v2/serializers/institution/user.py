@@ -13,6 +13,8 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """User api serialize module."""
+from django.contrib.auth.models import make_password
+
 from rest_framework import serializers
 from rest_framework import validators
 
@@ -68,6 +70,8 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Passwords does not match')
             if 'password2' in attrs:
                 del attrs['password2']
+            if 'password' in attrs:
+                attrs['password'] = make_password(attrs['password'])
         else:
             attrs['login_allowed'] = False
 
