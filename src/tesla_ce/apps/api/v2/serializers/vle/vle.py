@@ -17,11 +17,14 @@ from rest_framework import serializers
 
 from tesla_ce.models import VLE
 
+from tesla_ce.apps.api.v2.serializers import InstitutionSerializer
+
 
 class VLESerializer(serializers.ModelSerializer):
     """VLE serialize model module."""
     type = serializers.CharField(source='get_type_display')
+    institution = InstitutionSerializer(many=False)
 
     class Meta:
         model = VLE
-        exclude = ["lti", "created_at", "updated_at", "institution"]
+        exclude = ["lti", "created_at", "updated_at"]
