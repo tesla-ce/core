@@ -44,6 +44,10 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                                    )
     institution_id = serializers.HiddenField(default=None)
     login_allowed = serializers.BooleanField(required=False, allow_null=True, default=False, write_only=True)
+    inst_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
+    legal_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
+    send_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
+    data_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
 
     class Meta:
         model = InstitutionUser
