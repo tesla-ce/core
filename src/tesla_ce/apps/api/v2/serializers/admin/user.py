@@ -146,6 +146,12 @@ class UserSerializer(serializers.ModelSerializer):
             del validated_data['institution_id']
         if 'inst_admin' in validated_data:
             del validated_data['inst_admin']
+        if 'legal_admin' in validated_data:
+            del validated_data['legal_admin']
+        if 'data_admin' in validated_data:
+            del validated_data['data_admin']
+        if 'send_admin' in validated_data:
+            del validated_data['send_admin']
         if 'uid' in validated_data:
             del validated_data['uid']
         if 'login_allowed' in validated_data:
