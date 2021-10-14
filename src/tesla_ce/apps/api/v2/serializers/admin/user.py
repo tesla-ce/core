@@ -43,9 +43,14 @@ class UserSerializer(serializers.ModelSerializer):
     institution = serializers.SerializerMethodField(read_only=True)
     roles = serializers.SerializerMethodField(read_only=True)
     institution_id = serializers.IntegerField(write_only=True, allow_null=True, default=None)
-    inst_admin = serializers.BooleanField(write_only=True, default=False, allow_null=True)
     login_allowed = serializers.BooleanField(write_only=True, default=True, allow_null=True)
     uid = serializers.CharField(write_only=True, default=None, allow_null=True)
+
+    is_staff = serializers.BooleanField(required=False, allow_null=False, default=False)
+    inst_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
+    legal_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
+    send_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
+    data_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
 
     class Meta:
         model = User
@@ -90,6 +95,8 @@ class UserSerializer(serializers.ModelSerializer):
                 roles.append("SEND")
             if object.institutionuser.legal_admin:
                 roles.append("LEGAL")
+            if object.institutionuser.data_admin:
+                roles.append("DATA")
 
             return {
                 "id": object.institutionuser.institution.id,
@@ -118,10 +125,19 @@ class UserSerializer(serializers.ModelSerializer):
                 'institution': validated_data['institution_id'],
                 'uid': None,
                 'inst_admin': False,
+                'data_admin': False,
+                'send_admin': False,
+                'legal_admin': False,
                 'login_allowed': False
             }
             if 'inst_admin' in validated_data and validated_data['inst_admin'] is not None:
                 inst_data['inst_admin'] = validated_data['inst_admin']
+            if 'data_admin' in validated_data and validated_data['data_admin'] is not None:
+                inst_data['data_admin'] = validated_data['data_admin']
+            if 'send_admin' in validated_data and validated_data['send_admin'] is not None:
+                inst_data['send_admin'] = validated_data['send_admin']
+            if 'legal_admin' in validated_data and validated_data['legal_admin'] is not None:
+                inst_data['legal_admin'] = validated_data['legal_admin']
             if 'uid' in validated_data and validated_data['uid'] is not None:
                 inst_data['uid'] = validated_data['uid']
             if 'login_allowed' in validated_data and validated_data['login_allowed'] is not None:
@@ -149,7 +165,10 @@ class UserSerializer(serializers.ModelSerializer):
             user.institutionuser = InstitutionUser(institution_id=inst_data['institution'],
                                                    uid=inst_data['uid'],
                                                    login_allowed=inst_data['login_allowed'],
-                                                   inst_admin=inst_data['inst_admin'])
+                                                   inst_admin=inst_data['inst_admin'],
+                                                   legal_admin=inst_data['legal_admin'],
+                                                   data_admin=inst_data['data_admin'],
+                                                   send_admin=inst_data['send_admin'])
             user.institutionuser.save()
             user.save()
             user.institutionuser.refresh_from_db()
@@ -167,7 +186,10 @@ class UserSerializer(serializers.ModelSerializer):
                 instance.institutionuser = InstitutionUser(institution_id=validated_data['institution_id'],
                                                            uid=None,
                                                            login_allowed=False,
-                                                           inst_admin=False)
+                                                           inst_admin=False,
+                                                           legal_admin=False,
+                                                           data_admin=False,
+                                                           send_admin=False)
                 new_inst = True
             elif has_inst and validated_data['institution_id'] is None:
                 # Removing the institution
@@ -180,6 +202,15 @@ class UserSerializer(serializers.ModelSerializer):
             modified = False
             if 'inst_admin' in validated_data:
                 instance.institutionuser.inst_admin = validated_data['inst_admin']
+                modified = True
+            if 'send_admin' in validated_data:
+                instance.institutionuser.send_admin = validated_data['send_admin']
+                modified = True
+            if 'legal_admin' in validated_data:
+                instance.institutionuser.legal_admin = validated_data['legal_admin']
+                modified = True
+            if 'data_admin' in validated_data:
+                instance.institutionuser.data_admin = validated_data['data_admin']
                 modified = True
             if 'uid' in validated_data:
                 instance.institutionuser.uid = validated_data['uid']
