@@ -43,7 +43,7 @@ from .lib.exception import TeslaMissingEnrolmentException
 from .lib.exception import TeslaMissingICException
 from .lib.exception import TeslaVaultException
 
-from .models.user import get_institution_roles
+from .models.user import get_institution_roles, get_institution_user
 
 #: Client instance
 _client = None
@@ -587,6 +587,10 @@ class Client():
         """
         try:
             user = models.User.objects.get(email=email)
+            if not user.is_staff:
+                inst_user = get_institution_user(user)
+                if inst_user is None or not inst_user.login_allowed:
+                    raise TeslaAuthException('User is not allowed to login')
             authenticated = False
             if settings.TESLA_PASSWORD_BACKEND == 'DJANGO':
                 if user.check_password(password):
