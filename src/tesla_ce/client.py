@@ -43,7 +43,7 @@ from .lib.exception import TeslaMissingEnrolmentException
 from .lib.exception import TeslaMissingICException
 from .lib.exception import TeslaVaultException
 
-from .models.user import get_institution_roles
+from .models.user import get_institution_roles, get_institution_user
 
 #: Client instance
 _client = None
@@ -551,6 +551,28 @@ class Client():
 
         raise TeslaAuthException('Invalid JWT token')
 
+    def change_user_password(self, email, password):
+        """
+            Change user credentials
+
+            :param email: The user email
+            :type email: str
+            :param password: The user password
+            :type password: str
+        """
+        try:
+            user = models.User.objects.get(email=email)
+            if settings.TESLA_PASSWORD_BACKEND == 'DJANGO':
+                user.set_password(password)
+                user.save()
+            if settings.TESLA_PASSWORD_BACKEND == 'VAULT':
+                # TODO: Create Vault instance
+                pass
+        except TeslaVaultException:
+            raise TeslaAuthException('Invalid user credentials')
+        except models.User.DoesNotExist:
+            raise TeslaAuthException('Invalid user credentials')
+
     def verify_user(self, email, password):
         """
             Validate user credentials
@@ -565,6 +587,10 @@ class Client():
         """
         try:
             user = models.User.objects.get(email=email)
+            if not user.is_staff:
+                inst_user = get_institution_user(user)
+                if inst_user is None or not inst_user.login_allowed:
+                    raise TeslaAuthException('User is not allowed to login')
             authenticated = False
             if settings.TESLA_PASSWORD_BACKEND == 'DJANGO':
                 if user.check_password(password):

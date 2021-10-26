@@ -209,6 +209,14 @@ def api_create_institution_admin(global_admin, institution):
     assert 'ADMIN' in admin_user['roles']
     assert admin_user['institution']['id'] == institution['id']
 
+    # Check credentials
+    auth_resp = client.post('/api/v2/auth/login', data={
+        'email': email,
+        'password': password
+    })
+    assert auth_resp.status_code == 200
+    assert 'token' in auth_resp.data
+
     # Return credentials
     return {
         'email': email,
