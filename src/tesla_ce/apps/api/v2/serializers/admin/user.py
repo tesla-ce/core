@@ -161,12 +161,14 @@ class UserSerializer(serializers.ModelSerializer):
         user = super().create(validated_data)
 
         if inst_data is not None:
+            new_password = None
             # Disable password if necessary
             if not inst_data['login_allowed']:
                 user.set_unusable_password()
                 user.save()
             elif 'password' in validated_data:
-                get_default_client().change_user_password(user.email, validated_data['password'])
+                new_password = validated_data['password']
+                del validated_data['password']
 
             # Create the related institution user
             user.institutionuser = InstitutionUser(institution_id=inst_data['institution'],
@@ -179,6 +181,10 @@ class UserSerializer(serializers.ModelSerializer):
             user.institutionuser.save()
             user.save()
             user.institutionuser.refresh_from_db()
+
+            if new_password:
+                get_default_client().change_user_password(user.email, new_password)
+                user.refresh_from_db()
 
         return user
 
