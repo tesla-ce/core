@@ -19,6 +19,7 @@ from rest_framework import validators
 
 from tesla_ce.models import User
 from tesla_ce.models import InstitutionUser
+from tesla_ce import get_default_client
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -43,7 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
     institution = serializers.SerializerMethodField(read_only=True)
     roles = serializers.SerializerMethodField(read_only=True)
     institution_id = serializers.IntegerField(write_only=True, allow_null=True, default=None)
-    login_allowed = serializers.BooleanField(write_only=True, default=True, allow_null=True)
+    login_allowed = serializers.BooleanField(required=False, default=True, allow_null=False)
     uid = serializers.CharField(write_only=True, default=None, allow_null=True)
 
     is_staff = serializers.BooleanField(required=False, allow_null=False, default=False)
@@ -156,8 +157,6 @@ class UserSerializer(serializers.ModelSerializer):
             del validated_data['uid']
         if 'login_allowed' in validated_data:
             del validated_data['login_allowed']
-        if 'password' in validated_data:
-            validated_data['password'] = make_password(validated_data['password'])
 
         user = super().create(validated_data)
 
@@ -166,6 +165,8 @@ class UserSerializer(serializers.ModelSerializer):
             if not inst_data['login_allowed']:
                 user.set_unusable_password()
                 user.save()
+            elif 'password' in validated_data:
+                get_default_client().change_user_password(user.email, validated_data['password'])
 
             # Create the related institution user
             user.institutionuser = InstitutionUser(institution_id=inst_data['institution'],
@@ -236,5 +237,14 @@ class UserSerializer(serializers.ModelSerializer):
             instance.save()
             instance.institutionuser.refresh_from_db()
 
-        return super().update(instance, validated_data)
+        new_password = None
+        if 'password' in validated_data:
+            new_password = validated_data['password']
+            del validated_data['password']
 
+        updated_user = super().update(instance, validated_data)
+
+        if new_password is not None:
+            get_default_client().change_user_password(updated_user.email, new_password)
+
+        return updated_user

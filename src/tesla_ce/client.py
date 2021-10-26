@@ -551,6 +551,28 @@ class Client():
 
         raise TeslaAuthException('Invalid JWT token')
 
+    def change_user_password(self, email, password):
+        """
+            Change user credentials
+
+            :param email: The user email
+            :type email: str
+            :param password: The user password
+            :type password: str
+        """
+        try:
+            user = models.User.objects.get(email=email)
+            if settings.TESLA_PASSWORD_BACKEND == 'DJANGO':
+                user.set_password(password)
+                user.save()
+            if settings.TESLA_PASSWORD_BACKEND == 'VAULT':
+                # TODO: Create Vault instance
+                pass
+        except TeslaVaultException:
+            raise TeslaAuthException('Invalid user credentials')
+        except models.User.DoesNotExist:
+            raise TeslaAuthException('Invalid user credentials')
+
     def verify_user(self, email, password):
         """
             Validate user credentials

@@ -18,6 +18,8 @@ from django.contrib.auth.models import make_password
 from rest_framework import serializers
 from rest_framework import validators
 
+from tesla_ce import get_default_client
+
 from tesla_ce.models import InstitutionUser
 from tesla_ce.models import User
 
@@ -43,7 +45,7 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                                    ]
                                    )
     institution_id = serializers.HiddenField(default=None)
-    login_allowed = serializers.BooleanField(required=False, allow_null=True, default=False, write_only=True)
+    login_allowed = serializers.BooleanField(required=False, allow_null=False, default=False)
     inst_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
     legal_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
     send_admin = serializers.BooleanField(required=False, allow_null=False, default=False)
@@ -75,8 +77,6 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Passwords does not match')
             if 'password2' in attrs:
                 del attrs['password2']
-            if 'password' in attrs:
-                attrs['password'] = make_password(attrs['password'])
         else:
             attrs['login_allowed'] = False
 
@@ -84,3 +84,26 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
         for validator in self.get_validators():
             validator(attrs, self)
         return super().validate(attrs)
+
+    def create(self, validated_data):
+        new_user = super().create(validated_data)
+
+        if 'password' in validated_data:
+            if new_user.login_allowed:
+                get_default_client().change_user_password(new_user.email, validated_data['password'])
+            else:
+                new_user.set_unusable_password()
+
+        return new_user
+
+    def update(self, instance, validated_data):
+        updated_user = super().update(instance, validated_data)
+
+        if 'password' in validated_data:
+            if updated_user.login_allowed:
+                get_default_client().change_user_password(updated_user.email, validated_data['password'])
+            else:
+                updated_user.set_unusable_password()
+
+        return updated_user
+
