@@ -72,7 +72,7 @@
          "enabled":true,
          "institution":null,
          "user":null,
-         "roles":"ADMIN,GLOBAL_ADMIN,INSTRUCTOR,LEARNER",
+         "roles":"ADMIN,GLOBAL_ADMIN,INSTRUCTOR,LEARNER,DATA",
          "created_at":"2021-06-30T21:20:14.090Z",
          "updated_at":"2021-06-30T21:20:14.090Z"
       }
@@ -85,7 +85,7 @@
          "enabled":true,
          "institution":null,
          "user":null,
-         "roles":"GLOBAL_ADMIN",
+         "roles":"GLOBAL_ADMIN,ADMIN",
          "created_at":"2021-07-27T23:06:17.335Z",
          "updated_at":"2021-07-27T23:06:17.335Z"
       }
