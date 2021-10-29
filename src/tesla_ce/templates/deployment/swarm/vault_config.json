@@ -1,6 +1,7 @@
 {
   "ui": true,
   "backend": {
+{% if VAULT_BACKEND == 'database' %}
     "mysql": {
       "ha_enabled": "true",
       "address" : "{{ VAULT_DB_HOST}}:{{ VAULT_DB_PORT }}",
@@ -8,6 +9,11 @@
       "password": "{{ VAULT_DB_PASSWORD }}",
       "database": "{{ VAULT_DB_NAME }}"
     }
+{% else %}
+    "file": {
+      "path": "/vault_data",
+    }
+{% endif %}
   },
   "listener": {
     "tcp": {
