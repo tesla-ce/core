@@ -141,5 +141,31 @@
          "created_at":"2021-09-02T08:18:14.403Z",
          "updated_at":"2021-09-02T08:18:14.403Z"
       }
+   },
+   {
+      "model":"tesla_ce.uioption",
+      "pk":12,
+      "fields":{
+         "route":"administration-settings",
+         "enabled":true,
+         "institution":null,
+         "user":null,
+         "roles":"GLOBAL_ADMIN,ADMIN",
+         "created_at":"2021-09-02T08:18:14.403Z",
+         "updated_at":"2021-09-02T08:18:14.403Z"
+      }
+   },
+   {
+      "model":"tesla_ce.uioption",
+      "pk":13,
+      "fields":{
+         "route":"system-instruments",
+         "enabled":true,
+         "institution":null,
+         "user":null,
+         "roles":"GLOBAL_ADMIN",
+         "created_at":"2021-09-02T08:18:14.403Z",
+         "updated_at":"2021-09-02T08:18:14.403Z"
+      }
    }
 ]
