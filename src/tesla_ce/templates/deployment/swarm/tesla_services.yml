@@ -11,9 +11,15 @@ services:
       - tesla_private
     environment:
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/DB_ROOT_PASSWORD
+      {% if VAULT_BACKEND == "database" %}
       - MYSQL_DATABASE={{ VAULT_DB_NAME }}
       - MYSQL_USER={{ VAULT_DB_USER }}
       - MYSQL_PASSWORD_FILE=/run/secrets/VAULT_DB_PASSWORD
+      {% else %}
+      - MYSQL_DATABASE={{ DB_NAME }}
+      - MYSQL_USER={{ DB_USER }}
+      - MYSQL_PASSWORD_FILE=/run/secrets/DB_PASSWORD
+      {% endif %}
     volumes:
       - db_volume:/var/lib/mysql
     ports:
@@ -41,6 +47,10 @@ services:
     environment:
       SKIP_SETCAP: 1
       VAULT_API_ADDR: "https://vault.{{ TESLA_DOMAIN }}"
+    {% if VAULT_BACKEND == 'file' %}
+    volumes:
+      - vault_volume:/vault_data
+    {% endif %}
     configs:
       - source: vault_config
         target: /local_config.json
@@ -156,8 +166,18 @@ volumes:
       type: none
       device: {{ DEPLOYMENT_DATA_PATH }}/rabbitmq
       o: bind
-
+  {% if VAULT_BACKEND == 'file' %}
+  vault_volume:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/vault
+      o: bind
+  {% endif %}
 secrets:
+  {% if VAULT_BACKEND == 'database' %}
+  DB_PASSWORD:
+    file: ./secrets/DB_PASSWORD
+  {% endif}
   DB_ROOT_PASSWORD:
     file: ./secrets/DB_ROOT_PASSWORD
   VAULT_DB_PASSWORD:

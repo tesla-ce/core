@@ -63,6 +63,7 @@ class Config:
             ('mount_path_transit', 'Mount path for transit encryption engine', 'str', 'tesla-ce/transit', None, True),
             ('mount_path_approle', 'Mount path for approle auth engine', 'str', 'tesla-ce/approle', None, True),
             ('policies_prefix', 'Prefix prepended to ACL policy names', 'str', 'tesla-ce/policy/', None, True),
+            ('backend', 'Vault backend', 'enum', 'file', ['file', 'database', ], True),
         )),
         ('redis', 'Redis configuration', (
             ('host', 'Redis host', 'str', 'localhost', None, True),
