@@ -162,6 +162,9 @@ class BaseConfiguration(Configuration):
         'Content-Type'
     )
 
+    # Required for Django 3.2
+    DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 
 class Production(BaseConfiguration):
     """
