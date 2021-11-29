@@ -93,6 +93,19 @@ class Command(TeslaDeployCommand):
         error_count = 0
         for request in requests.all():
             try:
+                for instrument in request.instruments.all():
+                    providers = models.Provider.objects.filter(instrument_id=instrument.id, enabled=True).all()
+                    for provider in providers:
+                        models.RequestProviderResult.objects.filter(
+                            request=request,
+                            provider=provider
+                        ).delete()
+
+                    models.RequestResult.objects.filter(
+                        request_id=request.id,
+                        instrument_id=instrument.id
+                    ).delete()
+
                 tasks.requests.verification.verify_request(request.id)
             except Exception:
                 error_count += 1
