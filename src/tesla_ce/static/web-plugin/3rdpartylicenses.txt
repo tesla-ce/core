@@ -156,7 +156,10 @@ MIT
 
 @tesla-ce/icons
 
+@tesla-ce/sensors
+
 @tesla-ce/web-plugin
+AGPL-3.0-or-later
 
 @webcomponents/webcomponentsjs
 BSD-3-Clause
