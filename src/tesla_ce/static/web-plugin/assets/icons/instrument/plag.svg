@@ -1,6 +1,59 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 501 501">
   <defs>
     <style>
+      .tesla-primary-color {
+        fill: #5290e9;
+      }
+
+      .tesla-secondary-color {
+        fill: #97bcf2;
+      }
+
+      .tesla-tertiary-color {
+        fill: #ffffff;
+      }
+
+      .tesla-primary-stroke {
+        stroke: #5290e9;
+      }
+
+      .tesla-secondary-stroke {
+        stroke: #97bcf2;
+      }
+
+      .tesla-tertiary-stroke {
+        stroke: #ffffff;
+      }
+
+      .tesla-status-success {
+        fill: #25a148;
+      }
+
+      .tesla-status-warning {
+        fill: #ff832b;
+      }
+
+      .tesla-status-error {
+        fill: #da1f28;
+      }
+
+      .tesla_status_disabled,
+      .tesla_status_disabled .tesla-primary-color,
+      .tesla_status_disabled .tesla-secondary-color,
+      .tesla_status_disabled .tesla-tertiary-color {
+        fill: #fafafa !important;
+      }
+
+      .tesla_status_disabled .tesla-primary-stroke,
+      .tesla_status_disabled .tesla-secondary-stroke,
+      .tesla_status_disabled .tesla-tertiary-stroke {
+        stroke: #fafafa !important;
+      }
+
+      .tesla-status {
+        display: none;
+      }
+
     .instrument-plagiarism-1 {
       opacity: 0;
     }
