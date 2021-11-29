@@ -1,5 +1,5 @@
 [
   {"acronym": "fr_tfr", "url": "https://raw.githubusercontent.com/tesla-ce/provider-fr-tfr/main/fr_tfr.info.json"},
   {"acronym": "plag_urkund", "url": "https://raw.githubusercontent.com/tesla-ce/provider-pt-urkund/main/options.json"},
-  {"acronym": "ks_tks", "url": "https://raw.githubusercontent.com/tesla-ce/provider-ks-tks/main/options.json"},
+  {"acronym": "ks_tks", "url": "https://raw.githubusercontent.com/tesla-ce/provider-ks-tks/main/options.json"}
 ]
