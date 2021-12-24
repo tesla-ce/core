@@ -11,7 +11,6 @@
 
     .sensor-dashboard-4 {
       stroke-width: 8.09px;
-      mix-blend-mode: overlay;
     }
 
     .sensor-dashboard-5 {

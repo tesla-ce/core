@@ -372,8 +372,8 @@
                     xlink:href="#Degradado_sin_nombre_46"/>
   </defs>
   <g class="common-menu_logo-1">
-    <g id="Capa_1" data-name="Capa 1">
-      <rect id="fons" class="common-menu_logo-2" width="500" height="500"/>
+    <g>
+      <rect class="common-menu_logo-2" width="500" height="500"/>
       <line class="common-menu_logo-3" x1="113.21" y1="346.36" x2="152.71" y2="369.44"/>
       <line class="common-menu_logo-4" x1="169.83" y1="40.51" x2="214.79" y2="98.71"/>
       <line class="common-menu_logo-5" x1="220.6" y1="26.83" x2="214.79" y2="98.71"/>
@@ -444,7 +444,7 @@
       <polygon class="common-menu_logo-19" points="214.38 97.74 206.56 170.46 279.46 141.07 214.38 97.74"/>
       <polygon class="common-menu_logo-22" points="206.56 170.46 262.59 222.88 196.07 199.65 206.56 170.46"/>
       <polygon class="common-menu_logo-18" points="347.79 425.4 320.18 436.04 339.6 474.4 337.84 444.43 347.79 425.4"/>
-      <g id="Degradat" class="common-menu_logo-24">
+      <g class="common-menu_logo-24">
         <polygon class="common-menu_logo-25" points="266.33 449.32 317.74 437.4 287.74 466.16 263.06 483.93 266.33 449.32"/>
         <polygon class="common-menu_logo-26" points="240.2 245.13 252.17 299.7 206.22 274.84 240.2 245.13"/>
         <polygon class="common-menu_logo-27" points="401.62 186.69 393.56 212.63 417.55 227.62 403.01 208.37 401.62 186.69"/>
@@ -491,7 +491,7 @@
         <polygon class="common-menu_logo-61" points="206.9 171.77 259.56 221.05 196.95 199.18 206.9 171.77"/>
         <polygon class="common-menu_logo-62" points="346.28 426.76 321.22 436.55 338.66 470.92 337.1 444.29 346.28 426.76"/>
       </g>
-      <g id="TEXT">
+      <g>
         <circle class="common-menu_logo-63" cx="215.05" cy="97.98" r="3.59"/>
         <circle class="common-menu_logo-63" cx="369.85" cy="229.41" r="3.59"/>
         <circle class="common-menu_logo-63" cx="310.06" cy="247.43" r="3.59"/>
