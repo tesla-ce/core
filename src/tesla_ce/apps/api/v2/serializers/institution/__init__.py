@@ -14,6 +14,7 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from .activity import InstitutionCourseActivitySerializer
 from .activity import InstitutionCourseActivityExtendedSerializer
+from .activity import InstitutionUserActivityExtendedSerializer
 from .activity_instrument import InstitutionCourseActivityInstrumentSerializer
 from .activity_report import InstitutionCourseActivityReportDetailSerializer
 from .activity_report import InstitutionCourseActivityReportExtendedSerializer
@@ -44,6 +45,7 @@ __all__ = [
     "InstitutionCourseSerializer",
     "InstitutionCourseActivitySerializer",
     "InstitutionCourseActivityExtendedSerializer",
+    "InstitutionUserActivityExtendedSerializer",
     "InstitutionCourseActivityReportSerializer",
     "InstitutionCourseActivityReportAuditSerializer",
     "InstitutionCourseActivityReportDetailSerializer",
