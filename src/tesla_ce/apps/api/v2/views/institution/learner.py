@@ -75,8 +75,8 @@ class InstitutionLearnerViewSet(NestedViewSetMixin, DetailSerializerMixin, views
         permissions.InstitutionLearnerReadOnlyPermission
     ]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['uid', 'email', 'first_name', 'last_name']
-    search_fields = ['uid', 'email', 'first_name', 'last_name']
+    filterset_fields = ['id', 'uid', 'email', 'first_name', 'last_name', 'username']
+    search_fields = ['id', 'uid', 'email', 'first_name', 'last_name', 'username']
 
     def get_queryset(self):
         queryset = self.filter_queryset_by_parents_lookups(Learner.objects)

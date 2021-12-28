@@ -14,8 +14,9 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Activity serializer module """
 from rest_framework import serializers
+from django.shortcuts import get_object_or_404
 
-from tesla_ce.models import Activity
+from tesla_ce.models import Activity, Learner
 
 from .course import InstitutionCourseSerializer
 from .activity_instrument import InstitutionCourseActivityInstrumentSerializer
@@ -59,3 +60,16 @@ class InstitutionCourseActivityExtendedSerializer(serializers.ModelSerializer):
         learner = self.context['request'].user.learner
         return InstitutionCourseActivityInstrumentSerializer(
             instance.get_learner_instruments(learner), many=True).data
+
+
+class InstitutionUserActivityExtendedSerializer(InstitutionCourseActivityExtendedSerializer):
+
+    def get_user_instruments(self, instance):
+        """ Instruments for current user """
+        user_id = self.context['request'].parser_context['kwargs']['pk']
+        try:
+            learner = instance.course.learners.get(pk=user_id)
+            instruments = instance.get_learner_instruments(learner)
+        except Learner.DoesNotExist:
+            instruments = []
+        return InstitutionCourseActivityInstrumentSerializer(instruments, many=True).data

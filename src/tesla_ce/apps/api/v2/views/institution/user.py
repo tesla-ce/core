@@ -28,7 +28,7 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionUserSerializer
-from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivityExtendedSerializer
+from tesla_ce.apps.api.v2.serializers import InstitutionUserActivityExtendedSerializer
 from tesla_ce.models import InstitutionUser
 from tesla_ce.models import Activity
 from tesla_ce.models.user import get_institution_user
@@ -115,7 +115,7 @@ class InstitutionUserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         return queryset.all().order_by('id')
 
     @action(detail=True, methods=['GET'],
-            serializer_class=InstitutionCourseActivityExtendedSerializer,
+            serializer_class=InstitutionUserActivityExtendedSerializer,
             permission_classes=[permissions.GlobalAdminReadOnlyPermission |
                                 permissions.InstitutionAdminReadOnlyPermission |
                                 permissions.InstitutionLegalAdminReadOnlyPermission |

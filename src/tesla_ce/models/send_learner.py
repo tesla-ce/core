@@ -45,3 +45,9 @@ class SENDLearner(BaseModel):
         super().save(force_insert, force_update, using, update_fields)
         # Invalidate cached value
         get_learner_send.invalidate(self.learner_id)
+
+    def delete(self, using=None, keep_parents=False):
+        obj = super().delete(using, keep_parents)
+        # Invalidate cached value
+        get_learner_send.invalidate(self.learner_id)
+        return obj

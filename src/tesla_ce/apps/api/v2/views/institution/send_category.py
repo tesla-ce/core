@@ -37,10 +37,8 @@ class InstitutionSENDCategoryViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         permissions.InstitutionAdminPermission |
         permissions.InstitutionSENDAdminPermission
     ]
-    '''
-    filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
-    '''
+    filterset_fields = ['institution', 'description']
+    search_fields = ['institution', 'description']
 
     def get_queryset(self):
         queryset = self.filter_queryset_by_parents_lookups(SENDCategory.objects)

@@ -177,7 +177,7 @@ secrets:
   {% if VAULT_BACKEND == 'database' %}
   DB_PASSWORD:
     file: ./secrets/DB_PASSWORD
-  {% endif}
+  {% endif %}
   DB_ROOT_PASSWORD:
     file: ./secrets/DB_ROOT_PASSWORD
   VAULT_DB_PASSWORD:

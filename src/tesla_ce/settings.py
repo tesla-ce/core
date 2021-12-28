@@ -163,7 +163,7 @@ class BaseConfiguration(Configuration):
     )
 
     # Required for Django 3.2
-    DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+    DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 class Production(BaseConfiguration):

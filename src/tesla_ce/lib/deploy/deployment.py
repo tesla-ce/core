@@ -179,9 +179,9 @@ class SwarmDeployment(BaseDeployment):
                                                                               context))
 
         # Add Services script
-        if self._config.get('DEPLOYMENT_SERVICES'):
-            files['tesla_services.yml'] = self._remove_empty_lines(
-                render_to_string('deployment/swarm/tesla_services.yml', context))
+        # if self._config.get('DEPLOYMENT_SERVICES'):
+        #    files['tesla_services.yml'] = self._remove_empty_lines(
+        #        render_to_string('deployment/swarm/tesla_services.yml', context))
 
         # Add Front-end script
         files['tesla_dashboards.yml'] = self._remove_empty_lines(
