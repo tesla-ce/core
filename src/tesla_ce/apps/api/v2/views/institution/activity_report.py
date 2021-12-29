@@ -14,6 +14,9 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Activity Report views module """
 from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework as filters
+
+from django.db.models import Q
 
 from rest_framework import viewsets
 from rest_framework import exceptions
@@ -32,6 +35,46 @@ from tesla_ce.models.user import get_institution_user
 from tesla_ce.models.user import is_global_admin
 
 
+class MultiNumberFilter(filters.Filter):
+
+    def __init__(self, fields, lookup_expr=None, label=None, method=None, distinct=False, exclude=False, **kwargs):
+        self.fields = fields
+        super().__init__('id', lookup_expr, label=label, method=method, distinct=distinct, exclude=exclude, **kwargs)
+
+    def filter(self, qs, value):
+        if value is None:
+            return qs
+        multi_filter = Q()
+        for field in self.fields:
+            multi_filter = multi_filter | Q(**{'%s__%s' % (field, self.lookup_expr): value})
+        qs = qs.filter(multi_filter)
+        return qs
+
+
+class ReportFilter(filters.FilterSet):
+    identity_level__gte = filters.NumberFilter(field_name="identity_level", lookup_expr='gte')
+    identity_level__lte = filters.NumberFilter(field_name="identity_level", lookup_expr='lte')
+    content_level__gte = filters.NumberFilter(field_name="content_level", lookup_expr='gte')
+    content_level__lte = filters.NumberFilter(field_name="content_level", lookup_expr='lte')
+    integrity_level__gte = filters.NumberFilter(field_name="integrity_level", lookup_expr='gte')
+    integrity_level__lte = filters.NumberFilter(field_name="integrity_level", lookup_expr='lte')
+    level = MultiNumberFilter(
+        fields=['identity_level', 'content_level', 'integrity_level'])
+    level__lte = MultiNumberFilter(
+        fields=['identity_level', 'content_level', 'integrity_level'],
+        lookup_expr='lte')
+    level__gte = MultiNumberFilter(
+        fields=['identity_level', 'content_level', 'integrity_level'],
+        lookup_expr='gte')
+
+    class Meta:
+        model = ReportActivity
+        fields = [
+            'learner__first_name', 'learner__last_name', 'learner__email',
+            'identity_level', 'content_level', 'integrity_level',
+        ]
+
+
 # pylint: disable=too-many-ancestors
 class InstitutionCourseActivityReportViewSet(NestedViewSetMixin, DetailSerializerMixin, viewsets.ReadOnlyModelViewSet):
     """
@@ -44,8 +87,9 @@ class InstitutionCourseActivityReportViewSet(NestedViewSetMixin, DetailSerialize
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     search_fields = ['learner__first_name', 'learner__last_name', 'learner__email',
                      'identity_level', 'content_level', 'integrity_level']
-    filterset_fields = ['learner__first_name', 'learner__last_name', 'learner__email',
-                        'identity_level', 'content_level', 'integrity_level']
+    #filterset_fields = ['learner__first_name', 'learner__last_name', 'learner__email',
+    #                    'identity_level', 'content_level', 'integrity_level']
+    filterset_class = ReportFilter
     permission_classes = [
         permissions.GlobalAdminReadOnlyPermission |
         permissions.InstitutionAdminReadOnlyPermission |
