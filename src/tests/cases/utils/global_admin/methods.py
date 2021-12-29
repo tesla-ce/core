@@ -44,6 +44,7 @@ def api_register_providers(global_admin):
     fr_inst = None
     ks_inst = None
     plag_inst = None
+    vr_inst = None
 
     # Remove any existing provider
     for instrument in instruments:
@@ -53,6 +54,8 @@ def api_register_providers(global_admin):
             ks_inst = instrument['id']
         if instrument['acronym'] == 'plag':
             plag_inst = instrument['id']
+        if instrument['acronym'] == 'vr':
+            vr_inst = instrument['id']
         stop = False
         while not stop:
             list_inst_providers_resp = client.get('/api/v2/admin/instrument/{}/provider/'.format(instrument['id']))
@@ -131,6 +134,18 @@ def api_register_providers(global_admin):
     providers['plag_def'] = pt2_prov_register_resp.data
     providers['plag_def']['deferred'] = True
 
+    # Register a Voice Recognition provider
+    vr_desc = json.load(open(get_provider_desc_file('vr_tvr'), 'r'))
+    vr_desc['enabled'] = True
+    if 'instrument' in vr_desc:
+        del vr_desc['instrument']
+    vr_prov_register_resp = client.post('/api/v2/admin/instrument/{}/provider/'.format(vr_inst),
+                                        data=vr_desc,
+                                        format='json')
+    assert vr_prov_register_resp.status_code == 201
+    providers['vr'] = vr_prov_register_resp.data
+    providers['vr']['deferred'] = False
+
     # Enable the instruments
     fr_inst_enable_resp = client.patch('/api/v2/admin/instrument/{}/'.format(fr_inst),
                                        data={'enabled': True},
@@ -144,6 +159,10 @@ def api_register_providers(global_admin):
                                        data={'enabled': True},
                                        format='json')
     assert pt_inst_enable_resp.status_code == 200
+    vr_inst_enable_resp = client.patch('/api/v2/admin/instrument/{}/'.format(vr_inst),
+                                       data={'enabled': True},
+                                       format='json')
+    assert vr_inst_enable_resp.status_code == 200
 
     return providers
 
