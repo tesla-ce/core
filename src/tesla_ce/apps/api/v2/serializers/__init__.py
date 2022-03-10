@@ -44,6 +44,7 @@ from .institution import InstitutionCourseLearnerSerializer
 from .institution import InstitutionCourseInstructorSerializer
 from .institution import InstitutionUIOptionSerializer
 from .institution import InstitutionUserSerializer
+from .institution import InstitutionUserProfileSerializer
 from .institution import InstitutionVLESerializer
 from .provider import ProviderEnrolmentSampleSerializer
 from .provider import ProviderEnrolmentSampleValidationSerializer
@@ -120,6 +121,7 @@ __all__ = [
     "InstitutionVLESerializer",
     "InstitutionUIOptionSerializer",
     "InstitutionUserSerializer",
+    "InstitutionUserProfileSerializer",
     # Provider nested serializers
     "ProviderEnrolmentSerializer",
     "ProviderEnrolmentSampleSerializer",

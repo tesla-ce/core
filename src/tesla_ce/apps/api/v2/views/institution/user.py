@@ -26,9 +26,11 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce import get_default_client
 from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionUserSerializer
 from tesla_ce.apps.api.v2.serializers import InstitutionUserActivityExtendedSerializer
+from tesla_ce.apps.api.v2.serializers import InstitutionUserProfileSerializer
 from tesla_ce.models import InstitutionUser
 from tesla_ce.models import Activity
 from tesla_ce.models.user import get_institution_user
@@ -147,4 +149,32 @@ class InstitutionUserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
         data = self.serializer_class(qs, many=True, context={'request': self.request}).data
         return Response(self.get_paginated_response(data))
+
+    @action(detail=True, methods=['POST'],
+            serializer_class=InstitutionUserProfileSerializer,
+            permission_classes=[permissions.InstitutionMemberPermission]
+            )
+    def profile(self, request, *args, **kwargs):
+        """
+            Manage user profile
+        """
+        # Ensure permissions
+        inst_user = get_institution_user(self.request.user)
+        if int(kwargs['pk']) != inst_user.id:
+            raise PermissionDenied('You can only modify your own profile')
+
+        # Ensure modification rights
+        data = InstitutionUserProfileSerializer(data=request.data, many=False, context={'request': self.request})
+        if data.is_valid():
+            if data.validated_data['locale'] is not None:
+                inst_user.locale = data.validated_data['locale']
+                inst_user.save()
+            if data.validated_data['password'] is not None:
+                if not inst_user.login_allowed:
+                    raise PermissionDenied('This user is not allowed to use password authentication')
+                get_default_client().change_user_password(inst_user.email, data.validated_data['password'])
+
+            return Response(InstitutionUserSerializer(inst_user, many=False, context={'request': self.request}).data)
+
+        return Response(data.errors, status=400)
 

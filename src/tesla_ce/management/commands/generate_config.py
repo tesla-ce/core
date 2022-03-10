@@ -46,6 +46,10 @@ class Command(TeslaConfigCommand):
             help='Create the configuration file in current directory',
         )
         parser.add_argument(
+            '--out-dir',
+            help='Set the output directory for the configuration',
+        )
+        parser.add_argument(
             '--with-services',
             action='store_true',
             help='Include external services data',
@@ -76,6 +80,10 @@ class Command(TeslaConfigCommand):
         """
         # Get the file to be checked
         # config_file = self.get_configuration_file()
+
+        # Override output directory
+        if self._options.get('out_dir') is not None:
+            self._conf_file = os.path.join(self._options.get('out_dir'), 'tesla-ce.cfg')
 
         # Avoid unintentionally override
         if self.conf_file is not None and not self._options['override'] and os.path.exists(self.conf_file):

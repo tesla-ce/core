@@ -38,6 +38,7 @@ from .send_category import InstitutionSENDCategorySerializer
 from .send_learner import InstitutionSENDLearnerSerializer
 from .ui_option import InstitutionUIOptionSerializer
 from .user import InstitutionUserSerializer
+from .user import InstitutionUserProfileSerializer
 from .vle import InstitutionVLESerializer
 
 __all__ = [
@@ -68,4 +69,5 @@ __all__ = [
     "InstitutionVLESerializer",
     "InstitutionUIOptionSerializer",
     "InstitutionUserSerializer",
+    "InstitutionUserProfileSerializer",
 ]

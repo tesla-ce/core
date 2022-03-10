@@ -107,3 +107,27 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
 
         return updated_user
 
+
+class InstitutionUserProfileSerializer(serializers.ModelSerializer):
+    """Institution User profile serialize model module."""
+
+    password = serializers.CharField(write_only=True, default=None, allow_null=True)
+    password2 = serializers.CharField(write_only=True, default=None, allow_null=True)
+
+    class Meta:
+        model = InstitutionUser
+        fields = ["locale", "password", "password2"]
+
+    def validate(self, attrs):
+        """
+            Validate the given attributes
+            :param attrs: Attributes parsed from request
+            :type attrs: dict
+            :return: Validated attributes
+            :rtype: dict
+        """
+        # Check passwords
+        if 'password' in attrs and attrs.get('password') != attrs.get('password2'):
+            raise serializers.ValidationError('Passwords does not match')
+        if 'password2' in attrs:
+            del attrs['password2']
