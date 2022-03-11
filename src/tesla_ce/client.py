@@ -1146,8 +1146,8 @@ class Client():
 
         expiration = timezone.now() + timezone.timedelta(minutes=ttl)
 
-        launcher =  models.Launcher.objects.create(user=user, token=uuid.uuid4(), session=session, target_url=target_url,
-                                                   token_pair=token_pair, expires_at=expiration)
+        launcher = models.Launcher.objects.create(user=user, token=uuid.uuid4(), session=session, target_url=target_url,
+                                                  token_pair=token_pair, expires_at=expiration)
 
         return {
             'id': launcher.id,
