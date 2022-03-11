@@ -13,8 +13,8 @@ with open("requirements.txt", "r") as fh:
         if not req.strip().startswith('#') and len(req.strip()) > 0 and not req.strip().startswith(
                 'mysqlclient') and not req.strip().startswith('psycopg2'):
             # FIX error with native package name
-            if req.startswith('zope-interface'):
-                req = req.replace('zope-interface', 'zope.interface')
+            if req.startswith('zope-'):
+                req = req.replace('zope-', 'zope.')
             requirements.append(req)
 
 with open(os.path.join("src", "tesla_ce", "lib", "data", "VERSION"), "r") as fh:
