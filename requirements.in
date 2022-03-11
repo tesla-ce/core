@@ -27,9 +27,9 @@ psycopg2
 
 # Celery
 celery==5.2.2
-django-celery-beat
+django-celery-beat==2.2.0
 django-celery-results==2.2.0
-# gevent
+gevent==21.1.2
 # flower
 # django_celery_monitor
 rabbitmq-admin
