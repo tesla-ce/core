@@ -317,6 +317,10 @@ class Client():
             # Generate Moodle administrator password
             config.set('MOODLE_ADMIN_PASSWORD', uuid.uuid4().__str__())
 
+        # Check that output folder exists
+        if not os.path.exists(os.path.dirname(output_file)):
+            os.makedirs(os.path.dirname(output_file))
+
         # Write the configuration file to disk
         with open(output_file, 'w') as out_fh:
             config.write(out_fh)

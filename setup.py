@@ -12,6 +12,11 @@ with open("requirements.txt", "r") as fh:
         # Skip comments and optional requirements
         if not req.strip().startswith('#') and len(req.strip()) > 0 and not req.strip().startswith(
                 'mysqlclient') and not req.strip().startswith('psycopg2'):
+            # FIX error with native package names
+            if req.startswith('zope-'):
+                req = req.replace('zope-', 'zope.')
+            if req.startswith('ruamel-'):
+                req = req.replace('-', '.')
             requirements.append(req)
 
 with open(os.path.join("src", "tesla_ce", "lib", "data", "VERSION"), "r") as fh:
@@ -37,7 +42,7 @@ setuptools.setup(
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     include_package_data=True,
     install_requires=requirements,
     extras_require={

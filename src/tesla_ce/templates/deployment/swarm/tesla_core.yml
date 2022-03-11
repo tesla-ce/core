@@ -4,7 +4,7 @@ services:
   {{ service.module }}:
     image: {{ DEPLOYMENT_IMAGE }}:{{ DEPLOYMENT_VERSION }}
   {% if service.deployment.type == "worker" %}
-    command: /venv/bin/celery -A tesla_ce worker -E -l info -P gevent
+    command: /venv/bin/celery -A tesla_ce worker -E -l info # -P gevent
   {% endif %}
   {% if service.deployment.type == "beat" %}
     command: /venv/bin/celery -A tesla_ce beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
