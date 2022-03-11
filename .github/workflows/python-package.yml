@@ -79,6 +79,8 @@ jobs:
         env: 
           MINIO_ACCESS_KEY: minioadmin
           MINIO_SECRET_KEY: minioadmin
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
       rabbitmq:
         image: rabbitmq:3-management
         ports:
