@@ -20,7 +20,7 @@ with open("requirements.txt", "r") as fh:
             requirements.append(req)
 
 with open(os.path.join("src", "tesla_ce", "lib", "data", "VERSION"), "r") as fh:
-    version = fh.read()
+    version = fh.read().strip()
             
 setuptools.setup(
     version=version,

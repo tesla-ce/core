@@ -33,7 +33,7 @@ class Launcher(BaseModel):
                              on_delete=models.CASCADE,
                              help_text=_("Related user"))
 
-    session = models.ForeignKey(AssessmentSession, null=True, default=None,
+    session = models.ForeignKey(AssessmentSession, null=True, blank=True, default=None,
                                 on_delete=models.SET_NULL,
                                 help_text=_("Related assessment session"))
 
