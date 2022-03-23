@@ -88,6 +88,20 @@ class BaseDeployment:
         pass
 
     @abc.abstractmethod
+    def get_provider_scripts(self, provider, credentials=None):
+        """
+            Generate Provider deployment scripts for provided class
+
+            :param provider: The Provider instance
+            :type provider: tesla_ce.models.Provided
+            :param credentials: List of credentials required by this provider
+            :type credentials: list
+            :return: All required scripts and files for the deployment of required services
+            :rtype: dict
+        """
+        pass
+
+    @abc.abstractmethod
     def get_status(self):
         """
             Get the deployment status
@@ -165,9 +179,14 @@ class SwarmDeployment(BaseDeployment):
                                                                               context))
 
         # Add Services script
-        if self._config.get('DEPLOYMENT_SERVICES'):
-            files['tesla_services.yml'] = self._remove_empty_lines(
-                render_to_string('deployment/swarm/tesla_services.yml', context))
+        # if self._config.get('DEPLOYMENT_SERVICES'):
+        #    files['tesla_services.yml'] = self._remove_empty_lines(
+        #        render_to_string('deployment/swarm/tesla_services.yml', context))
+
+        # Add Front-end script
+        files['tesla_dashboards.yml'] = self._remove_empty_lines(
+            render_to_string('deployment/swarm/tesla_frontend.yml', context))
+
         return files
 
     def get_vle_scripts(self, vle):
@@ -201,6 +220,62 @@ class SwarmDeployment(BaseDeployment):
             'secrets/MOODLE_ROLE_ID': vle_info['role_id'],
             'secrets/MOODLE_SECRET_ID': vle_info['secret_id'],
         }
+
+        return files
+
+    def get_provider_scripts(self, provider, credentials=None):
+        """
+            Generate Provider deployment scripts for provided class
+
+            :param provider: The Provider instance
+            :type provider: tesla_ce.models.Provided
+            :param credentials: List of credentials required by this provider
+            :type credentials: list
+            :return: All required scripts and files for the deployment of required services
+            :rtype: dict
+        """
+        # Generate the context
+        context = self._config.get_config_kv()
+
+        # Add provider base info
+        context['provider'] = {
+            'acronym': provider.acronym,
+            'image': provider.image
+        }
+
+        # Add credentials
+        if credentials is None:
+            credentials = []
+        # Add credentials
+        context['credentials'] = []
+        credential_values = {}
+        for credential in credentials:
+            cred_name = None
+            cred_value = ""
+            if isinstance(credential, dict):
+                cred_name = credential['name']
+                cred_value = credential['value']
+            elif isinstance(credential, str):
+                cred_name = credential
+            # Store credentials
+            if cred_name is not None:
+                context['credentials'].append(cred_name)
+                credential_values[cred_name] = cred_value
+
+        # Get provider data
+        provider_info = self._client.vault.register_provider(provider)
+
+        # Generate provider scripts
+        files = {
+            'tesla_{}_provider.yml'.format(provider.acronym): self._remove_empty_lines(
+                render_to_string('deployment/swarm/tesla_provider.yml', context)
+            ),
+            'secrets/{}_ROLE_ID'.format(provider.acronym.upper()): provider_info['role_id'],
+            'secrets/{}_SECRET_ID'.format(provider.acronym.upper()): provider_info['secret_id'],
+        }
+        # Add credentials file
+        for name in credential_values:
+            files['secrets/{}_{}'.format(provider.acronym.upper(), name.upper())] = credential_values[name]
 
         return files
 

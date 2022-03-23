@@ -19,6 +19,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import InstitutionCourseActivitySerializer
 from tesla_ce.models import Activity
 
@@ -31,7 +32,16 @@ class InstitutionCourseActivityViewSet(NestedViewSetMixin, viewsets.ModelViewSet
     model = Activity
     serializer_class = InstitutionCourseActivitySerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    queryset = Activity.objects
+    permission_classes = [
+        permissions.GlobalAdminReadOnlyPermission |
+        permissions.InstitutionAdminPermission |
+        permissions.InstitutionCourseInstructorPermission |
+        permissions.InstitutionCourseLearnerReadOnlyPermission
+    ]
     # filterset_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']
     # search_fields = ['vle_id', 'vle_activity_type', 'vle_activity_id', 'course_id', 'name']
 
+    def get_queryset(self):
+        queryset = self.filter_queryset_by_parents_lookups(Activity.objects)
+
+        return queryset

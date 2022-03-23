@@ -27,7 +27,7 @@ BASE_TESLA_CONF_FILE = 'tesla-ce.cfg'
 class Command(TeslaConfigCommand):
     """ Command to generate configuration file from template """
     help = 'Generates a configuration file to be used on the initial setup of the TeSLA CE system'
-    requires_system_checks = False
+    requires_system_checks = []
 
     def add_arguments(self, parser):
         """
@@ -46,9 +46,18 @@ class Command(TeslaConfigCommand):
             help='Create the configuration file in current directory',
         )
         parser.add_argument(
+            '--out-dir',
+            help='Set the output directory for the configuration',
+        )
+        parser.add_argument(
             '--with-services',
             action='store_true',
             help='Include external services data',
+        )
+        parser.add_argument(
+            '--with-moodle',
+            action='store_true',
+            help='Include Moodle deployment',
         )
         parser.add_argument(
             'domain',
@@ -65,38 +74,21 @@ class Command(TeslaConfigCommand):
         """
         return Client
 
-    def get_configuration_file(self):
-        """
-            Obtain the configuration file to be used
-            :return:
-        """
-        config_file = super().get_configuration_file()
-
-        # If there is no configuration file, try to create one on system folder
-        if config_file is None:
-            try:
-                if not os.path.exists(BASE_TESLA_CONF_PATH):
-                    os.makedirs(BASE_TESLA_CONF_PATH)
-                with open('{}/{}'.format(BASE_TESLA_CONF_PATH, BASE_TESLA_CONF_FILE), 'w'):
-                    config_file = '{}/{}'.format(BASE_TESLA_CONF_PATH, BASE_TESLA_CONF_FILE)
-                os.remove(config_file)
-            except PermissionError:
-                # Create the file in the current folder
-                config_file = BASE_TESLA_CONF_FILE
-
-        return config_file
-
     def check_configuration_file(self):
         """
             Check if the defined configuration file exists
         """
         # Get the file to be checked
-        config_file = self.get_configuration_file()
+        # config_file = self.get_configuration_file()
+
+        # Override output directory
+        if self._options.get('out_dir') is not None:
+            self._conf_file = os.path.join(self._options.get('out_dir'), 'tesla-ce.cfg')
 
         # Avoid unintentionally override
-        if config_file is not None and not self._options['override'] and os.path.exists(config_file):
+        if self.conf_file is not None and not self._options['override'] and os.path.exists(self.conf_file):
             self.stdout.write(
-                self.style.ERROR('File {} already exists. Use --override option.'.format(config_file))
+                self.style.ERROR('File {} already exists. Use --override option.'.format(self.conf_file))
             )
             raise CommandError('Configuration file already exists')
 
@@ -107,9 +99,10 @@ class Command(TeslaConfigCommand):
         # Generate configuration file
         domain = self._options['domain']
         deploy_external_services = self._options['with_services']
-        self.client.generate_configuration(self._conf_file, domain, deploy_external_services)
+        deploy_moodle = self._options['with_moodle']
+        self.client.generate_configuration(self.conf_file, domain, deploy_external_services, deploy_moodle)
 
         # Change permissions to the file
-        os.chmod(self._conf_file, 0o600)
+        os.chmod(self.conf_file, 0o600)
 
         self.stdout.write(self.style.SUCCESS('Configuration file created at {}'.format(self._conf_file)))

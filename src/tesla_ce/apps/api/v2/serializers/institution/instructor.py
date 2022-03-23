@@ -16,6 +16,7 @@
 from rest_framework import serializers
 from rest_framework import validators
 
+from tesla_ce.models import Institution
 from tesla_ce.models import InstitutionUser
 from tesla_ce.models import Instructor
 from tesla_ce.models import User
@@ -62,3 +63,33 @@ class InstitutionInstructorSerializer(serializers.ModelSerializer):
         for validator in self.get_validators():
             validator(attrs, self)
         return super().validate(attrs)
+
+    def validate_email(self, value):
+        """
+            Validate the given email
+            :param value: Email for the instructor
+            :type value: str
+            :return: Validated value
+            :rtype: str
+        """
+        try:
+            institution = Institution.objects.get(id=self.context['view'].kwargs['parent_lookup_institution_id'])
+        except Institution.DoesNotExist:
+            raise serializers.ValidationError('Invalid institution')
+        if institution.mail_domain is not None and len(institution.mail_domain) > 0 \
+                and not value.endswith(institution.mail_domain):
+            raise serializers.ValidationError('Provided email does not belong to institution domain')
+        return value
+
+    def create(self, validated_data):
+        """
+            Create a new instance from provided data
+
+            :param validated_data: Validated data from request
+            :return: Created instance
+            :rtype: Instructor
+        """
+        instance = super().create(validated_data)
+        instance.set_unusable_password()
+        instance.save()
+        return instance

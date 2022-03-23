@@ -15,6 +15,8 @@
 """RequestResult api serialize module."""
 import simplejson
 from django.core.files.base import ContentFile
+from django.db.models import Q
+
 from rest_framework import serializers
 
 from tesla_ce import tasks
@@ -52,9 +54,10 @@ class ProviderVerificationRequestResultSerializer(serializers.ModelSerializer):
                                 ContentFile(simplejson.dumps(new_instance.audit_data).encode('utf-8')))
 
         # If all the providers reported their results, launch summarise task
-        if RequestProviderResult.objects.filter(request_id=new_instance.request_id,
-                                                provider__instrument=new_instance.provider.instrument,
-                                                status=0).count() == 0:
+        if RequestProviderResult.objects.filter(Q(status=0) | Q(status=7),
+                                                request_id=new_instance.request_id,
+                                                provider__instrument=new_instance.provider.instrument
+                                                ).count() == 0:
             tasks.requests.verification.create_verification_summary.apply_async((
                     instance.request.id,
                     new_instance.provider.instrument_id,

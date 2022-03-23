@@ -19,6 +19,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import VLECourseInstructorSerializer
 from tesla_ce.models import Course
 from tesla_ce.models import Instructor
@@ -31,6 +32,9 @@ class VLECourseInstructorViewSet(viewsets.ModelViewSet, NestedViewSetMixin):
     """
     model = Instructor
     serializer_class = VLECourseInstructorSerializer
+    permission_classes = [
+        permissions.VLEPermission
+    ]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['uid', 'email', 'first_name', 'last_name']
     search_fields = ['uid', 'email', 'first_name', 'last_name']

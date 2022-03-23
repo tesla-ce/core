@@ -34,7 +34,7 @@ class ProviderEnrolmentSerializer(serializers.ModelSerializer):
     percentage = serializers.FloatField(required=False, allow_null=None, default=0)
     can_analyse = serializers.BooleanField(required=False, allow_null=None, default=False)
     model_total_samples = serializers.IntegerField(read_only=True)
-    used_samples = serializers.ListField(write_only=True, required=False, default=[],
+    used_samples = serializers.ListField(write_only=True, allow_null=True, allow_empty=True, required=False, default=[],
                                          child=serializers.IntegerField())
 
     class Meta:
@@ -103,7 +103,7 @@ class ProviderEnrolmentSerializer(serializers.ModelSerializer):
                 )
                 model.model.save(get_upload_path(model, None),  ContentFile('{}'.encode('utf-8')))
             # Check if model is locked
-            if model.is_locked and model.locked_by != attrs['task_id']:
+            if model.is_locked and str(model.locked_by) != str(attrs['task_id']):
                 # If model lock have more than 5 hours, release previous lock
                 time_threshold = timezone.now() - timezone.timedelta(hours=5)
                 if model.locked_at >= time_threshold:

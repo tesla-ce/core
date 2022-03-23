@@ -213,3 +213,5 @@ celerybeat.pid
 requirements.txt
 /dependency-check-report.html
 /licenses.md
+/tesla-ce.bak.cfg
+/deploy/

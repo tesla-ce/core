@@ -1,0 +1,28 @@
+version: '3.5'
+services:
+  dashboards:
+    image: teslace/frontend-angular:{{ DEPLOYMENT_VERSION }}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      {% if DEPLOYMENT_LB == "traefik" %}
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.dashboard.rule=Host(`{{ TESLA_DOMAIN }}`) && PathPrefix(`/ui/`)"
+        - "traefik.http.routers.dashboard.entrypoints=https"
+        - "traefik.http.routers.dashboard.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.dashboard-service.loadbalancer.server.port=80"
+        - "traefik.http.routers.dashboard.service=dashboard-service"
+      {% endif %}
+    environment:
+      API_URL: https://{{ TESLA_DOMAIN }}/api/v2
+    networks:
+      - tesla_private
+      - tesla_public
+
+networks:
+  tesla_public:
+    external: true
+  tesla_private:
+    external: true

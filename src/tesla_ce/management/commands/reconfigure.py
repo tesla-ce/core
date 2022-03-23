@@ -22,7 +22,7 @@ from ..base import TeslaConfigCommand
 class Command(TeslaConfigCommand):
     """ Reconfiguration command """
     help = 'Reconfigure TeSLA CE system'
-    requires_system_checks = False
+    requires_system_checks = []
 
     def add_arguments(self, parser):
         """

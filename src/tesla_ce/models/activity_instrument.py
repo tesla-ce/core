@@ -22,6 +22,13 @@ from .activity import Activity
 from .base_model import BaseModel
 from .instrument import Instrument
 
+SENSOR = (
+    ('camera', _('Capture images from webcam')),
+    ('keyboard', _('Capture keyboard events')),
+    ('microphone', _('Capture audio')),
+    ('activity', _('Submission of the delivered activity')),
+)
+
 
 class ActivityInstrument(BaseModel):
     """ ActivityInstrument model. """
@@ -37,9 +44,6 @@ class ActivityInstrument(BaseModel):
     alternative_to = models.ForeignKey("ActivityInstrument", null=True, blank=False,
                                        on_delete=models.CASCADE,
                                        help_text=_('Primary instrument to be used.'))
-
-    required = models.BooleanField(null=False, blank=False,
-                                   help_text="Is instrument required?")
 
     active = models.BooleanField(null=False, blank=False,
                                  help_text="Is instrument active?")
@@ -75,9 +79,9 @@ class ActivityInstrument(BaseModel):
 
     def __repr__(self):
         return "<ActivityInstrument(activity_id='%r', instrument_id='%r', " \
-               "is_primary='%r', required='%r', active='%r')>" % (
+               "is_primary='%r', active='%r')>" % (
                    self.activity.id, self.instrument,
-                   self.is_primary, self.required, self.active)
+                   self.is_primary, self.active)
 
     def get_options(self):
         """
@@ -90,3 +94,36 @@ class ActivityInstrument(BaseModel):
             return json_field.to_representation(self.options)
 
         return None
+
+    def get_sensors(self):
+        """
+            Return the list of required sensors for this instrument
+            :return: List of sensors
+        """
+        # If this instrument is disabled, no sensor is required
+        if not self.active:
+            return []
+
+        # Get configuration options for this activity
+        options = self.get_options()
+
+        # Get sensors according to options
+        sensors = []
+        if self.instrument.acronym == 'fr':
+            if 'online' in options and options['online']:
+                sensors.append('camera')
+            if 'offline' in options and options['offline']:
+                sensors.append('activity')
+        elif self.instrument.acronym == 'ks':
+            sensors.append('keyboard')
+        elif self.instrument.acronym == 'vr':
+            if 'online' in options and options['online']:
+                sensors.append('microphone')
+            if 'offline' in options and options['offline']:
+                sensors.append('activity')
+        elif self.instrument.acronym == 'fa':
+            sensors.append('activity')
+        elif self.instrument.acronym == 'plag':
+            sensors.append('activity')
+
+        return sensors

@@ -28,22 +28,26 @@ from tesla_ce.models import User
 
 
 def institution_values():
+    """ Get available institutions for filter """
     institutions = Institution.objects.all()
     return ((inst.id, inst.acronym) for inst in institutions)
 
 
 def roles_values():
+    """ Get available roles for filter """
     return (
         ('GLOBAL_ADMIN', 'GLOBAL_ADMIN'),
         ('ADMIN', 'ADMIN'),
         ('SEND', 'SEND'),
         ('LEGAL', 'LEGAL'),
+        ('DATA', 'DATA'),
         # ('INSTRUCTOR', 'INSTRUCTOR'),
         # ('LEARNER', 'LEARNER'),
     )
 
 
 class UserFilter(filters_dj.FilterSet):
+    """ Filter implementation for Users """
     institution = filters_dj.ChoiceFilter(field_name="institution",
                                           label="institution",
                                           choices=institution_values,
@@ -63,11 +67,8 @@ class UserFilter(filters_dj.FilterSet):
 
     def filter_institution(self, queryset, name, value):
 
-        # In case value is not a valid integer, ignore the filter
-        try:
-            value = int(value)
-        except ValueError:
-            return queryset
+        # Get the value
+        value = int(value)
 
         # Request users with no institution assigned
         if value < 0:
@@ -92,6 +93,8 @@ class UserFilter(filters_dj.FilterSet):
             filter_q = filter_q | Q(institutionuser__send_admin=True)
         if 'LEGAL' in value:
             filter_q = filter_q | Q(institutionuser__legal_admin=True)
+        if 'DATA' in value:
+            filter_q = filter_q | Q(institutionuser__data_admin=True)
         return queryset.filter(filter_q)
 
     class Meta:

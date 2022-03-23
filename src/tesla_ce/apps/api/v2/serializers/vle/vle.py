@@ -15,13 +15,26 @@
 """VLE api serialize module."""
 from rest_framework import serializers
 
-from tesla_ce.models import VLE
+from tesla_ce.models import VLE, Institution
+
+
+class VLEInstitutionSerializer(serializers.ModelSerializer):
+    """Institution serialize model module."""
+
+    id = serializers.IntegerField(read_only=True)
+    acronym = serializers.CharField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Institution
+        fields = "__all__"
 
 
 class VLESerializer(serializers.ModelSerializer):
     """VLE serialize model module."""
     type = serializers.CharField(source='get_type_display')
+    institution = VLEInstitutionSerializer(many=False)
 
     class Meta:
         model = VLE
-        exclude = ["lti", "created_at", "updated_at", "institution"]
+        exclude = ["lti", "created_at", "updated_at"]

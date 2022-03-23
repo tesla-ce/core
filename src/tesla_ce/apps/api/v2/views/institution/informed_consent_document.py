@@ -44,3 +44,8 @@ class InstitutionInformedConsentDocumentViewSet(viewsets.ModelViewSet, NestedVie
                 consent_id=self.kwargs['parent_lookup_informed_consent_id']
             )
         return queryset.all().order_by('id')
+
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+

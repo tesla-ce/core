@@ -14,14 +14,12 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Django URLs definition """
 from django.conf import settings
-from django.conf.urls import url
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.templatetags.static import static
 from django.urls import include
 from django.urls import path
 from django.urls import re_path
-from django.views.generic.base import TemplateView
 
 from tesla_ce import get_default_client
 
@@ -57,12 +55,6 @@ if 'api' in settings.TESLA_MODULES:
     urlpatterns += [
         path('api/', include('tesla_ce.apps.api.urls')),
         path('api/webhooks/', include('tesla_ce.apps.webhooks.urls')),
-    ]
-
-if 'dashboards' in settings.TESLA_MODULES:
-    urlpatterns += [
-        path('dashboards/', include('tesla_ce.apps.dashboards.urls')),
-        url(r'^ui$', TemplateView.as_view(template_name="dashboards/index.html"), name="dashboards-home"),
     ]
 
 if 'lapi' in settings.TESLA_MODULES:

@@ -100,7 +100,7 @@ institution_course_group_course_router = institution_course_group_router.registe
     r'course',
     views.InstitutionCourseGroupCourseViewSet,
     basename='institution-group-course',
-    parents_query_lookups=['institution_id', 'group_id']
+    parents_query_lookups=['institution_id', 'id']
 )
 # Institution => SEND router
 institution_send_router = institution_router.register(r'send',
@@ -130,12 +130,35 @@ institution_instrument_router = institution_router.register(r'instrument',
                                                             parents_query_lookups=['institution_id']
                                                             )
 
+# User Interface router
+institution_ui_router = institution_router.register(r'ui',
+                                                    views.InstitutionUIOptionViewSet,
+                                                    basename='institution-ui',
+                                                    parents_query_lookups=['institution_id']
+                                                    )
+
 # Course router
 institution_course_router = institution_router.register(r'course',
                                                         views.InstitutionCourseViewSet,
                                                         basename='institution-course',
                                                         parents_query_lookups=['vle__institution_id']
                                                         )
+
+institution_course_learner_router = institution_course_router.register(r'learner',
+                                                                       views.InstitutionCourseLearnerViewSet,
+                                                                       basename='institution-course-learner',
+                                                                       parents_query_lookups=[
+                                                                           'vle__institution_id',
+                                                                           'id'
+                                                                       ])
+
+institution_course_instructor_router = institution_course_router.register(r'instructor',
+                                                                          views.InstitutionCourseInstructorViewSet,
+                                                                          basename='institution-course-instructor',
+                                                                          parents_query_lookups=[
+                                                                              'vle__institution_id',
+                                                                              'id'
+                                                                          ])
 
 institution_course_activity_router = institution_course_router.register(r'activity',
                                                                         views.InstitutionCourseActivityViewSet,
@@ -162,6 +185,26 @@ institution_course_activity_report_router = institution_course_activity_router.r
                            'activity_id']
 )
 
+institution_course_activity_report_audit_router = institution_course_activity_report_router.register(
+    r'audit',
+    views.InstitutionCourseActivityReportAuditViewSet,
+    basename='institution-course-activity-report-audit',
+    parents_query_lookups=['report__activity__vle__institution_id',
+                           'report__activity__course_id',
+                           'report__activity_id',
+                           'report_id']
+)
+
+institution_course_activity_report_requests_router = institution_course_activity_report_router.register(
+    r'request',
+    views.InstitutionCourseActivityReportRequestViewSet,
+    basename='institution-course-activity-report-request',
+    parents_query_lookups=['activity__vle__institution_id',
+                           'activity__course_id',
+                           'activity_id',
+                           'id']
+)
+
 # VLE router
 institution_vle = institution_router.register(r'vle',
                                               views.InstitutionVLEViewSet,
@@ -180,7 +223,7 @@ institution_user = institution_router.register(r'user',
 institution_learner_send_router = institution_learner_router.register(r'send',
                                                                       views.InstitutionSENDLearnerViewSet,
                                                                       basename='institution-learner-send',
-                                                                      parents_query_lookups=['institution_id',
+                                                                      parents_query_lookups=['learner__institution_id',
                                                                                              'learner_id']
                                                                       )
 
@@ -200,6 +243,10 @@ instrument_provider_router = admin_instrument_router.register(r'provider',
 # Institution router
 admin_institution_router = router.register(r'admin/institution', views.InstitutionAdminViewSet,
                                            basename='admin-institution')
+
+# UI Option router
+admin_ui_router = router.register(r'admin/ui', views.UIOptionViewSet,
+                                  basename='admin-ui')
 
 
 # Providers API

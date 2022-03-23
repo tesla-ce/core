@@ -2,6 +2,7 @@ version: '3.5'
 services:
   database:
     image: mariadb
+    command: --innodb-read-only-compressed=OFF
     deploy:
       restart_policy:
         condition: on-failure
@@ -10,9 +11,15 @@ services:
       - tesla_private
     environment:
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/DB_ROOT_PASSWORD
+      {% if VAULT_BACKEND == "database" %}
       - MYSQL_DATABASE={{ VAULT_DB_NAME }}
       - MYSQL_USER={{ VAULT_DB_USER }}
       - MYSQL_PASSWORD_FILE=/run/secrets/VAULT_DB_PASSWORD
+      {% else %}
+      - MYSQL_DATABASE={{ DB_NAME }}
+      - MYSQL_USER={{ DB_USER }}
+      - MYSQL_PASSWORD_FILE=/run/secrets/DB_PASSWORD
+      {% endif %}
     volumes:
       - db_volume:/var/lib/mysql
     ports:
@@ -40,6 +47,10 @@ services:
     environment:
       SKIP_SETCAP: 1
       VAULT_API_ADDR: "https://vault.{{ TESLA_DOMAIN }}"
+    {% if VAULT_BACKEND == 'file' %}
+    volumes:
+      - vault_volume:/vault_data
+    {% endif %}
     configs:
       - source: vault_config
         target: /local_config.json
@@ -81,12 +92,17 @@ services:
         - "traefik.http.routers.minio.tls.certresolver=tesla-tlschallenge"
         - "traefik.http.services.minio-service.loadbalancer.server.port=9000"
         - "traefik.http.routers.minio.service=minio-service"
+        - "traefik.http.routers.minio-console.rule=Host(`storage-console.{{ TESLA_DOMAIN }}`)"
+        - "traefik.http.routers.minio-console.entrypoints=https"
+        - "traefik.http.routers.minio-console.tls.certresolver=tesla-tlschallenge"
+        - "traefik.http.services.minio-console-service.loadbalancer.server.port=9001"
+        - "traefik.http.routers.minio-console.service=minio-console-service"
       {% endif %}
     environment:
       MINIO_REGION_NAME: {{ STORAGE_REGION }}
-    command: server /data
+    command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:9001/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -100,7 +116,7 @@ services:
       - tesla_private
 
   rabbitmq:
-    image: rabbitmq:management-alpine
+    image: rabbitmq:3.8-management-alpine
     deploy:
       restart_policy:
         condition: on-failure
@@ -150,8 +166,18 @@ volumes:
       type: none
       device: {{ DEPLOYMENT_DATA_PATH }}/rabbitmq
       o: bind
-
+  {% if VAULT_BACKEND == 'file' %}
+  vault_volume:
+    driver_opts:
+      type: none
+      device: {{ DEPLOYMENT_DATA_PATH }}/vault
+      o: bind
+  {% endif %}
 secrets:
+  {% if VAULT_BACKEND == 'database' %}
+  DB_PASSWORD:
+    file: ./secrets/DB_PASSWORD
+  {% endif %}
   DB_ROOT_PASSWORD:
     file: ./secrets/DB_ROOT_PASSWORD
   VAULT_DB_PASSWORD:

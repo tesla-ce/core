@@ -24,6 +24,7 @@ from rest_framework.mixins import UpdateModelMixin
 from rest_framework.views import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import ProviderVerificationRequestResultSerializer
 from tesla_ce.models import RequestProviderResult
 
@@ -34,8 +35,12 @@ class ProviderVerificationRequestResultViewSet(NestedViewSetMixin, UpdateModelMi
     API endpoint that allows activity to be viewed or edited.
     """
     queryset = RequestProviderResult.objects
+    lookup_field = 'request_id'
     serializer_class = ProviderVerificationRequestResultSerializer
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    permission_classes = [
+        permissions.ProviderPermission
+    ]
     '''
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
@@ -59,7 +64,7 @@ class ProviderVerificationRequestResultViewSet(NestedViewSetMixin, UpdateModelMi
 
         request_result = get_object_or_404(self.queryset,
                                            provider_id=kwargs['parent_lookup_provider_id'],
-                                           pk=kwargs['pk'])
+                                           request_id=kwargs['request_id'])
 
         if request_result.status == 1:
             raise ValidationError('Cannot change processed results status.')

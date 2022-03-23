@@ -19,7 +19,7 @@ from ..base import TeslaDeployCommand
 class Command(TeslaDeployCommand):
     """ Command to generate deployment files for services """
     help = 'Generates configuration files to deploy the TeSLA CE required services'
-    requires_system_checks = False
+    requires_system_checks = []
 
     def custom_handle(self):
         """

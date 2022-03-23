@@ -13,6 +13,8 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Deployment Manager Module"""
+import requests
+from simplejson.errors import JSONDecodeError
 from .deployment import BaseDeployment
 
 
@@ -89,3 +91,54 @@ class DeploymentManager:
             instance = BaseDeployment.get_instance(self._client, orchestrator)
             return instance.get_vle_scripts(vle)
         return self._deploy.get_vle_scripts(vle)
+
+    def get_provider_deployment_scripts(self, provider, orchestrator=None, credentials=None):
+        """
+            Get the provider deployment scripts according to the selected orchestrator
+
+            :param provider: The Provider instance
+            :type provider: tesla_ce.models.Provider
+            :param orchestrator: The orchestrator to be used
+            :type orchestrator: str
+            :param credentials: List of credentials required by this provider
+            :type credentials: list
+            :return: Object with all scripts and required files
+            :rtype: dict
+        """
+        # Generate the VLE deployment scripts
+        if orchestrator is not None:
+            instance = BaseDeployment.get_instance(self._client, orchestrator)
+            return instance.get_provider_scripts(provider, credentials)
+        return self._deploy.get_provider_scripts(provider, credentials)
+
+    @staticmethod
+    def get_registered_providers(repository="tesla-ce/core", version="main"):
+        """
+            Get the list of registered providers
+
+            :param repository: The repository in GitHub
+            :type repository: str
+            :param version: The branch on the repository
+            :type version: str
+            :return: List of registered providers
+            :rtype: list
+        """
+        # Read registry of providers on the repository
+        response = requests.get('https://raw.githubusercontent.com/{}/{}/providers/registry.json'.format(repository,
+                                                                                                         version))
+        if response.status_code != 200:
+            return []
+
+        resp_providers = response.json()
+
+        providers = []
+        for provider in resp_providers:
+            provider_info_resp = requests.get(provider['url'])
+            if provider_info_resp.status_code == 200:
+                try:
+                    providers.append(provider_info_resp.json())
+                except JSONDecodeError:
+                    # When fails to parse, do not include in the list
+                    pass
+
+        return providers

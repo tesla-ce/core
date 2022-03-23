@@ -16,13 +16,17 @@
 from .admin import InstitutionAdminSerializer
 from .admin import InstrumentSerializer
 from .admin import ProviderSerializer
+from .admin import UIOptionSerializer
 from .admin import UserSerializer
 from .institution import InstitutionCourseActivityInstrumentSerializer
 from .institution import InstitutionCourseActivityReportDetailSerializer
 from .institution import InstitutionCourseActivityReportExtendedSerializer
 from .institution import InstitutionCourseActivityReportLearnerSerializer
 from .institution import InstitutionCourseActivityReportSerializer
+from .institution import InstitutionCourseActivityReportAuditSerializer
 from .institution import InstitutionCourseActivitySerializer
+from .institution import InstitutionCourseActivityExtendedSerializer
+from .institution import InstitutionUserActivityExtendedSerializer
 from .institution import InstitutionCourseGroupCourseSerializer
 from .institution import InstitutionCourseGroupSerializer
 from .institution import InstitutionCourseSerializer
@@ -35,7 +39,12 @@ from .institution import InstitutionLearnerSerializer
 from .institution import InstitutionSENDCategorySerializer
 from .institution import InstitutionSENDLearnerSerializer
 from .institution import InstitutionSerializer
+from .institution import InstitutionCourseActivityReportRequestSerializer
+from .institution import InstitutionCourseLearnerSerializer
+from .institution import InstitutionCourseInstructorSerializer
+from .institution import InstitutionUIOptionSerializer
 from .institution import InstitutionUserSerializer
+from .institution import InstitutionUserProfileSerializer
 from .institution import InstitutionVLESerializer
 from .provider import ProviderEnrolmentSampleSerializer
 from .provider import ProviderEnrolmentSampleValidationSerializer
@@ -48,6 +57,7 @@ from .vle import VLECourseActivityLearnerSerializer
 from .vle import VLECourseActivityReportExtendedSerializer
 from .vle import VLECourseActivityReportSerializer
 from .vle import VLECourseActivitySerializer
+from .vle import VLECourseActivityAttachmentSerializer
 from .vle import VLECourseInstructorSerializer
 from .vle import VLECourseLearnerSerializer
 from .vle import VLECourseSerializer
@@ -63,6 +73,7 @@ __all__ = [
     "InstitutionAdminSerializer",
     "InstrumentSerializer",
     "ProviderSerializer",
+    "UIOptionSerializer",
     "UserSerializer",
     # VLE nested serializers
     "VLESerializer",
@@ -72,6 +83,7 @@ __all__ = [
     "VLECourseLearnerSerializer",
     "VLECourseActivityLearnerSerializer",
     "VLECourseActivityLearnerRequestSerializer",
+    "VLECourseActivityAttachmentSerializer",
     "VLECourseInstructorSerializer",
     "VLENewAssessmentSessionSerializer",
     "VLENewAssessmentSessionBodySerializer",
@@ -83,7 +95,10 @@ __all__ = [
     # Institution nested serializers
     "InstitutionSerializer",
     "InstitutionCourseActivitySerializer",
+    "InstitutionCourseActivityExtendedSerializer",
+    "InstitutionUserActivityExtendedSerializer",
     "InstitutionCourseActivityReportSerializer",
+    "InstitutionCourseActivityReportAuditSerializer",
     "InstitutionCourseActivityReportDetailSerializer",
     "InstitutionCourseActivityReportExtendedSerializer",
     "InstitutionCourseActivityReportLearnerSerializer",
@@ -92,7 +107,10 @@ __all__ = [
     "InstitutionCourseSerializer",
     "InstitutionCourseGroupSerializer",
     "InstitutionCourseGroupCourseSerializer",
+    "InstitutionCourseLearnerSerializer",
+    "InstitutionCourseInstructorSerializer",
     "InstitutionLearnerSerializer",
+    "InstitutionCourseActivityReportRequestSerializer",
     "InstitutionInstructorSerializer",
     "InstitutionLearnerDetailSerializer",
     "InstitutionLearnerICBodySerializer",
@@ -101,7 +119,9 @@ __all__ = [
     "InstitutionSENDCategorySerializer",
     "InstitutionSENDLearnerSerializer",
     "InstitutionVLESerializer",
+    "InstitutionUIOptionSerializer",
     "InstitutionUserSerializer",
+    "InstitutionUserProfileSerializer",
     # Provider nested serializers
     "ProviderEnrolmentSerializer",
     "ProviderEnrolmentSampleSerializer",

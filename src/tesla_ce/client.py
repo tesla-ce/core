@@ -26,6 +26,7 @@ from django.templatetags.static import static
 from django.utils import timezone
 
 from . import models
+
 from .lib import ConfigManager
 from .lib import DatabaseManager
 from .lib import DeploymentManager
@@ -42,6 +43,8 @@ from .lib.exception import TeslaMissingEnrolmentException
 from .lib.exception import TeslaMissingICException
 from .lib.exception import TeslaVaultException
 
+from .models.user import get_institution_roles, get_institution_user
+
 #: Client instance
 _client = None
 
@@ -54,6 +57,7 @@ def get_version():
     version_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'lib', 'data', 'VERSION'))
     with open(version_file, 'r') as v_file:
         version = v_file.read()
+    version = version.strip()
     return version
 
 
@@ -268,7 +272,7 @@ class Client():
             config.set('DEPLOYMENT_SERVICES', True)
 
             # Generate TeSLA Database configuration
-            config.set('DB_HOST', domain)
+            config.set('DB_HOST', 'database')
             config.set('DB_NAME', 'tesla')
             config.set('DB_USER', 'tesla')
             config.set('DB_ROOT_PASSWORD', uuid.uuid4().__str__())
@@ -282,7 +286,7 @@ class Client():
             config.set('VAULT_DB_PASSWORD', uuid.uuid4().__str__())
 
             # Generate Redis configuration
-            config.set('REDIS_HOST', domain)
+            config.set('REDIS_HOST', 'redis')
             config.set('REDIS_PASSWORD', uuid.uuid4().__str__())
 
             # Generate MinIO configuration
@@ -296,23 +300,26 @@ class Client():
             config.set('RABBITMQ_ADMIN_PASSWORD', uuid.uuid4().__str__())
 
             # Generate Celery configuration
-            config.set('CELERY_BROKER_HOST', domain)
+            config.set('CELERY_BROKER_HOST', 'rabbitmq')
             config.set('CELERY_BROKER_PORT', config.get('RABBITMQ_PORT'))
             config.set('CELERY_BROKER_USER', config.get('RABBITMQ_ADMIN_USER'))
             config.set('CELERY_BROKER_PASSWORD', config.get('RABBITMQ_ADMIN_PASSWORD'))
 
         # If Moodle is included, generate credentials and configuration
-        if deploy_external_services:
+        if deploy_moodle:
             # Enable the moodle flag
             config.set('MOODLE_DEPLOY', True)
 
             # Generate Moodle Database configuration
-            config.set('MOODLE_DB_HOST', domain)
+            config.set('MOODLE_DB_HOST', config.get('DB_HOST'))
             config.set('MOODLE_DB_PASSWORD', uuid.uuid4().__str__())
 
             # Generate Moodle administrator password
             config.set('MOODLE_ADMIN_PASSWORD', uuid.uuid4().__str__())
 
+        # Check that output folder exists
+        if not os.path.exists(os.path.dirname(output_file)):
+            os.makedirs(os.path.dirname(output_file))
 
         # Write the configuration file to disk
         with open(output_file, 'w') as out_fh:
@@ -322,7 +329,6 @@ class Client():
         """
             Check the current configuration
 
-            :param config: Configuration object
             :return: Report of the configuration check
             :rtype: dict
         """
@@ -549,6 +555,28 @@ class Client():
 
         raise TeslaAuthException('Invalid JWT token')
 
+    def change_user_password(self, email, password):
+        """
+            Change user credentials
+
+            :param email: The user email
+            :type email: str
+            :param password: The user password
+            :type password: str
+        """
+        try:
+            user = models.User.objects.get(email=email)
+            if settings.TESLA_PASSWORD_BACKEND == 'DJANGO':
+                user.set_password(password)
+                user.save()
+            if settings.TESLA_PASSWORD_BACKEND == 'VAULT':
+                # TODO: Create Vault instance
+                pass
+        except TeslaVaultException:
+            raise TeslaAuthException('Invalid user credentials')
+        except models.User.DoesNotExist:
+            raise TeslaAuthException('Invalid user credentials')
+
     def verify_user(self, email, password):
         """
             Validate user credentials
@@ -562,8 +590,26 @@ class Client():
             :exception TeslaAuthException: In case the credentials are not valid
         """
         try:
-            user_info = self.vault.verify_user_password(email, password)
-            user = models.User.objects.get(email=user_info['email'])
+            user = models.User.objects.get(email=email)
+            if not user.is_staff:
+                inst_user = get_institution_user(user)
+                if inst_user is None or not inst_user.login_allowed:
+                    raise TeslaAuthException('User is not allowed to login')
+            authenticated = False
+            if settings.TESLA_PASSWORD_BACKEND == 'DJANGO':
+                if user.check_password(password):
+                    authenticated = True
+                else:
+                    raise TeslaAuthException('Invalid user credentials')
+            if settings.TESLA_PASSWORD_BACKEND == 'VAULT':
+                self.vault.verify_user_password(email, password)
+                authenticated = True
+            if settings.TESLA_PASSWORD_BACKEND == 'DUMMY_EMAIL_PASSWORD':
+                if password != email:
+                    raise TeslaAuthException('Invalid user credentials')
+                authenticated = True
+            if not authenticated:
+                raise TeslaAuthException('Invalid password backend')
         except TeslaVaultException:
             raise TeslaAuthException('Invalid user credentials')
         except models.User.DoesNotExist:
@@ -590,6 +636,25 @@ class Client():
                 scopes.append('/api/v2/institution/{}/ic/*'.format(
                     inst_user.institution_id
                 ))
+            if 'LEARNER' in models.user.get_institution_roles(user):
+                learner_id = str(inst_user.learner.learner_id)
+                scopes.append('/lapi/v1/enrolment/{}/{}/'.format(
+                    inst_user.institution_id,
+                    learner_id
+                ))
+                scopes.append('/lapi/v1/status/{}/{}/'.format(
+                    inst_user.institution_id,
+                    learner_id
+                ))
+                scopes.append('/lapi/v1/alert/{}/{}/'.format(
+                    inst_user.institution_id,
+                    learner_id
+                ))
+                scopes.append('/api/v2/institution/{}/learner/{}/*'.format(
+                    inst_user.institution_id, inst_user.id
+                ))
+            if not inst_user.inst_admin and not inst_user.login_allowed:
+                raise TeslaAuthException('Login not allowed for this user.')
             token_pair = self.get_user_token_pair(user=inst_user, scope=scopes, ttl=15, max_ttl=24*60)
         else:
             raise TeslaAuthException('Invalid user. Missing Institution or administration rights.')
@@ -732,7 +797,7 @@ class Client():
                 out_fh.write(files[file])
 
     def create_assessment_session(self, activity, learner, locale=None, max_ttl=120, redirect_reject_url=None,
-                                  reject_message=None):
+                                  reject_message=None, options=None):
         """
             Create a new assessment session for a given activity and learner
 
@@ -748,6 +813,7 @@ class Client():
             :type redirect_reject_url: str
             :param reject_message: Message provided to learner in case ethical warning is rejected
             :type reject_message: str
+            :param options: Options that can be passed to the data object to modify some default properties
             :return: Created session
             :rtype: tesla_ce.models.AssessmentSession
         """
@@ -756,73 +822,31 @@ class Client():
             if learner.consent_accepted is None or learner.consent_rejected is not None:
                 raise TeslaMissingICException()
 
-            if learner.consent.status.startswith('VALID'):
+            if not learner.ic_status.startswith('VALID'):
                 raise TeslaInvalidICException()
 
         # Get the list of instruments and enrolment values
-        instruments = []
         enrolment_obj = {
             'missing_enrolments': False,
             'instruments': {}
         }
         if activity.enabled:
-            instrument_conf = activity.get_learner_instruments(learner)
-            instruments = [inst.instrument.id for inst in instrument_conf]
-
             # Check enrolment status for this learner and activity
-            missing_instruments = [inst.instrument.id for inst in instrument_conf if inst.instrument.requires_enrolment]
-            for enrolment in learner.enrolment_status:
-                if enrolment['instrument_id'] in instruments:
-                    missing_instruments.remove(enrolment['instrument_id'])
-                    enrolment_obj['instruments'][enrolment['instrument_id']] = enrolment
-                    if not enrolment['can_analyse__max']:
-                        enrolment_obj['missing_enrolments'] = True
-            if len(missing_instruments) > 0:
-                enrolment_obj['missing_enrolments'] = True
-                for inst_id in missing_instruments:
-                    enrolment_obj['instruments'][inst_id] = {
-                        "instrument_id": inst_id,
-                        "percentage__min": 0,
-                        "percentage__max": 0,
-                        "can_analyse__min": False,
-                        "can_analyse__max": False,
-                        "pending": [],
-                        "pending_contributions": 0
-                    }
+            enrolment_obj = learner.missing_enrolments(activity.id)
             if enrolment_obj['missing_enrolments']:
                 raise TeslaMissingEnrolmentException(enrolment_obj)
 
         # Set the list of sensors
-        # TODO: Store link between instruments and sensors to models
+        activity_instruments = activity.get_learner_instruments(learner)
         sensors = {}
-        for instrument in instruments:
-            if instrument == 1:
-                # FR
-                # TODO: Check if is online (camera) and/or offline (assessment)
-                if 'camera' not in sensors:
-                    sensors['camera'] = []
-                sensors['camera'].append(1)
-            elif instrument == 2:
-                # KS
-                if 'keyboard' not in sensors:
-                    sensors['keyboard'] = []
-                sensors['keyboard'].append(2)
-            elif instrument == 3:
-                # VR
-                # TODO: Check if is online (microphone) and/or offline (assessment)
-                if 'microphone' not in sensors:
-                    sensors['microphone'] = []
-                sensors['microphone'].append(3)
-            elif instrument == 4:
-                # FA
-                if 'assessment' not in sensors:
-                    sensors['assessment'] = []
-                sensors['assessment'].append(4)
-            elif instrument == 5:
-                # Plagiarism
-                if 'assessment' not in sensors:
-                    sensors['assessment'] = []
-                sensors['assessment'].append(5)
+        instruments = []
+        for instrument in activity_instruments:
+            instruments.append(instrument.instrument_id)
+            inst_sensor = instrument.get_sensors()
+            for sensor in inst_sensor:
+                if sensor not in sensors:
+                    sensors[sensor] = []
+                sensors[sensor].append(instrument.instrument_id)
 
         # Initialize a new Assessment Session
         session = models.AssessmentSession.objects.create(activity=activity, learner=learner)
@@ -834,11 +858,11 @@ class Client():
         # Get the learner token
         token = self.get_learner_token_pair(learner,
                                             [
-                                                '/lapi/v1/verification/{}/{}'.format(
+                                                '/lapi/v1/verification/{}/{}/'.format(
                                                     learner.institution_id, learner.learner_id),
-                                                '/lapi/v1/status/{}/{}'.format(
+                                                '/lapi/v1/status/{}/{}/'.format(
                                                     learner.institution_id, learner.learner_id),
-                                                '/lapi/v1/alert/{}/{}'.format(
+                                                '/lapi/v1/alert/{}/{}/'.format(
                                                     learner.institution_id, learner.learner_id)
                                             ], ttl=15, max_ttl=max_ttl,
                                             filters={
@@ -851,6 +875,12 @@ class Client():
 
         # Compute the base path for assets
         base_url = '{}'.format(static('web-plugin/web-plugin.js').split('web-plugin.js')[0])
+
+        # Set default options
+        if options is None:
+            options = {}
+        if 'floating_menu_initial_pos' not in options:
+            options['floating_menu_initial_pos'] = 'top-right'
 
         # Update the information
         session_connector_data = {
@@ -897,7 +927,8 @@ class Client():
             'dashboard_url': settings.DASHBOARD_URL,
             'launcher': launcher,
             'base_url': base_url,
-            'locale': locale
+            'locale': locale,
+            'options': options
         }
 
         # Store the session data
@@ -1081,13 +1112,24 @@ class Client():
         """
         target_id = None
         token_pair = None
+
+        user_scopes = []
+        user_roles = get_institution_roles(user)
+
+        # Add access to user data
+        user_scopes.append('/api/v2/institution/{}/*'.format(user.institution_id, user.id))
+        if 'LEARNER' in user_roles:
+            # Allow access to LAPI enrolment endpoints
+            user_scopes.append('/lapi/v1/enrolment/{}/{}/'.format(user.institution_id, user.learner.learner_id))
+            user_scopes.append('/lapi/v1/status/{}/{}/'.format(user.institution_id, user.learner.learner_id))
+            user_scopes.append('/lapi/v1/alert/{}/{}/'.format(user.institution_id, user.learner.learner_id))
+
         if target.upper() == 'DASHBOARD':
             target_id = 0
             if ttl is None:
                 ttl = 24 * 60
-            token_pair = self.get_user_token_pair(user=user, scope=['/api/v2/institution/{}/user/{}/*'.format(
-                user.institution_id, user.id
-            )], max_ttl=ttl)
+            token_pair = self.get_user_token_pair(user=user,
+                                                  scope=user_scopes, max_ttl=ttl)
         elif target.upper() == 'LAPI':
             target_id = 1
             if ttl is None:
@@ -1096,17 +1138,65 @@ class Client():
                 learner = user.learner
             except user.learner.RelatedObjectDoesNotExist:
                 raise TeslaAuthException('Provided user is not a learner')
-            token_pair = self.get_learner_token_pair(learner=learner, scope=['/lapi/*'], max_ttl=ttl)
+            token_pair = self.get_learner_token_pair(learner=learner,
+                                                     scope=user_scopes, max_ttl=ttl)
 
         if target_id is None or token_pair is None:
             raise TeslaConfigException('Invalid target type')
 
         expiration = timezone.now() + timezone.timedelta(minutes=ttl)
 
-        launcher =  models.Launcher.objects.create(user=user, token=uuid.uuid4(), session=session, target_url=target_url,
-                                                   token_pair=token_pair, expires_at=expiration)
+        launcher = models.Launcher.objects.create(user=user, token=uuid.uuid4(), session=session, target_url=target_url,
+                                                  token_pair=token_pair, expires_at=expiration)
 
         return {
             'id': launcher.id,
             'token': launcher.token.__str__()
         }
+
+    def get_registered_providers(self, repository="tesla-ce/core", version="main"):
+        """
+            Get the list of registered providers
+
+            :param repository: The repository in GitHub
+            :type repository: str
+            :param version: The branch on the repository
+            :type version: str
+            :return: List of registered providers
+            :rtype: list
+        """
+        return self.deploy.get_registered_providers(repository, version)
+
+    def export_provider_scripts(self, acronym, output, credentials=None, mode=None):
+        """
+            Generates the files required to deploy TeSLA CE VLE on a certain docker orchestrator
+
+            :param acronym: Provider acronym
+            :type type: str
+            :param output: Path to the folder where the scripts will be written
+            :type output: str
+            :param credentials: List of credentials required by this provider
+            :type credentials: list
+            :param mode: The deployment mode (orchestrator) to be used
+            :type mode: str
+        """
+        # Get the orchestrator
+        if mode is None:
+            mode = self.config.config.get('DEPLOYMENT_ORCHESTRATOR')
+
+        # Find Provider
+        try:
+            provider = models.Provider.objects.get(acronym=acronym)
+        except models.Provider.DoesNotExist:
+            raise TeslaConfigException('Invalid provider acronym')
+        files = self.deploy.get_provider_deployment_scripts(provider, mode, credentials=credentials)
+
+        # Write files to disk
+        if not os.path.exists(output):
+            os.makedirs(output)
+        for file in files:
+            out_file = os.path.join(output, file)
+            if not os.path.exists(os.path.dirname(out_file)):
+                os.makedirs(os.path.dirname(out_file))
+            with open(out_file, 'w') as out_fh:
+                out_fh.write(files[file])

@@ -46,6 +46,9 @@ class ReportActivity(BaseModel):
     integrity_level = models.SmallIntegerField(choices=REPORT_ALERT_LEVEL, null=False, default=0,
                                                help_text=_('Alert level for system integrity.'))
 
+    data = models.FileField(max_length=250, null=True, blank=False,
+                            help_text=_("Path to the content of this report."))
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

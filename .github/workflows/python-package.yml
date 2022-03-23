@@ -12,13 +12,33 @@ on:
     types: 
       - created
 jobs:
+  check:
+    runs-on: ubuntu-latest    
+    steps: 
+      - uses: actions/checkout@v2
+      - name: Get version values
+        id: vars
+        run: |          
+          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)                              
+          echo ::set-output name=tag::${GITHUB_REF#refs/*/}                
+      - name: Show captured versions
+        run: |
+          echo 'Version in source code: ${{ steps.vars.outputs.version }}'
+          echo 'Release version: ${{ steps.vars.outputs.tag }}'                    
+      - name: Check version tag
+        uses: nick-invision/assert-action@v1.1.0
+        if: github.event_name == 'release'
+        with:
+          expected: ${{ steps.vars.outputs.tag }}
+          actual: ${{ steps.vars.outputs.version }}
+          comparison: exact  
   build:
-
+    needs: check
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]        
+        python-version: [3.9, ] #[3.7, 3.8, 3.9]
     # Service containers to run with `runner-job`
     services:
       # Label used to access the service container
@@ -55,9 +75,12 @@ jobs:
         image: bitnami/minio:latest
         ports:
           - 9000:9000
+          - 9001:9001
         env: 
           MINIO_ACCESS_KEY: minioadmin
           MINIO_SECRET_KEY: minioadmin
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
       rabbitmq:
         image: rabbitmq:3-management
         ports:
@@ -73,6 +96,12 @@ jobs:
           --health-retries 5        
     steps:    
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get version value
+        id: vars
+        run: |          
+          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)          
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -117,8 +146,8 @@ jobs:
           STORAGE_REGION: eu-west-1
           STORAGE_URL: http://localhost:9000
           # RabbitMQ
-          RABBITMQ_USER: rabbitmq
-          RABBITMQ_GROUP: rabbitmq
+          RABBITMQ_ADMIN_USER: rabbitmq
+          RABBITMQ_ADMIN_PASSWORD: rabbitmq
           # TEST ENVIRONMENT #        
           TESLA_DOMAIN: tesla-ce
           TESLA_ADMIN_MAIL: test@tesla-ce.org
@@ -127,23 +156,57 @@ jobs:
           VAULT_TOKEN: sRRkAJtED7TmrbSf3zheD3LM           
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v1.5.0
+        continue-on-error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          PYTHON: ${{ matrix.python-version }}
         with:
           fail_ci_if_error: true
           env_vars: PYTHON
+      - name: Export coverage and lint data for SonarQube        
+        if: matrix.python-version == 3.9        
+        run: |
+          # Generate XML report
+          coverage xml         
+          # Replace the file paths to fit with source paths instead of installed package paths
+          sed -i 's+${{ env.LD_LIBRARY_PATH }}/python${{ matrix.python-version }}/site-packages/tesla_ce-${{ steps.vars.outputs.version }}-py${{ matrix.python-version }}.egg+src+g' coverage.xml
+          # Perform PyLint Analysis
+          python -m pip install pyflakes pylint pylint-django
+          pylint --load-plugins pylint_django --exit-zero --max-line-length=120 src/tesla_ce tests/ -r n --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" | tee pylint.txt
+          # Set the current version to SonarQube configuration file
+          echo 'sonar.projectVersion=${{ steps.vars.outputs.version }}' >> sonar-project.properties          
+      - name: SonarQube analysis
+        uses: docker://sonarsource/sonar-scanner-cli:latest
+        if: matrix.python-version == 3.9
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      - name: Fossa update license analysis
+        if: matrix.python-version == 3.9
+        continue-on-error: true
+        run: |
+          curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | bash
+          # fossa init
+          FOSSA_API_KEY=${{ secrets.FOSSA_API_KEY}} fossa analyze
   publish:    
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps: 
       - uses: actions/checkout@v2
+      - name: Store version
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
       - name: Build package
         run: |
           # Build requirements
           python -m pip install --upgrade pip
           python -m pip install pip-tools twine
           pip-compile
+          # Set the version
+          echo '${{ steps.vars.outputs.tag }}' > src/tesla_ce/lib/data/VERSION
           # Build wheel
           python setup.py sdist bdist_wheel
           # Publish the package
@@ -151,4 +214,99 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+  docker_tag:
+    needs: publish
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Store version
+        id: vars
+        run: |
+          echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+      - name: Whait package to be available
+        run: |
+          sudo apt-get install -y jq
+          while [ $(curl -Ls https://pypi.org/pypi/tesla-ce/json | jq -r .info.version) != ${{ steps.vars.outputs.tag }} ]; do echo "Waiting package to be available...."; sleep 10s; done
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2.5.0
+        with:
+          push: true
+          tags: teslace/core:${{ steps.vars.outputs.tag }}, teslace/core:latest
+          file: docker/Dockerfile
+          build-args: TESLA_CE_VERSION=${{ steps.vars.outputs.tag }}
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Login to TeSLA CE Registry
+        uses: docker/login-action@v1
+        with:
+            username: ${{ secrets.TESLA_CE_REGISTRY_USERNAME }}
+            password: ${{ secrets.TESLA_CE_REGISTRY_TOKEN }}
+            registry: registry.tesla-ce.eu
+      - name: Push to TeSLA CE registry
+        run: |
+          docker pull teslace/core:${{ steps.vars.outputs.tag }}
+          docker tag teslace/core:${{ steps.vars.outputs.tag }} registry.tesla-ce.eu/tesla-ce/core:${{ steps.vars.outputs.tag }}
+          docker push registry.tesla-ce.eu/tesla-ce/core:${{ steps.vars.outputs.tag }}
+          docker tag teslace/core:${{ steps.vars.outputs.tag }} registry.tesla-ce.eu/tesla-ce/core:latest
+          docker push registry.tesla-ce.eu/tesla-ce/core:latest
 
+  docker_edge:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'release' && github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Store version
+        id: vars
+        run: |
+          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push edge image
+        run: |
+          # Build requirements
+          python -m pip install --upgrade pip
+          python -m pip install pip-tools wheel
+          pip-compile
+          # Set the version
+          echo '${{ steps.vars.outputs.version }}' > src/tesla_ce/lib/data/VERSION
+          # Build wheel
+          python setup.py bdist_wheel
+          # Build and publish
+          docker build -t teslace/core:edge -f docker/Dockerfile.edge --build-arg TESLA_CE_VERSION=${{ steps.vars.outputs.version }} .
+          docker push teslace/core:edge
+      - name: Login to TeSLA CE Registry
+        uses: docker/login-action@v1
+        with:
+            username: ${{ secrets.TESLA_CE_REGISTRY_USERNAME }}
+            password: ${{ secrets.TESLA_CE_REGISTRY_TOKEN }}
+            registry: registry.tesla-ce.eu
+      - name: Push to TeSLA CE Registry
+        run: |
+          docker tag teslace/core:edge registry.tesla-ce.eu/tesla-ce/core:edge
+          docker push registry.tesla-ce.eu/tesla-ce/core:edge
+
+  deploy_demo:
+    needs: docker_edge
+    runs-on: [self-hosted, tesla-ce-demo]
+    steps:
+      - name: Update core images
+        run: |
+          sudo /opt/tesla-ce/upgrade_core_images.sh

@@ -79,18 +79,21 @@ def get_learner_enrolment(learner_id):
     # Compute enrolment estimation from pending enrolment samples
     pending_contribution = learner.enrolmentsample_set.filter(
         enrolmentsamplevalidation__status=1,
-        enrolmentsamplevalidation__included=False
+        models__isnull=True
     ).values(
         provider_id=models.F("enrolmentsamplevalidation__provider"),
         instrument_id=models.F("enrolmentsamplevalidation__provider__instrument_id"),
     ).annotate(
         pending_contribution=models.Sum("enrolmentsamplevalidation__contribution")
     )
-    pending_validation = learner.enrolmentsample_set.filter(status=0, enrolmentsamplevalidation__provider__enabled=True).values(
+    pending_validation = learner.enrolmentsample_set.filter(
+        models.Q(enrolmentsamplevalidation__status=0) | models.Q(enrolmentsamplevalidation__status=4),
+        enrolmentsamplevalidation__provider__enabled=True
+    ).values(
         provider_id=models.F("enrolmentsamplevalidation__provider"),
         instrument_id=models.F("enrolmentsamplevalidation__provider__instrument_id"),
     ).annotate(
-        count=models.Count("enrolmentsamplevalidation__contribution")
+        count=models.Count("id")
     )
     enrolments = list(real_enrolments)
     instruments = []
@@ -105,23 +108,90 @@ def get_learner_enrolment(learner_id):
         enrol['not_validated_count'] = int(pending_validation.filter(
             instrument_id=enrol['instrument_id']).aggregate(models.Avg('count')
                                                             )['count__avg'] or 0)
+
+    missing = {}
     for missing_enrolment in pending_validation.exclude(instrument_id__in=instruments).all():
-        enrolments.append({
+        pending_val = pending_validation.filter(instrument_id=missing_enrolment['instrument_id'])
+        missing[missing_enrolment['instrument_id']] = {
             'instrument_id': missing_enrolment['instrument_id'],
             'percentage__min': 0.0,
             'percentage__max': 0.0,
             'can_analyse__min': False,
             'can_analyse__max': False,
             'pending': [],
-            'not_validated': list(pending_validation.filter(
-                instrument_id=missing_enrolment['instrument_id']).all()),
+            'not_validated': list(pending_val.all()),
             'pending_contributions': 0.0,
-            'not_validated_count': int(pending_validation.filter(
-                instrument_id=missing_enrolment['instrument_id']
-            ).aggregate(models.Avg('count'))['count__avg'] or 0)
-        })
+            'not_validated_count': int(pending_val.aggregate(models.Avg('count'))['count__avg'] or 0)
+        }
 
+    for missing_enrolment in pending_contribution.exclude(instrument_id__in=instruments).all():
+        pending_cont = pending_contribution.filter(instrument_id=missing_enrolment['instrument_id'])
+        if missing_enrolment['instrument_id'] in missing:
+            missing[missing_enrolment['instrument_id']]['pending'] = list(pending_cont.all())
+            missing[missing_enrolment['instrument_id']]['pending_contributions'] = min(1.0, pending_cont.aggregate(
+                models.Avg('pending_contribution'))['pending_contribution__avg'] or 0.0)
+        else:
+            missing[missing_enrolment['instrument_id']] = {
+                'instrument_id': missing_enrolment['instrument_id'],
+                'percentage__min': 0.0,
+                'percentage__max': 0.0,
+                'can_analyse__min': False,
+                'can_analyse__max': False,
+                'pending': list(pending_cont.all()),
+                'not_validated': [],
+                'pending_contributions': min(1.0, pending_cont.aggregate(
+                    models.Avg('pending_contribution'))['pending_contribution__avg'] or 0.0),
+                'not_validated_count': 0
+            }
+    for inst in missing:
+        enrolments.append(missing[inst])
     return enrolments
+
+
+@cache_memoize(30)
+def get_missing_enrolment(learner_id, activity_id):
+    """
+        Get the missing enrolments for a learner and an activity
+        :param learner_id: Learner id
+        :param activity_id: Activity id
+        :return: Object with missing instruments for this learner and activity
+    """
+    from .activity import Activity
+    # Get related instances
+    learner = Learner.objects.get(id=learner_id)
+    activity = Activity.objects.get(id=activity_id)
+    # Get the list of instruments and enrolment values
+    enrolment_obj = {
+        'missing_enrolments': False,
+        'instruments': {},
+        'activity_id': activity_id,
+        'learner_id': learner_id
+    }
+    if activity.enabled:
+        instrument_conf = activity.get_learner_instruments(learner)
+        instruments = [inst.instrument.id for inst in instrument_conf]
+
+        # Check enrolment status for this learner and activity
+        missing_instruments = [inst.instrument.id for inst in instrument_conf if inst.instrument.requires_enrolment]
+        for enrolment in learner.enrolment_status:
+            if enrolment['instrument_id'] in instruments:
+                missing_instruments.remove(enrolment['instrument_id'])
+                enrolment_obj['instruments'][enrolment['instrument_id']] = enrolment
+                if not enrolment['can_analyse__max']:
+                    enrolment_obj['missing_enrolments'] = True
+        if len(missing_instruments) > 0:
+            enrolment_obj['missing_enrolments'] = True
+            for inst_id in missing_instruments:
+                enrolment_obj['instruments'][inst_id] = {
+                    "instrument_id": inst_id,
+                    "percentage__min": 0,
+                    "percentage__max": 0,
+                    "can_analyse__min": False,
+                    "can_analyse__max": False,
+                    "pending": [],
+                    "pending_contributions": 0
+                }
+    return enrolment_obj
 
 
 class Learner(InstitutionUser):
@@ -175,3 +245,11 @@ class Learner(InstitutionUser):
             :return: Aggregated values per instrument
         """
         return get_learner_enrolment(self.id)
+
+    def missing_enrolments(self, activity_id):
+        """
+            Get the missing enrolments for a particular activity
+            :param activity_id: Activity id
+            :return: Aggregated values per instrument
+        """
+        return get_missing_enrolment(self.id, activity_id)

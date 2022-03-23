@@ -29,8 +29,8 @@ class Activity(BaseModel):
                             help_text=_('Activity VLE.'))
 
     course = models.ForeignKey(Course, null=False, blank=False,
-                            on_delete=models.CASCADE,
-                            help_text=_('Activity VLE.'))
+                               on_delete=models.CASCADE,
+                               help_text=_('Activity VLE.'))
 
     vle_activity_type = models.CharField(max_length=250, null=False, blank=False,
                                          help_text=_("Activity type on the VLE."))
@@ -81,10 +81,10 @@ class Activity(BaseModel):
 
         primary_instruments = self.configuration.filter(active=True,
                                                         alternative_to=None
-                                                        ).exclude(id__in=disabled_instruments).all()
+                                                        ).exclude(instrument_id__in=disabled_instruments).all()
         excluded_instruments = self.configuration.filter(active=True,
                                                          alternative_to=None,
-                                                         id__in=disabled_instruments).all()
+                                                         instrument_id__in=disabled_instruments).all()
         alternative_instruments = []
         for exc_inst in excluded_instruments:
             alternative = exc_inst.activityinstrument_set.filter(active=True).all()

@@ -17,8 +17,10 @@ from .admin import AdminProviderViewSet
 from .admin import AdminUserViewSet
 from .admin import InstitutionAdminViewSet
 from .admin import InstrumentViewSet
+from .admin import UIOptionViewSet
 from .institution import InstitutionCourseActivityInstrumentViewSet
 from .institution import InstitutionCourseActivityReportViewSet
+from .institution import InstitutionCourseActivityReportAuditViewSet
 from .institution import InstitutionCourseActivityViewSet
 from .institution import InstitutionCourseGroupCourseViewSet
 from .institution import InstitutionCourseGroupViewSet
@@ -28,8 +30,12 @@ from .institution import InstitutionInformedConsentViewSet
 from .institution import InstitutionInstructorViewSet
 from .institution import InstitutionInstrumentViewSet
 from .institution import InstitutionLearnerViewSet
+from .institution import InstitutionCourseLearnerViewSet
+from .institution import InstitutionCourseInstructorViewSet
+from .institution import InstitutionCourseActivityReportRequestViewSet
 from .institution import InstitutionSENDCategoryViewSet
 from .institution import InstitutionSENDLearnerViewSet
+from .institution import InstitutionUIOptionViewSet
 from .institution import InstitutionUserViewSet
 from .institution import InstitutionVLEViewSet
 from .institution import InstitutionViewSet
@@ -56,6 +62,7 @@ __all__ = [
     "InstrumentViewSet",
     "AdminProviderViewSet",
     "AdminUserViewSet",
+    "UIOptionViewSet",
     # VLE nested views
     "VLEViewSet",
     "VLECourseViewSet",
@@ -74,14 +81,19 @@ __all__ = [
     "InstitutionCourseGroupCourseViewSet",
     "InstitutionCourseActivityViewSet",
     "InstitutionCourseActivityReportViewSet",
+    "InstitutionCourseActivityReportAuditViewSet",
     "InstitutionCourseActivityInstrumentViewSet",
     "InstitutionLearnerViewSet",
+    "InstitutionCourseLearnerViewSet",
+    "InstitutionCourseInstructorViewSet",
+    "InstitutionCourseActivityReportRequestViewSet",
     "InstitutionInstructorViewSet",
     "InstitutionInformedConsentViewSet",
     "InstitutionInformedConsentDocumentViewSet",
     "InstitutionSENDCategoryViewSet",
     "InstitutionSENDLearnerViewSet",
     "InstitutionVLEViewSet",
+    "InstitutionUIOptionViewSet",
     "InstitutionUserViewSet",
     # Provider nested views
     "ProviderViewSet",

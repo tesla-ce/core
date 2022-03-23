@@ -1,5 +1,5 @@
 # DJango packages
-django
+django>=3.2
 django-configurations
 django-storages
 django-redis
@@ -26,9 +26,9 @@ mysqlclient
 psycopg2
 
 # Celery
-celery==5.0.5
+celery==5.2.2
 django-celery-beat
-django-celery-results
+django-celery-results==2.2.0
 gevent
 # flower
 # django_celery_monitor
@@ -39,7 +39,7 @@ boto3
 
 # Utility packages
 requests
-simplejson
+simplejson==3.17.4
 
 # Vault SDK
 hvac[parser]>=0.10.9
@@ -55,7 +55,7 @@ sphinx
 sphinxcontrib-httpdomain
 recommonmark
 # m2r
-pyyaml
+pyyaml>=5.4.1
 uritemplate
 drf_yasg
 

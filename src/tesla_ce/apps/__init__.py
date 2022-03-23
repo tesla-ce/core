@@ -14,8 +14,7 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ DJango applications package """
 from . import api
-from . import dashboards
 from . import lapi
 from . import webhooks
 
-__all__ = ['api', 'dashboards', 'lapi', 'webhooks']
+__all__ = ['api', 'lapi', 'webhooks']

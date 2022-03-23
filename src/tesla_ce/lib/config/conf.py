@@ -63,6 +63,7 @@ class Config:
             ('mount_path_transit', 'Mount path for transit encryption engine', 'str', 'tesla-ce/transit', None, True),
             ('mount_path_approle', 'Mount path for approle auth engine', 'str', 'tesla-ce/approle', None, True),
             ('policies_prefix', 'Prefix prepended to ACL policy names', 'str', 'tesla-ce/policy/', None, True),
+            ('backend', 'Vault backend', 'enum', 'file', ['file', 'database', ], True),
         )),
         ('redis', 'Redis configuration', (
             ('host', 'Redis host', 'str', 'localhost', None, True),
@@ -73,7 +74,7 @@ class Config:
         ('storage', 'Storage configuration (S3 or Minio)', (
             ('url', 'Storage url', 'str', 'http://localhost:9000', None, True),
             ('bucket_name', 'Storage default private bucket', 'str', 'tesla', None, True),
-            ('public_bucket_name', 'Storage default prublic bucket', 'str', 'tesla-public', None, True),
+            ('public_bucket_name', 'Storage default public bucket', 'str', 'tesla-public', None, True),
             ('region', 'Storage region', 'str', 'eu-west-1', None, True),
             ('access_key', 'Storage access key id', 'str', None, None, True),
             ('secret_key', 'Storage secret access key', 'str', None, None, True),
@@ -115,7 +116,7 @@ class Config:
             ('services', 'Deploy external services', 'bool', False, None, True),
             ('lb', 'Load balancer', 'enum', 'traefik', ['traefik', ], True),
             ('image', 'Docker image used for deployment', 'str',
-             'registry.sunai.uoc.edu/tesla-ce/tesla-ce', None, True),
+             'teslace/core', None, True),
             ('version', 'Docker image version used for deployment', 'str', 'latest', None, True),
             ('secrets_path', 'Folder where secrets will be mounted', 'str', '/run/secrets', None, True),
             ('data_path', 'Folder where volumes will be persisted', 'str', '/var/tesla', None, True),

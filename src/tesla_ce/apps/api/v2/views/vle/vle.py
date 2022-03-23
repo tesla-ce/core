@@ -19,13 +19,13 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.filters import SearchFilter
-from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.views import Response
 from rest_framework.views import status
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from tesla_ce import get_default_client
 from tesla_ce.apps.api import status as tesla_status
+from tesla_ce.apps.api import permissions
 from tesla_ce.apps.api.v2.serializers import VLELauncherBodySerializer
 from tesla_ce.apps.api.v2.serializers import VLELauncherDataSerializer
 from tesla_ce.apps.api.v2.serializers import VLENewAssessmentSessionBodySerializer
@@ -41,42 +41,6 @@ from tesla_ce.models import Learner
 from tesla_ce.models import VLE
 
 
-class NewAssessmentSchema(AutoSchema):
-
-    def get_operation(self, path, method):
-        default = super().get_operation(path, method)
-        default['requestBody'] = {
-            'content': {
-                'application/json': {
-                    'schema': {
-                        'type': 'object',
-                        'required': ['vle_activity_type', 'vle_activity_id', 'vle_learner_uid'],
-                        'properties': {
-                            'vle_course_id': {
-                                'type': 'string',
-                                'description': 'Course unique ID in the VLE'
-                            },
-                            'vle_activity_type': {
-                                'type': 'string',
-                                'description': 'Activity type ID in the VLE'
-                            },
-                            'vle_activity_id': {
-                                'type': 'string',
-                                'description': 'Activity unique ID in the VLE'
-                            },
-                            'vle_learner_uid': {
-                                'type': 'string',
-                                'description': 'Learner unique identification in the institution'
-                            },
-                        }
-                    }
-                }
-            }
-        }
-
-        return default
-
-
 # pylint: disable=too-many-ancestors
 class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
@@ -84,14 +48,17 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
     queryset = VLE.objects.all().order_by('created_at')
     serializer_class = VLESerializer
+    permission_classes = [
+        permissions.VLEPermission
+    ]
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     '''
     filterset_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     search_fields = ['activity_type', 'external_token', 'description', 'conf', 'vle']
     '''
 
-    @action(detail=True, methods=['POST', ],
-            schema=NewAssessmentSchema(), serializer_class=VLENewAssessmentSessionSerializer)
+    @action(detail=True, methods=['POST',],
+            serializer_class=VLENewAssessmentSessionSerializer)
     def assessment(self, request, pk):
         """
             Create a new assessment session
@@ -101,20 +68,24 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            if serializer.data['session_id'] is not None:
+                assessment_session = AssessmentSession.objects.get(id=serializer.data['session_id'])
+
+                # Close the session
+                if serializer.data['close'] is not None and serializer.data['close']:
+                    if not assessment_session.is_active:
+                        raise ValidationError('Cannot close a closed session')
+                    assessment_session.close(auto=False, close_related=True)
+                elif not assessment_session.is_active:
+                    raise ValidationError('Closed session')
+
+                resp = self.serializer_class(assessment_session)
+                return Response(resp.data)
             vle = VLE.objects.get(pk=pk)
             activity = Activity.objects.get(vle=vle, vle_activity_type=serializer.data['vle_activity_type'],
                                             vle_activity_id=serializer.data['vle_activity_id'])
             learner = Learner.objects.get(institution=vle.institution, uid=serializer.data['vle_learner_uid'])
 
-            if serializer.data['session_id'] is not None:
-                assessment_session = AssessmentSession.objects.get(id=serializer.data['session_id'])
-                # Check session data
-                if assessment_session.activity != activity:
-                    raise ValidationError('Provided session does not match with the activity')
-                if assessment_session.learner != learner:
-                    raise ValidationError('Provided session does not match with the learner')
-                resp = self.serializer_class(assessment_session)
-                return Response(resp.data)
         except VLE.DoesNotExist:
             return Response("VLE not found", status=status.HTTP_404_NOT_FOUND)
         except Activity.DoesNotExist:
@@ -126,12 +97,15 @@ class VLEViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         # Create the assessment session
         try:
-            assessment_session = get_default_client().create_assessment_session(activity=activity,
-                                                                                learner=learner,
-                                                                                locale=serializer.data['locale'],
-                                                                                max_ttl=serializer.data['max_ttl'],
-                                                                                redirect_reject_url=serializer.data['redirect_reject_url'],
-                                                                                reject_message=serializer.data['reject_message'])
+            assessment_session = get_default_client(
+            ).create_assessment_session(activity=activity,
+                                        learner=learner,
+                                        locale=serializer.data['locale'],
+                                        max_ttl=serializer.data['max_ttl'],
+                                        redirect_reject_url=serializer.data['redirect_reject_url'],
+                                        reject_message=serializer.data['reject_message'],
+                                        options=serializer.data['options']
+                                        )
         except TeslaMissingICException:
             return Response({
                 'status': tesla_status.TESLA_MISSING_IC,

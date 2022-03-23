@@ -67,7 +67,13 @@ class VaultManager:
         self._transit_mount_point = self._config.config.get('VAULT_MOUNT_PATH_TRANSIT')
 
         # Try to authenticate
-        self._auth()
+        try:
+            self._auth()
+            self._is_ready = True
+            self._error = None
+        except TeslaVaultException as exc:
+            self._is_ready = False
+            self._error = exc
 
     def _module_auth(self):
         """
@@ -103,8 +109,8 @@ class VaultManager:
             else:
                 # Management is disabled. Use module authentication.
                 self._module_auth()
-        except ConnectionError:
-            raise TeslaVaultException('Vault is not responding at {}.'.format(self.vault_url))
+        except ConnectionError as conn_err:
+            raise TeslaVaultException('Vault is not responding at {}.'.format(self.vault_url)) from conn_err
 
     def initialize(self):
         """

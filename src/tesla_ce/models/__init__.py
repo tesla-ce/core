@@ -40,12 +40,14 @@ from .monitor import Monitor
 from .provider import Provider
 from .provider_notification import ProviderNotification
 from .report_activity import ReportActivity
+from .report_activity_session import ReportActivitySession
 from .report_activity_instrument import ReportActivityInstrument
 from .request import Request
 from .request_provider_result import RequestProviderResult
 from .request_result import RequestResult
 from .send_category import SENDCategory
 from .send_learner import SENDLearner
+from .ui_option import UIOption
 from .user import AuthenticatedModule
 from .user import AuthenticatedUser
 from .user import InstitutionUser
@@ -87,8 +89,10 @@ __all__ = [
     'AuthenticatedModule',
     'AuthenticatedUser',
     'Launcher',
+    'UIOption',
     'User',
     'ReportActivity',
+    'ReportActivitySession',
     'ReportActivityInstrument',
     'HistogramActivityInstrument',
     'HistogramActivityProvider',

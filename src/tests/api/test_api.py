@@ -12,27 +12,27 @@
 #
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
+""" TeSLA CE API global tests """
 import pytest
+import json
 
 
 @pytest.mark.django_db
-def test_api(rest_api_client):
-    pass
+def test_favicon(rest_api_client):
+    favicon_resp = rest_api_client.get('/favicon.ico')
+    assert favicon_resp.status_code == 302
 
 
-def backup_test_api(rest_api_client):
+@pytest.mark.django_db
+def test_api_version(rest_api_client):
+    api_version_resp = rest_api_client.get('/api/version/')
+    assert api_version_resp.status_code == 200
+    assert 'version' in json.loads(api_version_resp.content)
 
-    # Get the list of Institutions
-    inst_response = rest_api_client.get('/api/v2/institution/')
-    assert inst_response.status_code == 200
+    lapi_version_resp = rest_api_client.get('/lapi/version/')
+    assert lapi_version_resp.status_code == 200
+    assert 'version' in json.loads(lapi_version_resp.content)
 
-    institutions = inst_response.json()
+    assert json.loads(api_version_resp.content)['version'] == json.loads(lapi_version_resp.content)['version']
 
-    # Get the list of VLEs
-    vle_response = rest_api_client.get('/api/v2/vle/')
-    assert vle_response.status_code == 200
-
-    # Get the list of Providers
-    provider_response = rest_api_client.get('/api/v2/provider/')
-    assert provider_response.status_code == 200
 

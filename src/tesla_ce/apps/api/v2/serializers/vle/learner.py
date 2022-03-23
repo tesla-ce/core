@@ -72,6 +72,8 @@ class VLECourseLearnerSerializer(serializers.ModelSerializer):
             # Create using existing user
             user = User.objects.get(email=attrs['email'])
             inst_user = InstitutionUser(user_ptr=user, institution_id=attrs['institution_id'])
+            inst_user.created_at = timezone.now()
+            inst_user.updated_at = timezone.now()
             inst_user.save_base(raw=True)
             inst_user = InstitutionUser.objects.get(id=inst_user.id)
         except User.DoesNotExist:

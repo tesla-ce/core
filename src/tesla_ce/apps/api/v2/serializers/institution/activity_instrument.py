@@ -32,7 +32,7 @@ class InstitutionCourseActivityInstrumentSerializer(serializers.ModelSerializer)
     """Activity instruments serialize model module."""
 
     activity_id = serializers.HiddenField(default=None, allow_null=True)
-    options = JSONFormField(allow_null=True, schema='instrument.options_schema')
+    options = JSONFormField(allow_null=True, schema='instrument.options_schema', default=None)
     instrument = InstitutionCourseActivityInstrumentInfoSerializer(many=False, read_only=True)
     instrument_id = serializers.IntegerField(allow_null=False, write_only=True)
 

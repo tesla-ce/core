@@ -25,7 +25,6 @@ def get_modules():
     return {
         'api': get_api_properties(),
         'lapi': get_lapi_properties(),
-        'dashboards': get_dashboards_properties(),
         'worker': get_worker_properties(),
         'beat': get_beat_properties(),
         'worker-all': get_worker_all_properties(),
@@ -86,7 +85,7 @@ def get_lapi_properties():
             'django': ['django/config'],
             'redis': ['redis/config'],
             'storage': ['storage/config'],
-            'vault': ['vault/jwt/learners/validate'],
+            'vault': ['vault/jwt/learners/validate', 'vault/jwt/users/validate'],
             'celery': ['celery/config', 'celery/queues', 'celery/credentials/lapi'],
         },
         'deployment': {
@@ -95,33 +94,6 @@ def get_lapi_properties():
             'base_path': 'lapi',
         },
         'dependencies': [],
-    }
-
-
-def get_dashboards_properties():
-    """
-        Returns the definition of the Dashboards module
-
-        :return: Definition of the Dashboards module
-        :rtype: dict
-    """
-    return {
-        'module': 'dashboards',
-        'description': 'TeSLA Dashboards',
-        'apps': ['tesla_ce.apps.dashboards'],
-        'services': {
-            'django': ['django/config'],
-            'vault': ['vault/jwt/users/validate',
-                      'vault/jwt/learners/validate',
-                      'vault/jwt/instructors/validate',
-                     ],
-        },
-        'deployment': {
-            'type': 'service',
-            'public': True,
-            'base_path': 'ui',
-        },
-        'dependencies': ['api', 'lapi'],
     }
 
 

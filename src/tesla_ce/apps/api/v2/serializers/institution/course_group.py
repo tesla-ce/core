@@ -32,8 +32,8 @@ class InstitutionCourseGroupsField(serializers.PrimaryKeyRelatedField):
         queryset = super().get_queryset()
         if 'parent_lookup_institution_id' in self.context['view'].kwargs:
             queryset = queryset.filter(institution_id=self.context['view'].kwargs['parent_lookup_institution_id'])
-        if 'id' in self.root.data and self.root.data['id'] is not None:
-            queryset = queryset.exclude(id=self.root.data['id'])
+        if self.root.instance is not None:
+            queryset = queryset.exclude(id=self.root.instance.id)
         return queryset
 
 
@@ -65,11 +65,12 @@ class InstitutionCourseGroupSerializer(serializers.ModelSerializer):
             validator(attrs, self)
         return super().validate(attrs)
 
+
 class InstitutionCourseGroupCourseSerializer(serializers.ModelSerializer):
     """Course serialize class."""
 
     id = serializers.IntegerField()
-    vle = VLESerializer(read_only=True)
+    vle_id = serializers.IntegerField(read_only=True)
     vle_course_id = serializers.CharField(read_only=True)
     code = serializers.CharField(read_only=True)
     description = serializers.CharField(read_only=True)
@@ -78,7 +79,7 @@ class InstitutionCourseGroupCourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        exclude = ["learners", "instructors"]
+        exclude = ["learners", "instructors", "vle"]
 
     def validate(self, attrs):
         """
@@ -89,7 +90,7 @@ class InstitutionCourseGroupCourseSerializer(serializers.ModelSerializer):
             :rtype: dict
         """
         # Add predefined fields
-        attrs['group_id'] = self.context['view'].kwargs['parent_lookup_group_id']
+        attrs['group_id'] = self.context['view'].kwargs['parent_lookup_id']
 
         # Apply validators
         for validator in self.get_validators():

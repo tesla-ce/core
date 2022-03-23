@@ -16,7 +16,10 @@
 from .activity import InstitutionCourseActivityViewSet
 from .activity_instrument import InstitutionCourseActivityInstrumentViewSet
 from .activity_report import InstitutionCourseActivityReportViewSet
+from .activity_report_audit import InstitutionCourseActivityReportAuditViewSet
 from .course import InstitutionCourseViewSet
+from .course_learner import InstitutionCourseLearnerViewSet
+from .course_instructor import InstitutionCourseInstructorViewSet
 from .course_group import InstitutionCourseGroupCourseViewSet
 from .course_group import InstitutionCourseGroupViewSet
 from .informed_consent import InstitutionInformedConsentViewSet
@@ -25,8 +28,10 @@ from .institution import InstitutionViewSet
 from .instructor import InstitutionInstructorViewSet
 from .instrument import InstitutionInstrumentViewSet
 from .learner import InstitutionLearnerViewSet
+from .request import InstitutionCourseActivityReportRequestViewSet
 from .send_category import InstitutionSENDCategoryViewSet
 from .send_learner import InstitutionSENDLearnerViewSet
+from .ui_option import InstitutionUIOptionViewSet
 from .user import InstitutionUserViewSet
 from .vle import InstitutionVLEViewSet
 
@@ -39,12 +44,17 @@ __all__ = [
     "InstitutionCourseGroupViewSet",
     "InstitutionCourseGroupCourseViewSet",
     "InstitutionLearnerViewSet",
+    "InstitutionCourseActivityReportRequestViewSet",
+    "InstitutionCourseActivityReportAuditViewSet",
+    "InstitutionCourseLearnerViewSet",
+    "InstitutionCourseInstructorViewSet",
     "InstitutionInstructorViewSet",
     "InstitutionInformedConsentViewSet",
     "InstitutionInformedConsentDocumentViewSet",
     "InstitutionSENDCategoryViewSet",
     "InstitutionSENDLearnerViewSet",
     "InstitutionVLEViewSet",
+    "InstitutionUIOptionViewSet",
     "InstitutionUserViewSet",
     "InstitutionInstrumentViewSet",
 ]
