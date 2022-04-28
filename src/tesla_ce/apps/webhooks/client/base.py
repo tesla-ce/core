@@ -15,6 +15,7 @@
 """ Base Webhook client implementation """
 import abc
 import importlib
+import json
 
 from django.utils import timezone
 
@@ -60,7 +61,7 @@ class BaseWebhookMessage:
                 message_id = request.headers[client.id_header]
             imp_class = BaseWebhookMessage._get_class(client.implementation)
             obj = imp_class(client, request.data, message_id)
-            obj.authenticate(request)
+            obj.authenticate(request, client)
             objects.append(obj)
 
         return objects
@@ -88,7 +89,7 @@ class BaseWebhookMessage:
         raise NotImplemented('Specific webhook process is not implemented')
 
     @abc.abstractmethod
-    def _is_authenticated(self, request):
+    def _is_authenticated(self, request, webhook_client):
         raise NotImplemented('Specific webhook process is not implemented')
 
     def process(self):
@@ -100,8 +101,8 @@ class BaseWebhookMessage:
         except Exception as exc:
             self.update_status(3, exc.__str__())
 
-    def authenticate(self, request):
-        if not self._is_authenticated(request):
+    def authenticate(self, request, webhook_client):
+        if not self._is_authenticated(request, webhook_client):
             raise exceptions.WebhookAuthException('Invalid authentication')
 
     @staticmethod
@@ -113,7 +114,7 @@ class BaseWebhookMessage:
         imp_class = BaseWebhookMessage._get_class(model.client.implementation)
         obj = imp_class(model.client, model.body, model.message_id, model)
         if request is not None:
-            obj.authenticate(request)
+            obj.authenticate(request, model.client)
         return obj
 
     def save(self):
@@ -122,7 +123,7 @@ class BaseWebhookMessage:
                 status=0,
                 message_id=self.message_id,
                 client=self.client,
-                body=self.body
+                body=json.dumps(self.body)
             )
         else:
             self.model.save()

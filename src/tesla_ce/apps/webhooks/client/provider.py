@@ -13,7 +13,12 @@
 #      You should have received a copy of the GNU Affero General Public License
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Default Webhook client for providers implementation """
+import json
+import hmac
+import hashlib
+
 from tesla_ce.models import Provider
+from tesla_ce.lib.webhook.process import process_webhook_message
 from .base import BaseWebhookMessage
 from .. import exceptions
 
@@ -27,10 +32,25 @@ class DefaultProviderWebhookMessage(BaseWebhookMessage):
         except Provider.DoesNotExist:
             raise exceptions.WebhookProviderNotFoundException('Provider with acronym {} not found'.format(client.name))
 
-    def _is_authenticated(self, request):
+    def _is_authenticated(self, request, webhook_client):
+        if request is None:
+            return False
+
+        if request.headers.get('TESLA-SIGN') is None:
+            return False
+
+        signature_request = request.headers['TESLA-SIGN']
+
+        credentials = json.loads(webhook_client.credentials)
+        secret = credentials['secret']
+
+        signature = hmac.new(secret.encode('utf8'), json.dumps(request.data).encode('utf8'), digestmod=hashlib.sha512)
+        signature_calculated = signature.hexdigest()
+
+        if signature_request != signature_calculated:
+            return False
+
         return True
 
     def _process_webhook(self):
-        print('PROCESSING MESSAGE')
-
-
+        process_webhook_message(self.model.id, self.provider.id)
