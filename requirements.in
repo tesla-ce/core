@@ -26,9 +26,9 @@ mysqlclient
 psycopg2
 
 # Celery
-celery==5.2.2
+celery
 django-celery-beat
-django-celery-results==2.2.0
+django-celery-results
 gevent
 # flower
 # django_celery_monitor
