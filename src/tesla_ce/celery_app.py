@@ -49,7 +49,7 @@ elif len(settings.TESLA_CONFIG.config.get('CELERY_QUEUES')) == 1:
     if settings.TESLA_CONFIG.config.get('CELERY_QUEUES')[0] == '__all__':
         queues = [
             'ENROLMENT', 'ENROLMENT_STORAGE', 'ENROLMENT_VALIDATION', 'VERIFICATION',
-            'ALERTS', 'REPORTING'
+            'ALERTS', 'REPORTING', 'DEFAULT'
         ]
     else:
         # Set the default queue
