@@ -100,6 +100,7 @@ services:
       {% endif %}
     environment:
       MINIO_REGION_NAME: {{ STORAGE_REGION }}
+      MINIO_BROWSER_REDIRECT_URL: https://storage-console.{{ TESLA_DOMAIN }}
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9001/minio/health/live"]

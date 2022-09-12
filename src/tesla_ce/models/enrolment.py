@@ -42,7 +42,7 @@ def get_upload_path(instance, filename):
 
 
 class Enrolment(BaseModel):
-    """ Enrollment model. """
+    """ Enrolment model. """
     learner = models.ForeignKey(Learner, null=False,
                                 on_delete=models.CASCADE,
                                 help_text=_("Related learner"))
@@ -85,7 +85,7 @@ class Enrolment(BaseModel):
         return self.model_samples.count()
 
     def __repr__(self):
-        return "<Enrollment(learner='%s', provider='%r', percentage='%r'," \
+        return "<Enrolment(learner='%s', provider='%r', percentage='%r'," \
                "can_analyse='%s', locked='%r', num_samples='%r')>" % (self.learner, self.provider, self.percentage,
                                                                       self.can_analyse, self.is_locked,
                                                                       self.model_total_samples)
