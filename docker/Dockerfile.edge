@@ -1,5 +1,5 @@
 #FROM python:3.7-alpine
-FROM python:3-alpine3.13
+FROM python:3.9-alpine3.13
 
 # Version to use
 ARG TESLA_CE_VERSION
@@ -89,7 +89,7 @@ RUN addgroup -g 2000 -S web_group && \
 RUN chown -R web_user:web_group /tesla
 
 # Call collectstatic (customize the following line with the minimal environment variables needed for manage.py to run):
-RUN DJANGO_CONFIGURATION=Dev /venv/bin/tesla_ce collectstatic --noinput && ln -s /venv/lib/python3.7/site-packages/tesla_ce/static /tesla/static
+RUN DJANGO_CONFIGURATION=Dev /venv/bin/tesla_ce collectstatic --noinput && ln -s /venv/lib/python3.9/site-packages/tesla_ce/static /tesla/static
 
 # Copy the Nginx global conf
 COPY docker/nginx.conf /etc/nginx/
