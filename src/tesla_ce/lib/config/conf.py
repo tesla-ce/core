@@ -64,6 +64,8 @@ class Config:
             ('mount_path_approle', 'Mount path for approle auth engine', 'str', 'tesla-ce/approle', None, True),
             ('policies_prefix', 'Prefix prepended to ACL policy names', 'str', 'tesla-ce/policy/', None, True),
             ('backend', 'Vault backend', 'enum', 'file', ['file', 'database', ], True),
+            ('approle_default_ttl', 'Vault approle default TTL', 'str', '12h', None, True),
+            ('approle_max_ttl', 'Vault approle max TTL', 'str', '24h', None, True),
         )),
         ('redis', 'Redis configuration', (
             ('host', 'Redis host', 'str', 'localhost', None, True),
