@@ -42,7 +42,8 @@ requests
 simplejson==3.17.4
 
 # Vault SDK
-hvac[parser]>=0.10.9
+#hvac[parser]
+hvac
 
 # Test requirements
 pytest

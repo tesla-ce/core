@@ -192,6 +192,9 @@ class Client():
         """
         if self._vault is None:
             self._vault = VaultManager(self.config)
+
+        self._vault.login()
+
         return self._vault
 
     @property
@@ -1200,3 +1203,40 @@ class Client():
                 os.makedirs(os.path.dirname(out_file))
             with open(out_file, 'w') as out_fh:
                 out_fh.write(files[file])
+
+    def register_webhook(self, name, client_header, id_header, credentials):
+        """
+            Register or update a new Webhook to the system
+
+            :param name: Name of the webhook
+            :type name: str
+            :param client_header: Client header of the webhook
+            :type client_header: str
+            :param id_header: Id header of the webhook
+            :type id_header: str
+            :param id_header: Credentials used for the webhook
+            :type id_header: dict
+            :return: Webhook data
+            :rtype: dict
+        """
+        try:
+            webhook_client = models.WebhookClient.objects.get(name=name)
+
+            webhook_client.name = name
+            webhook_client.client_header = client_header
+            webhook_client.id_header = id_header
+            webhook_client.enabled = 1
+            webhook_client.credentials = credentials
+
+            webhook_client.save()
+        except models.WebhookClient.DoesNotExist:
+            webhook_client = models.WebhookClient.objects.create(
+                name=name,
+                implementation='tesla_ce.apps.webhooks.client.provider.DefaultProviderWebhookMessage',
+                client_header=client_header,
+                id_header=id_header,
+                enabled=1,
+                credentials=credentials,
+            )
+
+        return webhook_client

@@ -41,6 +41,10 @@ class VaultSetup:
     #: Configuration object
     _config: Config = None
 
+    #: Approle TTL defines
+    approle_default_ttl = None
+    approle_max_ttl = None
+
     def __init__(self, client, config):
         """
             Default constructor
@@ -53,6 +57,8 @@ class VaultSetup:
         """
         self._client = client
         self._config = config
+        self.approle_default_ttl = self._config.get('VAULT_APPROLE_DEFAULT_TTL', '12h')
+        self.approle_max_ttl = self._config.get('VAULT_APPROLE_MAX_TTL', '24h')
 
         # Read Vault mount points
         self._approle_mount_point = self._config.get('VAULT_MOUNT_PATH_APPROLE')
@@ -214,8 +220,17 @@ class VaultSetup:
             Creates the roles for the different modules that needs to authenticate with Vault
         """
         if not self._is_auth_method_enabled('{}/'.format(self._approle_mount_point)):
-            self._client.sys.enable_auth_method('approle', path=self._approle_mount_point,
+            config = {
+                'default_lease_ttl': self.approle_default_ttl,
+                 'max_lease_ttl': self.approle_max_ttl
+            }
+            self._client.sys.enable_auth_method('approle', path=self._approle_mount_point, config=config,
                                                 description='TeSLA CE modules authentication')
+        else:
+            a = self._client.sys.read_auth_method_tuning(self._approle_mount_point)
+            self._client.sys.tune_auth_method(self._approle_mount_point, default_lease_ttl=self.approle_default_ttl,
+                                               max_lease_ttl=self.approle_max_ttl)
+            b = self._client.sys.read_auth_method_tuning(self._approle_mount_point)
 
         modules = get_modules()
         for module in modules:

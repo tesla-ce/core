@@ -112,6 +112,13 @@ class VaultManager:
         except ConnectionError as conn_err:
             raise TeslaVaultException('Vault is not responding at {}.'.format(self.vault_url)) from conn_err
 
+    def login(self):
+        """
+        Ensure vault access is refreshed
+        :return:
+        """
+        self._auth()
+
     def initialize(self):
         """
             Initialize Vault server
