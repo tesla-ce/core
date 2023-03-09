@@ -321,8 +321,9 @@ class Client():
             config.set('MOODLE_ADMIN_PASSWORD', uuid.uuid4().__str__())
 
         # Check that output folder exists
-        if not os.path.exists(os.path.dirname(output_file)):
-            os.makedirs(os.path.dirname(output_file))
+        output_dir = os.path.dirname(output_file)
+        if output_dir != '' and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         # Write the configuration file to disk
         with open(output_file, 'w') as out_fh:
