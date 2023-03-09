@@ -11,7 +11,7 @@ jobs:
   check:
     runs-on: ubuntu-latest    
     steps: 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Get version values
         id: vars
         run: |          
@@ -35,7 +35,7 @@ jobs:
       matrix:
         python-version: [3.9, ]
     steps:    
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Get version value
@@ -66,7 +66,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Store version
         id: vars
         run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
