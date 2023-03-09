@@ -27,6 +27,7 @@ from ..config.conf import Config
 from ..modules import get_modules
 from ..modules import get_provider_properties
 from ..modules import get_vle_properties
+from ..exception import TeslaRemoteException
 
 # Template to generate module JWT key names
 MODULE_KEY_STR_TEMPLATE = 'jwt_module_{}'
@@ -84,6 +85,321 @@ class VaultSetup:
 
         # Setup authentication roles
         self.setup_roles()
+
+    def check_vault_status(self):
+        result = {
+            'vault_tesla_ce_version': None,
+            'update_available': False,
+            'kv': {
+                'installed': False,
+                'read': False,
+                'write': False
+            },
+            'transit': {
+                'installed': False,
+                'read': False,
+                'sign': False
+            },
+            'approle': {
+                'installed': False,
+                'read': False
+            },
+            'policies': {
+                'read': False,
+                'is_valid': False
+            },
+            'unsealed': False,
+            'initialized': False,
+            'steps': [],
+            'command_status': False
+        }
+
+        try:
+            result['initialized'] = self._client.sys.is_initialized()
+        except hvac.exceptions.VaultError as err:
+            result['steps'].append({"msg": str(err), "status": False})
+
+        if result['initialized'] is False:
+            return result
+
+        try:
+            result['unsealed'] = not self._client.sys.is_sealed()
+        except hvac.exceptions.VaultError as err:
+            result['steps'].append({"msg": str(err), "status": False})
+
+        if result['unsealed'] is False:
+            return result
+
+        # KV checks
+        try:
+            result['kv']['installed'] = self._is_secret_engine_enabled('{}/'.format(self._kv_mount_point))
+        except hvac.exceptions.VaultError as err:
+            result['steps'].append({"msg": str(err), "status": False})
+
+        if result['kv']['installed'] is True:
+            # check if KEY exists
+            response_version = None
+            response_aval_version = None
+
+            try:
+                response_version = self._client.secrets.kv.v2.read_secret_version(
+                    path='{}/{}'.format('system', 'version')
+                )
+
+                response_aval_version = self._client.secrets.kv.v2.read_secret_version(
+                    path='{}/{}'.format('system', 'available_version')
+                )
+
+                result['kv']['read'] = True
+
+            except hvac.exceptions.Forbidden:
+                result['kv']['read'] = False
+                result['steps'].append({"msg": "KV read is forbidden with provided credentials", "status": False})
+            except hvac.exceptions.Unauthorized:
+                result['steps'].append({"msg": "KV read is unauthorized with provided credentials", "status": False})
+            except hvac.exceptions.InvalidPath:
+                # it is the first time to execute this check
+                result['kv']['read'] = True
+            except hvac.exceptions.VaultError as err:
+                result['steps'].append({"msg": str(err), "status": False})
+
+            from tesla_ce.client import get_version
+
+            if response_aval_version is None:
+                try:
+                    response_aval_version = self._client.secrets.kv.v2.create_or_update_secret(
+                        path='{}/{}'.format('system', 'available_version'),
+                        secret=dict({
+                            'tesla-ce': get_version()
+                        }),
+                        mount_point=self._kv_mount_point
+                    )
+                    result['kv']['write'] = True
+
+                except hvac.exceptions.Forbidden:
+                    result['kv']['write'] = False
+                    result['steps'].append({"msg": "KV write is forbidden with provided credentials", "status": False})
+                except hvac.exceptions.Unauthorized:
+                    result['steps'].append({"msg": "KV write is unauthorized with provided credentials", "status": False})
+                except hvac.exceptions.VaultError as err:
+                    result['steps'].append({"msg": str(err), "status": False})
+
+            else:
+                if response_aval_version < response_version:
+                    result['steps'].append({"msg": "It is detected that system/availaible_version is less than "
+                                                   "system/version. Is it possible that you are executing old version"
+                                                   " of TeSLA CE?", "status": False})
+                    return result
+
+                if response_aval_version == response_version:
+                    try:
+                        response_version = self._client.secrets.kv.v2.create_or_update_secret(
+                            path='{}/{}'.format('system', 'version'),
+                            secret=dict({
+                                'tesla-ce': get_version()
+                            }),
+                            mount_point=self._kv_mount_point
+                        )
+                    except hvac.exceptions.Forbidden:
+                        result['kv']['write'] = False
+                        result['steps'].append({"msg": "KV write is forbidden with provided credentials", "status": False})
+                    except hvac.exceptions.Unauthorized:
+                        result['steps'].append({"msg": "KV write is unauthorized with provided credentials", "status": False})
+                    except hvac.exceptions.VaultError as err:
+                        result['steps'].append({"msg": str(err), "status": False})
+
+        # Transit checks
+        try:
+            result['transit']['installed'] = self._is_secret_engine_enabled('{}/'.format(self._transit_mount_point))
+        except hvac.exceptions.VaultError as err:
+            result['steps'].append({"msg": str(err), "status": False})
+
+        if result['transit']['installed'] is True:
+            check_keys = ['jwt_default', 'jwt_learners', 'jwt_instructors', 'jwt_users', 'jwt_modules']
+            for module in get_modules():
+                check_keys.append(MODULE_KEY_STR_TEMPLATE.format(module))
+
+            result['transit']['read'] = True
+            result['transit']['sign'] = True
+            for check_key in check_keys:
+                # read checks
+                try:
+                    response = self._client.secrets.transit.read_key(check_key, mount_point=self._transit_mount_point)
+
+                except hvac.exceptions.Forbidden:
+                    result['transit']['read'] = False
+                    result['steps'].append({"msg": "Transit read is forbidden with provided credentials. Error key {}.".format(MODULE_KEY_STR_TEMPLATE.format(module)), "status": False})
+                except hvac.exceptions.Unauthorized:
+                    result['steps'].append({"msg": "Transit read is unauthorized with provided credentials. Error key {}.".format(MODULE_KEY_STR_TEMPLATE.format(module)), "status": False})
+                except hvac.exceptions.VaultError as err:
+                    result['steps'].append({"msg": str(err), "status": False})
+
+                # write/sign checks
+                try:
+                    response = self._client.secrets.transit.encrypt_data(check_key, "testing")
+
+                except hvac.exceptions.Forbidden:
+                    result['transit']['sign'] = False
+                    result['steps'].append({"msg": "Transit encrypt is forbidden with provided credentials. Error key {}.".format(MODULE_KEY_STR_TEMPLATE.format(module)), "status": False})
+                except hvac.exceptions.Unauthorized:
+                    result['steps'].append({"msg": "Transit encrypt is unauthorized with provided credentials. Error key {}.".format(MODULE_KEY_STR_TEMPLATE.format(module)), "status": False})
+                except hvac.exceptions.VaultError as err:
+                    result['steps'].append({"msg": str(err), "status": False})
+
+        # check policies
+        # todo: refactor
+        policies = self._adapt_policies_path(get_policies())
+        result['policies']['read'] = True
+        for policy in policies:
+            try:
+                self._client.sys.read_policy(
+                    name='{}{}'.format(self._policy_prefix, policy)
+                )
+            except hvac.exceptions.Forbidden:
+                result['policies']['read'] = False
+                result['steps'].append({"msg": "Policy name {}{} is forbidden with provided credentials.".format(self._policy_prefix, policy), "status": False})
+            except hvac.exceptions.Unauthorized:
+                result['steps'].append({"msg": "Policy name {}{} is unauthorized with provided credentials.".format(self._policy_prefix, policy), "status": False})
+            except hvac.exceptions.VaultError as err:
+                result['steps'].append({"msg": str(err), "status": False})
+
+        result['policies']['info'] = self.check_policies()
+        result['policies']['is_valid'] = result['policies']['info']['is_valid']
+
+        # check approle
+        try:
+            result['approle']['installed'] = self._is_auth_method_enabled('{}/'.format(self._approle_mount_point))
+        except hvac.exceptions.VaultError as err:
+            result['steps'].append({"msg": str(err), "status": False})
+
+
+        if result['approle']['installed'] is True:
+            result['approle']['read'] = True
+            modules = get_modules()
+            for aux_module in modules:
+                try:
+                    module = modules[aux_module]['module']
+                    response = self._client.auth.approle.read_role_id(role_name=module)
+                except hvac.exceptions.Forbidden:
+                    result['approle']['read'] = False
+                    result['steps'].append({"msg": "Approle read for module {} is forbidden with provided credentials.".format(module['module']), "status": False})
+                except hvac.exceptions.Unauthorized:
+                    result['steps'].append({"msg": "Approle read for module {} is unauthorized with provided credentials.".format(module['module']), "status": False})
+                except hvac.exceptions.VaultError as err:
+                    result['steps'].append({"msg": str(err), "status": False})
+
+        result['command_status'] = True
+        return result
+
+    def run_setup_remote(self, command=None):
+
+        """
+            Perform Vault remote setup
+        """
+        # Setup KV
+        status = self.check_vault_status()
+
+        if status['initialized'] is True:
+            status['steps'].append({"msg": "Vault is initialized", "status": True})
+        else:
+            status['steps'].append({"msg": "Vault is not initialized", "status": False})
+
+        if status['unsealed'] is False:
+            status['steps'].append({"msg": "Vault is sealed", "status": False})
+        else:
+            status['steps'].append({"msg": "Vault is unsealed", "status": True})
+
+        if command == 'vault_unseal':
+            if not self._client.sys.is_sealed():
+                return status
+
+            # Get unseal keys
+            keys = self._config.get('VAULT_KEYS')
+            if keys is None:
+                status['steps'].append({"msg": "Vault KEYS are missing", "status": False})
+                raise TeslaRemoteException(status=status)
+
+            self._client.sys.submit_unseal_keys(keys=keys)
+            status = self.check_vault_status()
+            if status['unsealed'] is True:
+                status['steps'].append({"msg": "Vault is unsealed", "status": True})
+
+            return status
+
+        # for all other command check if vault is initialized and unsealed
+        if status['initialized'] is False or status['unsealed'] is False:
+            raise TeslaRemoteException(status=status)
+
+        if command == 'vault_init_kv':
+            if status['kv']['installed'] is False:
+                self._client.sys.enable_secrets_engine('kv', path=self._kv_mount_point, options={'version': 2},
+                                                       description='TeSLA CE Secrets Engine')
+                # This can take a time to be ready. Wait until active
+                # todo: SLEEP TIME?
+                time.sleep(2)
+
+                status = self.check_vault_status()
+                if status['kv']['installed'] is False:
+                    status['steps'].append({"msg": "KV is not enabled", "status": False})
+                    raise TeslaRemoteException(status=status)
+
+            if status['kv']['write'] is False:
+                status['steps'].append({"msg": "KV is not writable", "status": False})
+                raise TeslaRemoteException(status=status)
+
+            if status['kv']['read'] is False:
+                status['steps'].append({"msg": "KV is not readable", "status": False})
+                raise TeslaRemoteException(status=status)
+
+            self.setup_kv()
+            # Update configuration
+            self._update_configuration()
+
+        elif command == 'vault_init_transit':
+            if status['transit']['installed'] is False:
+                self._client.sys.enable_secrets_engine('transit', path=self._transit_mount_point)
+
+                status = self.check_vault_status()
+                if status['transit']['installed'] is False:
+                    status['steps'].append({"msg": "Transit is not enabled", "status": False})
+                    raise TeslaRemoteException(status=status)
+
+            if status['transit']['sign'] is False:
+                status['steps'].append({"msg": "Transit can not sign", "status": False})
+                raise TeslaRemoteException(status=status)
+
+            self.setup_jwt()
+
+        elif command == 'vault_init_policies':
+            if status['policies']['read'] is False:
+                status['steps'].append({"msg": "Policies can not read", "status": False})
+                raise TeslaRemoteException(status=status)
+
+            self.setup_policies()
+
+        elif command == 'vault_init_roles':
+            if status['approle']['installed'] is False:
+                config = {
+                    'default_lease_ttl': self.approle_default_ttl,
+                    'max_lease_ttl': self.approle_max_ttl
+                }
+                self._client.sys.enable_auth_method('approle', path=self._approle_mount_point, config=config,
+                                                    description='TeSLA CE modules authentication')
+
+                status = self.check_vault_status()
+
+                if status['approle']['installed'] is False:
+                    status['steps'].append({"msg": "Approle is not enabled", "status": False})
+                    raise TeslaRemoteException(status=status)
+
+            if status['approle']['read'] is False:
+                status['steps'].append({"msg": "Approle can not read", "status": False})
+                raise TeslaRemoteException(status=status)
+
+            self.setup_roles()
+
+        status = self.check_vault_status()
+        return status
 
     def setup_kv(self):
         """
@@ -162,6 +478,40 @@ class VaultSetup:
                 )
                 adapted_policies[policy]['path'][adapted_path] = policies[policy]['path'][key]
         return adapted_policies
+
+    def check_policies(self):
+        """
+            Creates the policies to grant access to services
+        """
+        # Create generic policies
+        policies = self._adapt_policies_path(get_policies())
+        result = {
+            "policies": [],
+            "is_valid": True
+        }
+        for policy in policies:
+            try:
+                vault_policy = self._client.sys.read_policy(
+                    name='{}{}'.format(self._policy_prefix, policy)
+                )
+                result['policies'].append({
+                    "policy": '{}{}'.format(self._policy_prefix, policy),
+                    "expected": policy,
+                    "current": vault_policy,
+                    "exist": "True|False",
+                    "is_valid": "True|False"
+                })
+                # todo: implement
+                # vault_policy != policy
+                # result['is_valid'] = False
+
+            except hvac.exceptions.InvalidPath:
+                # policy not found
+                result['is_valid'] = False
+
+
+
+        return result
 
     def setup_policies(self):
         """

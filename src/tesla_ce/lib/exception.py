@@ -62,6 +62,17 @@ class TeslaException(Exception):
         tesla_report_exception(self)
 
 
+class TeslaRemoteException(TeslaException):
+    """ Class to raise remote exceptions """
+    def __init__(self, status={}):
+        super(TeslaRemoteException, self).__init__()
+        self._status = status
+
+    @property
+    def status(self):
+        return self._status
+
+
 class TeslaConfigException(TeslaException):
     """ Class to raise configuration exceptions """
     pass

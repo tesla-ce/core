@@ -14,6 +14,7 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ DJango settings module """
 import os
+import requests
 
 from configurations import Configuration
 
@@ -374,3 +375,48 @@ class Test(Production):
             cls.TESLA_MODULES += ['api']
         if 'lapi' not in cls.TESLA_MODULES:
             cls.TESLA_MODULES += ['lapi']
+
+
+class Setup(Production):
+    """
+        Setup configuration.
+    """
+    @classmethod
+    def pre_setup(cls):
+        # Download file from supervisor remote url
+        url = os.getenv('SUPERVISOR_REMOTE_URL', None)
+
+        if url is not None:
+            response = requests.get(url, verify=False)
+
+            output_file = './tesla-ce.cfg'
+
+            if response.status_code == 200:
+                config = response.json()
+                conf_manager = ConfigManager(load_config=False)
+
+                # Check that output folder exists
+                if not os.path.exists(os.path.dirname(output_file)):
+                    os.makedirs(os.path.dirname(output_file))
+
+                for section in config:
+                    for item_key in config[section]:
+                        config_key = "{}_{}".format(section, item_key).upper()
+                        if config[section][item_key]['value'] is not None:
+                            conf_manager.config.set(config_key, config[section][item_key]['value'])
+
+                # Write the configuration file to disk
+                conf_manager.save_configuration()
+            else:
+                content = response.content
+                if content is not None:
+                    content = content.decode('utf8')
+                else:
+                    content = ''
+
+                raise TeslaConfigException("Cannot get remote configuration. Server returns status code {}. Response content {}.".format(response.status_code, content))
+            print(os.path.dirname(output_file))
+            print(output_file)
+            cls.TESLA_CONFIG.load_file(output_file)
+        # Load Production configuration
+        super().pre_setup()
