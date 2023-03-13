@@ -19,6 +19,7 @@ import uuid
 
 from django.db import connections
 from django.db.migrations.executor import MigrationExecutor
+from django.db.utils import IntegrityError
 
 from tesla_ce.lib import ConfigManager
 from tesla_ce.lib.checks import check_database_connection
@@ -377,3 +378,15 @@ class DatabaseManager:
             'queue': queue
         })
 
+    def create_superuser(self, username, email, password):
+        from django.contrib.auth.models import User
+        try:
+            superuser = User.objects.create_superuser(
+                username=username,
+                email=email,
+                password=password)
+            superuser.save()
+        except IntegrityError as exc:
+            raise TeslaDatabaseException("Create superuser error: {}".format(exc))
+
+        return superuser

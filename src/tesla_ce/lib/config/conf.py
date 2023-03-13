@@ -29,10 +29,12 @@ class Config:
         # (section_name, section_description, fields)
         #   (field_name, field_description, field_type, default, options, exportable)
         ('tesla', 'Generic configuration', (
+            ('config_source', 'Configuration source', 'enum', 'file', ['file', 'database', ], False),
             ('config_file', 'Configuration file to be used', 'str', None, None, False),
             ('mode', 'Working mode of TeSLA', 'enum', 'production', ['config', 'production', ], False),
             ('domain', 'Base domain', 'str', None, None, True),
             ('admin_mail', 'Mail of the administrator', 'str', None, None, True),
+            ('admin_password', 'Password of the administrator', 'str', None, None, True),
             ('institution_name', 'Name of the institution', 'str', 'Default Institution', None, True),
             ('institution_acronym', 'Acronym of the institution', 'str', 'default', None, True),
         )),
@@ -114,8 +116,11 @@ class Config:
             ('allowed_hosts', 'Allowed hosts', 'list', [], None, True),
         )),
         ('deployment', 'Deployment configuration', (
-            ('orchestrator', 'Docker orchestrator', 'enum', 'swarm', ['swarm', ], True),
+            ('status', 'Deployment status', 'int', 0, None, True),
+            ('catalog_system', 'Catalog system', 'enum', 'swarm', ['consul', 'swarm'], True),
+            ('orchestrator', 'Docker orchestrator', 'enum', 'swarm', ['swarm', 'nomad'], True),
             ('services', 'Deploy external services', 'bool', False, None, True),
+            ('register_services', 'Register external services', 'bool', False, None, True),
             ('lb', 'Load balancer', 'enum', 'traefik', ['traefik', ], True),
             ('image', 'Docker image used for deployment', 'str',
              'teslace/core', None, True),
@@ -140,6 +145,40 @@ class Config:
             ('full_name', 'Full name for Moodle instance', 'str', 'TeSLA CE Moodle', None, True),
             ('short_name', 'Short name for Moodle instance', 'str', 'TeSLA CE', None, True),
             ('summary', 'Summary for Moodle instance', 'str', 'TeSLA CE Moodle Instance', None, True),
+        )),
+        ('nomad', 'Nomad configuration. Only required if Nomad is used as Orchestrator.', (
+            ('addr', 'Nomad Address', 'str', 'http://127.0.0.1:4646', None, True),
+            ('region', 'Nomad Region', 'str', None, None, True),
+            ('datacenters', 'Nomad Datacenters', 'list', None, None, True),
+            ('skip_verify', 'Skip TLS verification for Nomad server', 'bool', False, None, True),
+            ('tls_server_name', 'Nomad server name for TLS verification', 'str', None, None, True),
+            ('auth_type', 'Nomad authentication mechanism', 'enum', 'none', ['none', 'acl_token', 'client_cert'], True),
+            ('acl_token', 'Nomad ACL token', 'str', None, None, True),
+        )),
+        ('consul', 'Consul configuration. Only required if Consul is used as Catalog.', (
+            ('host', 'Consul host', 'str', 'localhost', None, True),
+            ('port', 'Consul port', 'int', 8500, None, True),
+            ('scheme', 'Consul scheme', 'str', 'http', None, True),
+            ('verify', 'TLS verification for Consul server', 'bool', True, None, True),
+            ('tls_server_name', 'Consul server name for TLS verification', 'str', None, None, True),
+            ('auth_type', 'Consul authentication mechanism', 'enum', 'none', ['none', 'acl_token', 'client_cert'], True),
+            ('acl_token', 'Consul ACL token', 'str', None, None, True),
+        )),
+        ('swarm', 'Docker Swarm configuration. Only required if Swarm is used as Orchestrator.', (
+            ('service_prefix', 'Service prefix', 'str', 'teslace', None, True),
+            ('base_url', 'Address', 'str', 'unix:///var/run/docker.sock', None, True),
+            ('client_key_path', 'Client key file path', 'str', None, None, False),
+            ('client_cert_path', 'Client certificate file path', 'str', None, None, False),
+            ('specific_ca_cert_path', 'Specific CA certificate file path', 'str', None, None, False),
+            ('client_key', 'Client key', 'str', None, None, True),
+            ('client_cert', 'Client certificate', 'str', None, None, True),
+            ('specific_ca_cert', 'Specific CA certificate', 'str', None, None, True),
+        )),
+        ('supervisor', 'TeSLA CE Supervisor configuration.', (
+            ('secret', 'Supervisor Secret', 'str', None, None, True),
+            ('admin_user', 'Administrator username', 'str', 'admin', None, True),
+            ('admin_password', 'Administrator password', 'str', None, None, True),
+            ('admin_email', 'Administrator email', 'str', None, None, True),
         ))
     )
 

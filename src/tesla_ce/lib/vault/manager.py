@@ -27,7 +27,7 @@ from requests.exceptions import ConnectionError
 
 from .setup import VaultSetup
 from ..config import ConfigManager
-from ..exception import TeslaVaultException
+from ..exception import TeslaVaultException, TeslaRemoteException
 from ..modules import get_modules
 
 
@@ -145,6 +145,24 @@ class VaultManager:
 
         # Setup vault information to be used in TeSLA
         self._setup_vault()
+
+    def remote_setup(self, command):
+        """
+            Prepare Vault to be used by TeSLA. Creates the roles, configurations and policies.
+        """
+        # Create the setup object
+        try:
+            setup = VaultSetup(self._client, self._config.config)
+            # Setup vault
+            return setup.run_setup_remote(command)
+
+        except TeslaVaultException as err:
+            return {"command_status": False, "info": str(err)}
+        except TeslaRemoteException as err:
+            status = err.status
+            status['command_status'] = False
+            return status
+
 
     def unseal(self, keys=None):
         """
