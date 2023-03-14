@@ -16,6 +16,7 @@
 import random
 import string
 import time
+import json
 
 import hvac
 from hvac.exceptions import InvalidPath
@@ -485,6 +486,7 @@ class VaultSetup:
         """
         # Create generic policies
         policies = self._adapt_policies_path(get_policies())
+
         result = {
             "policies": [],
             "is_valid": True
@@ -494,22 +496,20 @@ class VaultSetup:
                 vault_policy = self._client.sys.read_policy(
                     name='{}{}'.format(self._policy_prefix, policy)
                 )
+
+                vault_policy_data = json.loads(vault_policy['data']['rules'])
+
                 result['policies'].append({
                     "policy": '{}{}'.format(self._policy_prefix, policy),
-                    "expected": policy,
-                    "current": vault_policy,
-                    "exist": "True|False",
-                    "is_valid": "True|False"
+                    "expected": policies[policy],
+                    "current": vault_policy_data,
+                    "exist": True,
+                    "is_valid": (policies[policy] == vault_policy_data)
                 })
-                # todo: implement
-                # vault_policy != policy
-                # result['is_valid'] = False
 
             except hvac.exceptions.InvalidPath:
                 # policy not found
                 result['is_valid'] = False
-
-
 
         return result
 
