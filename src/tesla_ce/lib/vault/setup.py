@@ -226,7 +226,6 @@ class VaultSetup:
                 # read checks
                 try:
                     response = self._client.secrets.transit.read_key(check_key, mount_point=self._transit_mount_point)
-
                 except hvac.exceptions.Forbidden:
                     result['transit']['read'] = False
                     result['steps'].append({"msg": "Transit read is forbidden with provided credentials. Error key {}.".format(MODULE_KEY_STR_TEMPLATE.format(module)), "status": False})
@@ -237,7 +236,7 @@ class VaultSetup:
 
                 # write/sign checks
                 try:
-                    response = self._client.secrets.transit.encrypt_data(check_key, "testing")
+                    response = self._client.secrets.transit.encrypt_data(check_key, "testing", mount_point=self._transit_mount_point)
 
                 except hvac.exceptions.Forbidden:
                     result['transit']['sign'] = False
@@ -248,7 +247,6 @@ class VaultSetup:
                     result['steps'].append({"msg": str(err), "status": False})
 
         # check policies
-        # todo: refactor
         policies = self._adapt_policies_path(get_policies())
         result['policies']['read'] = True
         for policy in policies:
