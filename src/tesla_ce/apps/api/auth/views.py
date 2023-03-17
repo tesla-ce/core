@@ -354,9 +354,11 @@ class TokenObtainPairView(AuthViewBase):
             try:
                 launcher = models.Launcher.objects.get(id=data['id'],
                                                        token=data['token'])
+                token_pair = launcher.token_pair
+                launcher.delete()
             except models.Launcher.DoesNotExist:
                 return None
-        return launcher.token_pair
+        return token_pair
 
     def _add_token(self, auth_data):
         return decode_json(auth_data)
