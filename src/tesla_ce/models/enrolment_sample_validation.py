@@ -71,3 +71,11 @@ class EnrolmentSampleValidation(BaseModel):
         super().save(force_insert, force_update, using, update_fields)
         # Invalidate cached value
         get_learner_enrolment.invalidate(self.sample.learner_id)
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.info.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

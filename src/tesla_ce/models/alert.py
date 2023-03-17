@@ -85,3 +85,11 @@ class Alert(BaseModel):
         return "<Alert(learner='%s', activity='%r', level='%r')>" % (
             self.learner, self.activity, self.get_level_display()
         )
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.data.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

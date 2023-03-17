@@ -94,3 +94,11 @@ class Enrolment(BaseModel):
         super().save(force_insert, force_update, using, update_fields)
         # Invalidate cached value
         get_learner_enrolment.invalidate(self.learner_id)
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.model.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

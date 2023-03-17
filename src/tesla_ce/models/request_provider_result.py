@@ -119,3 +119,11 @@ class RequestProviderResult(BaseModel):
                                                    provider=self.provider)
                     setattr(h4, bin, 1)
                     h4.save()
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.audit.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)
