@@ -937,6 +937,7 @@ class Client():
         # Store the session data
         session_data = models.AssessmentSessionData.objects.create(session=session)
         session_connector_data_path = os.path.join(str(learner.institution.id),
+                                                   'launchers',
                                                    str(learner.learner_id),
                                                    'sessions',
                                                    str(session.activity_id),
@@ -961,6 +962,7 @@ class Client():
 
         # Create the data path
         session_connector_path = os.path.join(str(learner.institution.id),
+                                              'launchers',
                                               str(learner.learner_id),
                                               'sessions',
                                               str(session.activity_id),
