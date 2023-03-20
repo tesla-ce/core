@@ -15,6 +15,7 @@
 """ InformedConsentDocument model module."""
 
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from .base_model import BaseModel
@@ -60,10 +61,15 @@ class InformedConsentDocument(BaseModel):
         return "<InformedConsentDocument(consent_id='%d', language='%s')>" % (
             self.consent.id, self.language)
 
-    def delete(self, using=None, keep_parents=False):
+
+@receiver(models.signals.post_delete, sender=InformedConsentDocument)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.pdf:
         try:
-            self.pdf.delete(save=False)
+            instance.pdf.delete(save=False)
         except:
             pass
-
-        return super().delete(using, keep_parents)

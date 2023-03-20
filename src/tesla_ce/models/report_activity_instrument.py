@@ -19,6 +19,7 @@ import json
 from django.core.files.base import ContentFile
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from .base_model import BaseModel
@@ -340,10 +341,15 @@ class ReportActivityInstrument(BaseModel):
 
         return audit
 
-    def delete(self, using=None, keep_parents=False):
+
+@receiver(models.signals.post_delete, sender=ReportActivityInstrument)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.audit_data:
         try:
-            self.audit_data.delete(save=False)
+            instance.audit_data.delete(save=False)
         except:
             pass
-
-        return super().delete(using, keep_parents)

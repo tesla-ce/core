@@ -15,6 +15,7 @@
 """ Request model module."""
 
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from .activity import Activity
@@ -68,10 +69,15 @@ class Request(BaseModel):
         return "<Request(learner='%s', activity='%r', status='%r')>" % (self.learner, self.activity,
                                                                         self.status, )
 
-    def delete(self, using=None, keep_parents=False):
+
+@receiver(models.signals.post_delete, sender=Request)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.data:
         try:
-            self.data.delete(save=False)
+            instance.data.delete(save=False)
         except:
             pass
-
-        return super().delete(using, keep_parents)
