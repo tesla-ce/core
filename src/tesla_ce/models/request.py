@@ -67,3 +67,11 @@ class Request(BaseModel):
     def __repr__(self):
         return "<Request(learner='%s', activity='%r', status='%r')>" % (self.learner, self.activity,
                                                                         self.status, )
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.data.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

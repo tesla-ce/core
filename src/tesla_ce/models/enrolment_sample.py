@@ -57,3 +57,11 @@ class EnrolmentSample(BaseModel):
 
     def __repr__(self):
         return "<EnrolmentSample(learner='%s', status='%r')>" % (self.learner, self.status, )
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.data.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

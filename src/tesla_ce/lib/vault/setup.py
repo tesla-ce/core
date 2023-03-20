@@ -16,6 +16,7 @@
 import random
 import string
 import time
+import json
 
 import hvac
 from hvac.exceptions import InvalidPath
@@ -225,7 +226,6 @@ class VaultSetup:
                 # read checks
                 try:
                     response = self._client.secrets.transit.read_key(check_key, mount_point=self._transit_mount_point)
-
                 except hvac.exceptions.Forbidden:
                     result['transit']['read'] = False
                     result['steps'].append({"msg": "Transit read is forbidden with provided credentials. Error key {}.".format(MODULE_KEY_STR_TEMPLATE.format(module)), "status": False})
@@ -236,7 +236,7 @@ class VaultSetup:
 
                 # write/sign checks
                 try:
-                    response = self._client.secrets.transit.encrypt_data(check_key, "testing")
+                    response = self._client.secrets.transit.encrypt_data(check_key, "testing", mount_point=self._transit_mount_point)
 
                 except hvac.exceptions.Forbidden:
                     result['transit']['sign'] = False
@@ -247,7 +247,6 @@ class VaultSetup:
                     result['steps'].append({"msg": str(err), "status": False})
 
         # check policies
-        # todo: refactor
         policies = self._adapt_policies_path(get_policies())
         result['policies']['read'] = True
         for policy in policies:
@@ -485,6 +484,7 @@ class VaultSetup:
         """
         # Create generic policies
         policies = self._adapt_policies_path(get_policies())
+
         result = {
             "policies": [],
             "is_valid": True
@@ -494,22 +494,20 @@ class VaultSetup:
                 vault_policy = self._client.sys.read_policy(
                     name='{}{}'.format(self._policy_prefix, policy)
                 )
+
+                vault_policy_data = json.loads(vault_policy['data']['rules'])
+
                 result['policies'].append({
                     "policy": '{}{}'.format(self._policy_prefix, policy),
-                    "expected": policy,
-                    "current": vault_policy,
-                    "exist": "True|False",
-                    "is_valid": "True|False"
+                    "expected": policies[policy],
+                    "current": vault_policy_data,
+                    "exist": True,
+                    "is_valid": (policies[policy] == vault_policy_data)
                 })
-                # todo: implement
-                # vault_policy != policy
-                # result['is_valid'] = False
 
             except hvac.exceptions.InvalidPath:
                 # policy not found
                 result['is_valid'] = False
-
-
 
         return result
 

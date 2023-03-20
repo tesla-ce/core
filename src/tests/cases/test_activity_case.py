@@ -302,8 +302,11 @@ def test_activity_case_complete(rest_api_client, user_global_admin):
     provider_verification_tasks += tasks
 
     # VLE send the activity
-    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session1, activity_doc1, True)
-    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session2, activity_doc2)
+    assessment_session3 = utils.vle.vle_create_assessment_session(vle, learners[0], activity, vle_options)
+    assessment_session4 = utils.vle.vle_create_assessment_session(vle, learners[1], activity)
+
+    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session3, activity_doc1, True)
+    provider_verification_tasks += utils.vle.vle_send_activity(vle, assessment_session4, activity_doc2)
 
     # The VLE creates a launcher for the learners to check the status of their requests
     launcher_stats1 = utils.vle.vle_create_launcher(vle, learners[0])

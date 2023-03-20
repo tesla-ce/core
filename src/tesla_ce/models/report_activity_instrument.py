@@ -339,3 +339,11 @@ class ReportActivityInstrument(BaseModel):
                 audit['providers'][provider_id]['enrolment_percentage'] = enrolment.percentage
 
         return audit
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.audit_data.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

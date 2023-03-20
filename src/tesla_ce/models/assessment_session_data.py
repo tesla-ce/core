@@ -33,5 +33,14 @@ class AssessmentSessionData(BaseModel):
         return "<AssessmentSessionData(session_id='%r')>" % (self.session_id)
 
     def delete(self, using=None, keep_parents=False):
-        # TODO: Remove data from storage
+        try:
+            self.connector.delete(save=False)
+        except:
+            pass
+
+        try:
+            self.data.delete(save=False)
+        except:
+            pass
+
         return super().delete(using, keep_parents)

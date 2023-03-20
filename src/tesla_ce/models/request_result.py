@@ -79,3 +79,11 @@ class RequestResult(BaseModel):
                    self.request.id, self.instrument.acronym, self.get_status_display(),
                    self.result, self.get_code_display()
         )
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.audit.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

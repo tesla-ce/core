@@ -58,3 +58,11 @@ class ReportActivity(BaseModel):
     def __repr__(self):
         return "<ReportActivity(id='%r', learner_id='%r' activity_id='%r')>" % (
             self.id, self.learner_id, self.activity_id)
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.data.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

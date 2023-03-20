@@ -59,3 +59,11 @@ class InformedConsentDocument(BaseModel):
     def __repr__(self):
         return "<InformedConsentDocument(consent_id='%d', language='%s')>" % (
             self.consent.id, self.language)
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.pdf.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)

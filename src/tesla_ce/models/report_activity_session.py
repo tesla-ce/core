@@ -61,3 +61,11 @@ class ReportActivitySession(BaseModel):
     def __repr__(self):
         return "<ReportActivitySession(id='%r', session_id='%r', learner_id='%r' activity_id='%r')>" % (
             self.id, self.session.id, self.session.learner.learner_id, self.session.activity_id)
+
+    def delete(self, using=None, keep_parents=False):
+        try:
+            self.data.delete(save=False)
+        except:
+            pass
+
+        return super().delete(using, keep_parents)
