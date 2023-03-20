@@ -33,19 +33,6 @@ class AssessmentSessionData(BaseModel):
     def __repr__(self):
         return "<AssessmentSessionData(session_id='%r')>" % (self.session_id)
 
-    def delete(self, using=None, keep_parents=False):
-        try:
-            self.connector.delete(save=False)
-        except:
-            pass
-
-        try:
-            self.data.delete(save=False)
-        except:
-            pass
-
-        return super().delete(using, keep_parents)
-
 
 @receiver(models.signals.post_delete, sender=AssessmentSessionData)
 def auto_delete_file_on_delete(sender, instance, **kwargs):
@@ -53,12 +40,13 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     Deletes file from filesystem
     when corresponding `FieldField` object is deleted.
     """
-    if instance.model:
+    if instance.connector:
         try:
             instance.connector.delete(save=False)
         except:
             pass
 
+    if instance.data:
         try:
             instance.data.delete(save=False)
         except:

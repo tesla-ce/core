@@ -94,7 +94,7 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     Deletes file from filesystem
     when corresponding `FieldField` object is deleted.
     """
-    if instance.model:
+    if instance.data:
         try:
             instance.data.delete(save=False)
         except:
