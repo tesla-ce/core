@@ -15,6 +15,7 @@
 """ Request Provider Result model module."""
 
 from django.db import models
+from django.dispatch import receiver
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
@@ -120,10 +121,15 @@ class RequestProviderResult(BaseModel):
                     setattr(h4, bin, 1)
                     h4.save()
 
-    def delete(self, using=None, keep_parents=False):
+
+@receiver(models.signals.post_delete, sender=RequestProviderResult)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.model:
         try:
-            self.audit.delete(save=False)
+            instance.audit.delete(save=False)
         except:
             pass
-
-        return super().delete(using, keep_parents)

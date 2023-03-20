@@ -14,6 +14,7 @@
 #      along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """ Assessment session data model module."""
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from .assessment_session import AssessmentSession
@@ -44,3 +45,21 @@ class AssessmentSessionData(BaseModel):
             pass
 
         return super().delete(using, keep_parents)
+
+
+@receiver(models.signals.post_delete, sender=AssessmentSessionData)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.model:
+        try:
+            instance.connector.delete(save=False)
+        except:
+            pass
+
+        try:
+            instance.data.delete(save=False)
+        except:
+            pass

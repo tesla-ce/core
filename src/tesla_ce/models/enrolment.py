@@ -15,6 +15,7 @@
 """ Enrolment model module."""
 
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from .base_model import BaseModel
@@ -95,10 +96,15 @@ class Enrolment(BaseModel):
         # Invalidate cached value
         get_learner_enrolment.invalidate(self.learner_id)
 
-    def delete(self, using=None, keep_parents=False):
+
+@receiver(models.signals.post_delete, sender=Enrolment)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.model:
         try:
-            self.model.delete(save=False)
+            instance.model.delete(save=False)
         except:
             pass
-
-        return super().delete(using, keep_parents)

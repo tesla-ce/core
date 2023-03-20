@@ -15,6 +15,7 @@
 """ Report Activity model module."""
 
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from .activity import Activity
@@ -59,10 +60,15 @@ class ReportActivity(BaseModel):
         return "<ReportActivity(id='%r', learner_id='%r' activity_id='%r')>" % (
             self.id, self.learner_id, self.activity_id)
 
-    def delete(self, using=None, keep_parents=False):
+
+@receiver(models.signals.post_delete, sender=ReportActivity)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.model:
         try:
-            self.data.delete(save=False)
+            instance.data.delete(save=False)
         except:
             pass
-
-        return super().delete(using, keep_parents)

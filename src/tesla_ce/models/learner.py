@@ -16,7 +16,9 @@
 import uuid
 
 from cache_memoize import cache_memoize
+from django.core.files.storage import default_storage
 from django.db import models
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -253,3 +255,17 @@ class Learner(InstitutionUser):
             :return: Aggregated values per instrument
         """
         return get_missing_enrolment(self.id, activity_id)
+
+
+@receiver(models.signals.post_delete, sender=Learner)
+def auto_delete_folders_on_delete(sender, instance, **kwargs):
+    """
+    Deletes folders from filesystem
+    when corresponding object is deleted.
+    """
+
+    for data in ['enrolment', 'models', 'requests', 'results', 'launchers']:
+        try:
+            default_storage.delete(f'{instance.institution.id}/{data}/{instance.learner_id}')
+        except:
+            pass

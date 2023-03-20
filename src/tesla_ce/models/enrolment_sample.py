@@ -15,6 +15,7 @@
 """ Enrolment sample request model module."""
 
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from .base_model import BaseModel
@@ -58,10 +59,15 @@ class EnrolmentSample(BaseModel):
     def __repr__(self):
         return "<EnrolmentSample(learner='%s', status='%r')>" % (self.learner, self.status, )
 
-    def delete(self, using=None, keep_parents=False):
+
+@receiver(models.signals.post_delete, sender=EnrolmentSample)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `FieldField` object is deleted.
+    """
+    if instance.model:
         try:
-            self.data.delete(save=False)
+            instance.data.delete(save=False)
         except:
             pass
-
-        return super().delete(using, keep_parents)
