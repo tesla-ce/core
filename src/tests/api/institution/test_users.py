@@ -64,10 +64,10 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
     assert profile['first_name'] == user_name[:5]
     assert profile['last_name'] == user_name[5:]
 
-    # Grant administration privileges
+    # Grant administration privileges and data privileges (DATA privileges to remove user)
     user_mod_resp = client.patch(
         '/api/v2/institution/{}/user/{}/'.format(inst_id, user_create_resp.data['id']),
-        data={'inst_admin': True},
+        data={'inst_admin': True, 'data_admin': True},
         format='json'
     )
     assert user_mod_resp.status_code == 200
@@ -76,6 +76,7 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
     profile = auth_utils.get_profile(user_client)
     assert len(profile['roles']) == 1
     assert 'ADMIN' in profile['roles']
+    assert 'DATA' in profile['roles']
 
     # Try to grant global administration privileges
     user_mod_resp2 = client.patch(
@@ -89,6 +90,7 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
     profile = auth_utils.get_profile(user_client)
     assert len(profile['roles']) == 1
     assert 'ADMIN' in profile['roles']
+    assert 'DATA' in profile['roles']
 
     # Find for this user by email
     find_user_resp = client.get('/api/v2/institution/{}/user/?email={}'.format(inst_id, email))
