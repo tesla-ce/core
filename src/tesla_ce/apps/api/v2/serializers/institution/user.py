@@ -75,10 +75,11 @@ class InstitutionUserSerializer(serializers.ModelSerializer):
         if attrs.get('login_allowed', True):
             if 'password' in attrs and attrs.get('password') != attrs.get('password2'):
                 raise serializers.ValidationError('Passwords does not match')
-            if 'password2' in attrs:
-                del attrs['password2']
         else:
             attrs['login_allowed'] = False
+
+        if 'password2' in attrs:
+            del attrs['password2']
 
         # Apply validators
         for validator in self.get_validators():

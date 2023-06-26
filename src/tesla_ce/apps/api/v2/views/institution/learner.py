@@ -133,17 +133,23 @@ class InstitutionLearnerViewSet(NestedViewSetMixin, DetailSerializerMixin, views
         serializer = self.get_serializer(learner)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['GET'])
+    @action(detail=True, methods=['GET', 'DELETE'], permission_classes=[
+        permissions.InstitutionMemberReadOnlyPermission | permissions.InstitutionDataAdminPermission])
     def enrolment(self, request, *args, **kwargs):
         """
             Get learner enrolment status
         """
+        # todo: check if learner1 can not see learner2 enrolment
         learner = Learner.objects.get(
             pk=kwargs['pk'],
             institution_id=kwargs['parent_lookup_institution_id']
         )
 
-        if 'activity_id' in request.query_params:
-            return Response(learner.missing_enrolments(int(request.query_params['activity_id'])))
+        if request.method == 'GET':
+            if 'activity_id' in request.query_params:
+                return Response(learner.missing_enrolments(int(request.query_params['activity_id'])))
 
-        return Response(learner.enrolment_status)
+            return Response(learner.enrolment_status)
+        elif request.method == 'DELETE':
+            learner.delete_unused_enrolments()
+            return Response(learner.enrolment_status)

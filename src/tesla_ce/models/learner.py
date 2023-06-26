@@ -256,6 +256,15 @@ class Learner(InstitutionUser):
         """
         return get_missing_enrolment(self.id, activity_id)
 
+    def delete_unused_enrolments(self):
+        """
+            Delete unused enrolments for this learner
+        :return:
+        """
+        for enrolment in self.enrolment_set.all():
+            for request in self.request_set.all():
+                if enrolment.provider.instrument not in request.instruments:
+                    enrolment.delete()
 
 @receiver(models.signals.post_delete, sender=Learner)
 def auto_delete_folders_on_delete(sender, instance, **kwargs):
