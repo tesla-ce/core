@@ -69,7 +69,7 @@ class BaseConfiguration(Configuration):
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
-        'corsheaders.middleware.CorsPostCsrfMiddleware',
+        #'corsheaders.middleware.CorsPostCsrfMiddleware',
         #'tesla_ce.lib.auth.tesla_token_auth_middleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
