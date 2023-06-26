@@ -74,7 +74,7 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
 
     # Get the user profile again
     profile = auth_utils.get_profile(user_client)
-    assert len(profile['roles']) == 1
+    assert len(profile['roles']) == 2
     assert 'ADMIN' in profile['roles']
     assert 'DATA' in profile['roles']
 
@@ -88,7 +88,7 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
 
     # Get the user profile again
     profile = auth_utils.get_profile(user_client)
-    assert len(profile['roles']) == 1
+    assert len(profile['roles']) == 2
     assert 'ADMIN' in profile['roles']
     assert 'DATA' in profile['roles']
 
