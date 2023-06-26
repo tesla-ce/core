@@ -22,7 +22,8 @@ jsonschema
 
 # Database connectors
 #mysql
-mysqlclient
+#mysqlclient
+mysql-connector-python
 psycopg2
 
 # Celery
