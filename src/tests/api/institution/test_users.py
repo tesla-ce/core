@@ -108,7 +108,7 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
     # Create a new user
     user_name2 = get_random_string(10)
     password2 = get_random_string(10)
-    email2 = '{}@inst.tesla-ce.eu'.format(user_name)
+    email2 = '{}@inst.tesla-ce.eu'.format(user_name2)
     user_data2 = {
         'username': user_name2,
         'uid': user_name2,
