@@ -109,7 +109,6 @@ class InstitutionUserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     ]
 
     def destroy(self, request, *args, **kwargs):
-        # todo: create unit test for this method
         inst_user = get_institution_user(self.request.user)
         if inst_user is not None and int(kwargs['pk']) == inst_user.id:
             raise PermissionDenied("Cannot delete yourself")

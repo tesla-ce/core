@@ -98,14 +98,40 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
     assert find_user_resp.data['count'] == 1
     assert find_user_resp.data['results'][0]['id'] == profile['id']
 
-    # Remove the user
+    # Remove the user (it is forbidden to remove the user that is logged in)
     user_del_resp = client.delete(
         '/api/v2/institution/{}/user/{}/'.format(inst_id, user_create_resp.data['id'])
+    )
+    assert user_del_resp.status_code == 403
+
+    # create other user to delete
+    # Create a new user
+    user_name2 = get_random_string(10)
+    password2 = get_random_string(10)
+    email2 = '{}@inst.tesla-ce.eu'.format(user_name)
+    user_data2 = {
+        'username': user_name2,
+        'uid': user_name2,
+        'email': email2,
+        'first_name': user_name2[:5],
+        'last_name': user_name2[5:],
+        'login_allowed': True,
+        'is_active': True,
+        'is_staff': False,
+        'password': password2,
+        'password2': password2
+    }
+    user_create_resp2 = client.post('/api/v2/institution/{}/user/'.format(inst_id), data=user_data2, format='json')
+    assert user_create_resp2.status_code == 201
+
+    # Remove the user
+    user_del_resp = client.delete(
+        '/api/v2/institution/{}/user/{}/'.format(inst_id, user_create_resp2.data['id'])
     )
     assert user_del_resp.status_code == 204
 
     # Ensure that this user does not exist
-    find2_user_resp = client.get('/api/v2/institution/{}/user/?email={}'.format(inst_id, email))
+    find2_user_resp = client.get('/api/v2/institution/{}/user/?email={}'.format(inst_id, email2))
     assert find2_user_resp.status_code == 200
     assert find2_user_resp.data['count'] == 0
 
