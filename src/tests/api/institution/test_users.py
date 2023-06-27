@@ -124,6 +124,14 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
     user_create_resp2 = client.post('/api/v2/institution/{}/user/'.format(inst_id), data=user_data2, format='json')
     assert user_create_resp2.status_code == 201
 
+    # Try to remove global administration privileges
+    user_mod_resp3 = client.patch(
+        '/api/v2/institution/{}/user/{}/'.format(inst_id, user_create_resp.data['id']),
+        data={'is_staff': False},
+        format='json'
+    )
+    assert user_mod_resp3.status_code == 200
+
     # Remove the user
     user_del_resp = client.delete(
         '/api/v2/institution/{}/user/{}/'.format(inst_id, user_create_resp2.data['id'])
