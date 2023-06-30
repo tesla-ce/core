@@ -98,6 +98,8 @@ def test_api_institution_users(rest_api_client, institution_course_test_case):
     assert find_user_resp.data['count'] == 1
     assert find_user_resp.data['results'][0]['id'] == profile['id']
 
+    # logged as user created in previous steps
+    client = auth_utils.client_with_user_credentials(user_data['email'], user_data['password'])
     # Remove the user (it is forbidden to remove the user that is logged in)
     user_del_resp = client.delete(
         '/api/v2/institution/{}/user/{}/'.format(inst_id, user_create_resp.data['id'])
