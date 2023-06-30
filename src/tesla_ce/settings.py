@@ -433,8 +433,7 @@ class Setup(Production):
                     content = ''
 
                 raise TeslaConfigException("Cannot get remote configuration. Server returns status code {}. Response content {}.".format(response.status_code, content))
-            print(os.path.dirname(output_file))
-            print(output_file)
+
             cls.TESLA_CONFIG.load_file(output_file)
         # Load Production configuration
         super().pre_setup()
