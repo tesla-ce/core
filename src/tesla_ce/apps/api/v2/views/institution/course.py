@@ -38,7 +38,8 @@ class InstitutionCourseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet
     permission_classes = [
         permissions.InstitutionMemberReadOnlyPermission |
         permissions.GlobalAdminReadOnlyPermission |
-        permissions.InstitutionAdminPermission
+        permissions.InstitutionAdminNotDeletePermission |
+        permissions.InstitutionDataAdminPermission
     ]
     # filterset_fields = ['code', 'vle_course_id', 'description', 'vle']
     # search_fields = ['vle_course_id', 'description', 'code', 'vle']

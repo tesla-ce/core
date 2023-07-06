@@ -69,7 +69,7 @@ class BaseConfiguration(Configuration):
         'django.contrib.sessions.middleware.SessionMiddleware',
         'django.middleware.common.CommonMiddleware',
         'django.middleware.csrf.CsrfViewMiddleware',
-        'corsheaders.middleware.CorsPostCsrfMiddleware',
+        #'corsheaders.middleware.CorsPostCsrfMiddleware',
         #'tesla_ce.lib.auth.tesla_token_auth_middleware',
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
@@ -199,11 +199,29 @@ class Production(BaseConfiguration):
         cls.AWS_S3_STORAGE_PUBLIC_BUCKET_NAME = cls.TESLA_CONFIG.config.get('STORAGE_PUBLIC_BUCKET_NAME')
 
         if cls.AWS_ACCESS_KEY_ID is not None and cls.AWS_SECRET_ACCESS_KEY is not None:
-            cls.DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-            cls.STATICFILES_STORAGE = 'tesla_ce.lib.storage.bucket.PublicS3Boto3Storage'
+            # cls.DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+            # cls.STATICFILES_STORAGE = 'tesla_ce.lib.storage.bucket.PublicS3Boto3Storage'
             cls.STATIC_ROOT = '/'
+            cls.STORAGES = {
+                "default": {
+                    "BACKEND": 'storages.backends.s3boto3.S3Boto3Storage',
+                },
+                "staticfiles": {
+                    "BACKEND": 'tesla_ce.lib.storage.bucket.PublicS3Boto3Storage',
+                },
+            }
         else:
-            cls.DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+            #cls.DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+            cls.STORAGES = {
+                "default": {
+                    "BACKEND": 'django.core.files.storage.FileSystemStorage',
+                },
+                "staticfiles": {
+                    "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+                },
+            }
+
+
 
     @classmethod
     def pre_setup(cls):
@@ -415,8 +433,7 @@ class Setup(Production):
                     content = ''
 
                 raise TeslaConfigException("Cannot get remote configuration. Server returns status code {}. Response content {}.".format(response.status_code, content))
-            print(os.path.dirname(output_file))
-            print(output_file)
+
             cls.TESLA_CONFIG.load_file(output_file)
         # Load Production configuration
         super().pre_setup()

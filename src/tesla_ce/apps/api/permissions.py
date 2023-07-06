@@ -93,6 +93,17 @@ class InstitutionAdminPermission(InstitutionMemberPermission):
         return False
 
 
+class InstitutionAdminNotDeletePermission(InstitutionAdminPermission):
+    """
+        Only admins of the institution can access to the view
+    """
+    def has_permission(self, request, view):
+        if request.method != 'DELETE':
+            return super().has_permission(request, view)
+
+        return False
+
+
 class InstitutionAdminReadOnlyPermission(InstitutionAdminPermission):
     """
         Only admins of the institution can access to the view in read only mode
@@ -109,6 +120,13 @@ class InstitutionDataAdminPermission(InstitutionMemberPermission):
     """
     def has_permission(self, request, view):
         if super().has_permission(request, view):
+            # todo: review if GLOBAL_ADMIN should be able to access to this view
+            '''
+                try:
+                    return request.user.institutionuser.institution
+                except User.institutionuser.RelatedObjectDoesNotExist:
+                    return None
+            '''
             if isinstance(request.user, InstitutionUser):
                 return request.user.data_admin
             else:

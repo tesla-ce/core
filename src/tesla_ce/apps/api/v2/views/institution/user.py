@@ -102,11 +102,18 @@ class InstitutionUserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     search_fields = ['username', 'first_name', 'last_name', 'email', 'uid']
     permission_classes = [
         permissions.GlobalAdminReadOnlyPermission |
-        permissions.InstitutionAdminPermission |
+        permissions.InstitutionAdminNotDeletePermission |
         permissions.InstitutionLegalAdminReadOnlyPermission |
-        permissions.InstitutionDataAdminReadOnlyPermission |
+        permissions.InstitutionDataAdminPermission |
         permissions.InstitutionMemberReadOnlyPermission
     ]
+
+    def destroy(self, request, *args, **kwargs):
+        inst_user = get_institution_user(self.request.user)
+        if inst_user is not None and int(kwargs['pk']) == inst_user.id:
+            raise PermissionDenied("Cannot delete yourself")
+
+        return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = self.filter_queryset_by_parents_lookups(InstitutionUser.objects)

@@ -27,14 +27,15 @@ jobs:
           MYSQL_DATABASE: tesla
           MYSQL_USER: tesla
           MYSQL_PASSWORD: tesla-password
+          MARIADB_MYSQL_LOCALHOST_USER: 1
         options: >-
-          --health-cmd "mysqladmin ping"
+          --health-cmd "/usr/local/bin/healthcheck.sh --su=mysql --connect --innodb_initialized"
           --health-interval 5s
           --health-timeout 2s
           --health-retries 3
           --name db
       vault:
-        image: vault
+        image: hashicorp/vault
         ports:
           - 8200:8200
         env:
