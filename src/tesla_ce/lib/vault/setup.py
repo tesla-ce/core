@@ -227,6 +227,7 @@ class VaultSetup:
             result['transit']['sign'] = True
             for check_key in check_keys:
                 # read checks
+                jwt_signing_key = None
                 try:
                     response = self._client.secrets.transit.read_key(check_key, mount_point=self._transit_mount_point)
                     jwt_signing_key = response['data']
