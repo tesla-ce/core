@@ -259,7 +259,7 @@ class Learner(InstitutionUser):
     def delete_unused_enrolments(self):
         """
             Delete unused enrolments for this learner
-        :return:
+            :return:
         """
         for enrolment in self.enrolment_set.all():
             for request in self.request_set.all():

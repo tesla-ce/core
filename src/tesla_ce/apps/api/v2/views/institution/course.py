@@ -28,7 +28,7 @@ from tesla_ce.models.user import get_institution_user
 
 
 # pylint: disable=too-many-ancestors
-class InstitutionCourseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
+class InstitutionCourseViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     """
     API endpoint that allows course in a vle to be viewed or edited.
     """
