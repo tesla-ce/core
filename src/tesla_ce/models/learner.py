@@ -269,7 +269,7 @@ class Learner(InstitutionUser):
                     delete = False
                     break
             if delete:
-                for model_sample in enrolment.model_samples_set.all():
+                for model_sample in enrolment.model_samples.all():
                     model_sample.delete()
 
                 enrolment.delete()
