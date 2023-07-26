@@ -263,7 +263,7 @@ class Learner(InstitutionUser):
         """
         for enrolment in self.enrolment_set.all():
             for request in self.request_set.all():
-                if enrolment.provider.instrument not in request.instruments:
+                if enrolment.provider.instrument not in request.instruments.all():
                     enrolment.delete()
 
 @receiver(models.signals.post_delete, sender=Learner)
