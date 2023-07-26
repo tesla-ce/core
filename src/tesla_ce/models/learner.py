@@ -261,10 +261,18 @@ class Learner(InstitutionUser):
             Delete unused enrolments for this learner
             :return:
         """
+        # todo: optimize this
         for enrolment in self.enrolment_set.all():
+            delete = True
             for request in self.request_set.all():
-                if enrolment.provider.instrument not in request.instruments.all():
-                    enrolment.delete()
+                if enrolment.provider.instrument in request.instruments.all():
+                    delete = False
+                    break
+            if delete:
+                for model_sample in enrolment.model_samples_set.all():
+                    model_sample.delete()
+
+                enrolment.delete()
 
 @receiver(models.signals.post_delete, sender=Learner)
 def auto_delete_folders_on_delete(sender, instance, **kwargs):
