@@ -118,7 +118,7 @@ class Command(TeslaConfigCommand):
             'collect_static',
             'load_fixtures',
             'create_superuser',
-            'register_tpt_webook'
+            'register_tpt_webhook'
         ]
 
         status = {"status": False, "info": {}}
@@ -191,7 +191,7 @@ class Command(TeslaConfigCommand):
             except TeslaDatabaseException as exc:
                 status['status'] = False
                 status['info'] = str(exc)
-        elif command in ['register_tpt_webook']:
+        elif command in ['register_tpt_webhook']:
             try:
                 name = 'tpt'
                 client_header = 'TESLA-TPT-METHOD'
