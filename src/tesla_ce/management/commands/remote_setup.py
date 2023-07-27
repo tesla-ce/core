@@ -196,7 +196,7 @@ class Command(TeslaConfigCommand):
                 name = 'tpt'
                 client_header = 'TESLA-TPT-METHOD'
                 id_header = 'TESLA-TPT-MESSAGE-ID'
-                credentials = "{""secret"": "+self.client.config.config.get('tpt_service_api_secret')+"}"
+                credentials = "{\"secret\": \""+self.client.config.config.get('tpt_service_api_secret')+"\"}"
                 provider_info = self.client.register_webhook(name, client_header, id_header, credentials)
                 status['status'] = True
             except Exception as err:
