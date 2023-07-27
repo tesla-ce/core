@@ -117,7 +117,8 @@ class Command(TeslaConfigCommand):
             'migrate_database',
             'collect_static',
             'load_fixtures',
-            'create_superuser'
+            'create_superuser',
+            'register_tpt_webook'
         ]
 
         status = {"status": False, "info": {}}
@@ -190,5 +191,16 @@ class Command(TeslaConfigCommand):
             except TeslaDatabaseException as exc:
                 status['status'] = False
                 status['info'] = str(exc)
+        elif command in ['register_tpt_webook']:
+            try:
+                name = 'tpt'
+                client_header = 'TESLA-TPT-METHOD'
+                id_header = 'TESLA-TPT-MESSAGE-ID'
+                credentials = "{""secret"": "+self.client.config.config.get('tpt_service_api_secret')+"}"
+                provider_info = self.client.register_webhook(name, client_header, id_header, credentials)
+                status['status'] = True
+            except Exception as err:
+                status['status'] = False
+                status['info'] = str(err)
 
         self.report_remote_result(status=status)

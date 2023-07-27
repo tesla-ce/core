@@ -179,6 +179,16 @@ class Config:
             ('admin_user', 'Administrator username', 'str', 'admin', None, True),
             ('admin_password', 'Administrator password', 'str', None, None, True),
             ('admin_email', 'Administrator email', 'str', None, None, True),
+        )),
+        ('tpt_service', 'TeSLA TPT Service configuration.', (
+            ('api_secret', 'API secret shared with TeSLA CE API', 'str', None, None, True),
+            ('db_password', 'Database password', 'str', None, None, True),
+            ('db_user', 'Database user', 'str', 'tpt_user', None, True),
+            ('db_address', 'Database address', 'str', 'localhost', None, True),
+            ('db_database', 'Database name', 'str', 'tpt_db', None, True),
+            ('db_port', 'Database port', 'int', 5432, None, True),
+            ('db_schema', 'Database schema', 'str', 'tpt_schema', None, True),
+            ('db_engine', 'Database engine', 'str', 'postgresql+psycopg2', None, True)
         ))
     )
 
