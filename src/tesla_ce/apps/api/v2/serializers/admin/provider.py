@@ -46,7 +46,7 @@ class ProviderSerializer(serializers.ModelSerializer):
         model = Provider
         fields = ['id', 'instrument_id', 'instrument', 'name', 'queue', 'description', 'url', 'version', 'acronym',
                   'allow_validation', 'inverted_polarity', 'image', 'has_service', 'service_port', 'options_schema',
-                  'options', 'credentials', 'enabled', 'validation_active']
+                  'options', 'credentials', 'enabled', 'validation_active', 'warning_below', 'alert_below']
 
     def validate(self, attrs):
         """
