@@ -5,6 +5,7 @@
 
 !src/tesla_ce/lib
 !src/tesla_ce/lib/deploy
+!src/tesla_ce/lib/webhook
 
 # User-specific stuff
 .idea/**/workspace.xml
