@@ -197,6 +197,10 @@ def update_learner_activity_instrument_report(self, learner_id, activity_id, ins
     if code > 0:
         # Unless the code is 0 (PENDING), move to the alerts scale
         code += 1
+
+        if instrument_report.confidence < 60:
+            code = max(code, 2)  # Warning
+
     # Update levels where this instrument applies
     if instrument_report.instrument.identity:
         instrument_report.identity_level = code
@@ -221,6 +225,7 @@ def update_learner_activity_instrument_report(self, learner_id, activity_id, ins
                 'request__requestproviderresult__provider_id',
                 flat=True).distinct()
         ).aggregate(Min('percentage'))['percentage__min'] * 100)
+
     instrument_report.save()
 
     # Update the audit data

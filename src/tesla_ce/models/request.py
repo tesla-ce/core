@@ -77,6 +77,7 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     when corresponding `FieldField` object is deleted.
     """
     if instance.data:
+        # todo: remove .valid and .error associated files
         try:
             instance.data.delete(save=False)
         except:
