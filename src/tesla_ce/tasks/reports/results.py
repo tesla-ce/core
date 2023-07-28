@@ -180,8 +180,19 @@ def update_learner_activity_instrument_report(self, learner_id, activity_id, ins
 
     # Compute the final alert levels from result codes
     code_result = results_qs.filter(status=1).aggregate(Max('code'), Avg('result'))
+
+    if code_result['code__max'] is None:
+        code_result['code__max'] = 2  # Warning
+
+    if code_result['result__avg'] is None:
+        code_result['result__avg'] = 0
+
     instrument_report.result = round(code_result['result__avg'] * 100)
-    instrument_report.confidence = round(results_qs.filter(status=1).count() / results_qs.count() * 100)
+    if results_qs.count() != 0:
+        instrument_report.confidence = round(results_qs.filter(status=1).count() / results_qs.count() * 100)
+    else:
+        instrument_report.confidence = 0
+
     code = code_result['code__max']
     if code > 0:
         # Unless the code is 0 (PENDING), move to the alerts scale

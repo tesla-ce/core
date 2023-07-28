@@ -144,8 +144,8 @@ def create_verification_summary(self, request_id, instrument_id):
         Summarize request verification
         :param request_id: Request ID
         :type request_id: int
-        :param request_id: Instrument ID
-        :type request_id: int
+        :param instrument_id: Instrument ID
+        :type instrument_id: int
     """
     try:
         result = models.RequestResult.objects.get(request_id=request_id, instrument_id=instrument_id)
@@ -153,10 +153,57 @@ def create_verification_summary(self, request_id, instrument_id):
         result = models.RequestResult.objects.create(request_id=request_id, instrument_id=instrument_id,
                                                      code=0, status=0)
 
-    res_values = models.RequestProviderResult.objects.filter(request_id=request_id,
-                                                             provider__instrument_id=instrument_id,
-                                                             status=1
-                                                             ).aggregate(Max('result'), Max('code'))
+
+    instrument_provider = models.RequestProviderResult.objects.filter(
+        request_id=request_id,
+        provider__instrument_id=instrument_id,
+        status=1
+    ).values('provider_id').distinct().values_list('provider_id', flat=True)
+
+    alert_level = 0
+    for provider_id in instrument_provider:
+        provider = models.Provider.objects.get(id=provider_id)
+
+        if provider.inverted_polarity is False:
+            if alert_level < 3 and models.RequestProviderResult.objects.filter(
+                    request_id=request_id,
+                    provider_id=provider_id,
+                    status=1,
+                    result__lt=provider.alert_below).count() > 0:
+                alert_level = 3
+
+            elif alert_level < 2 and models.RequestProviderResult.objects.filter(
+                    request_id=request_id,
+                    provider_id=provider_id,
+                    status=1,
+                    result__lt=provider.warning_below).count() > 0:
+                alert_level = 2
+        else:
+            if alert_level < 3 and models.RequestProviderResult.objects.filter(
+                    request_id=request_id,
+                    provider_id=provider_id,
+                    status=1,
+                    result__gt=provider.alert_below).count() > 0:
+                alert_level = 3
+
+            elif alert_level < 2 and models.RequestProviderResult.objects.filter(
+                    request_id=request_id,
+                    provider_id=provider_id,
+                    status=1,
+                    result__gt=provider.warning_below).count() > 0:
+                alert_level = 2
+
+    res_values = models.RequestProviderResult.objects.filter(
+        request_id=request_id,
+        provider__instrument_id=instrument_id,
+        status=1
+    ).aggregate(Max('result'), Max('code'))
+
+    if res_values['result__max'] is None:
+        res_values['result__max'] = 0
+    if res_values['code__max'] is None:
+        res_values['code__max'] = 2  # Warning
+
     status_values = models.RequestProviderResult.objects.filter(request_id=request_id,
                                                                 provider__instrument_id=instrument_id
                                                                ).aggregate(Min('status'), Max('status'))
@@ -168,7 +215,7 @@ def create_verification_summary(self, request_id, instrument_id):
     # Compute average result for providers
     result.result = res_values['result__max']
     # Set the maximum alert level as the final level
-    result.code = res_values['code__max']
+    result.code = max(res_values['code__max'], alert_level)
     result.save()
 
     # If there are no missing requests for this learner and instrument in the activity, update the activity report
