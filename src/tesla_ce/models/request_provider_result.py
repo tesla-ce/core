@@ -17,6 +17,7 @@
 from django.db import models
 from django.dispatch import receiver
 from django.db import transaction
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from .base_model import BaseModel
@@ -120,6 +121,17 @@ class RequestProviderResult(BaseModel):
                                                    provider=self.provider)
                     setattr(h4, bin, 1)
                     h4.save()
+
+        # If all the providers reported their results, launch summarise task
+        if RequestProviderResult.objects.filter(Q(status=0) | Q(status=7),
+                                                request_id=self.request_id,
+                                                provider__instrument=self.provider.instrument
+                                                ).count() == 0:
+            from ..tasks.requests.verification import create_verification_summary
+            create_verification_summary.apply_async((
+                self.request.id,
+                self.provider.instrument_id,
+            ))
 
 
 @receiver(models.signals.post_delete, sender=RequestProviderResult)

@@ -53,6 +53,7 @@ class ProviderVerificationRequestResultSerializer(serializers.ModelSerializer):
         new_instance.audit.save('{}__audit.json'.format(new_instance.request.data.name),
                                 ContentFile(simplejson.dumps(new_instance.audit_data).encode('utf-8')))
 
+        '''
         # If all the providers reported their results, launch summarise task
         if RequestProviderResult.objects.filter(Q(status=0) | Q(status=7),
                                                 request_id=new_instance.request_id,
@@ -62,4 +63,6 @@ class ProviderVerificationRequestResultSerializer(serializers.ModelSerializer):
                     instance.request.id,
                     new_instance.provider.instrument_id,
             ))
+        '''
         return new_instance
+
