@@ -11,14 +11,17 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.vars.outputs.version }}
+      tag: ${{ steps.vars.outputs.tag }}
     steps: 
       - uses: actions/checkout@v3
       - name: Get version values
         id: vars
-        run: |          
-          echo ::set-output name=version::$(cat src/tesla_ce/lib/data/VERSION)                              
-          echo ::set-output name=tag::${GITHUB_REF#refs/*/}                
+        run: |
+          echo "version=$(cat src/tesla_ce/lib/data/VERSION)" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
       - name: Show captured versions
         run: |
           echo 'Version in source code: ${{ steps.vars.outputs.version }}'
