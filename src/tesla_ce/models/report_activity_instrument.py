@@ -22,6 +22,7 @@ from django.db import models
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
+from .alert import Alert
 from .base_model import BaseModel
 from .instrument import Instrument
 from .report_activity import REPORT_ALERT_LEVEL
@@ -43,6 +44,7 @@ class ResultFacts(Enum):
     NEGATIVE_LEARNER_RESULT_BAD_ACTIVITY = -3
     NEGATIVE_LEARNER_RESULT_NOT_FREQUENT = -4
     NEGATIVE_CONFIDENCE_LOW = -5
+    NEGATIVE_WITH_ALERTS = -6
 
 
 class ReportActivityInstrument(BaseModel):
@@ -221,6 +223,11 @@ class ReportActivityInstrument(BaseModel):
                 facts['negative'].append(ResultFacts.NEGATIVE_LEARNER_RESULT_BAD_ACTIVITY.name)
             if self.get_prob_learner() > 0.8:
                 facts['positive'].append(ResultFacts.POSITIVE_LEARNER_RESULT_FREQUENT.name)
+
+        # check if there are any alerts
+        if Alert.objects.filter(session__activity=self.report.activity,
+                                session__learner=self.report.learner).count() > 0:
+            facts['negative'].append(ResultFacts.NEGATIVE_WITH_ALERTS.name)
 
         return facts
 
