@@ -1,4 +1,4 @@
-#  Copyright (c) 2020 Xavier Baró
+#      Copyright (c) 2020 Xavier Baró
 #
 #      This program is free software: you can redistribute it and/or modify
 #      it under the terms of the GNU Affero General Public License as
@@ -121,13 +121,15 @@ def update_learner_activity_session_report(self, learner_id, activity_id, sessio
                 list(results_qs.values_list('created_at', 'result').order_by('created_at')),
                 cls=DjangoJSONEncoder)
 
+        from tesla_ce.apps.api.v2.serializers.institution.alert import AlertSerializer
         session_data = {
             'instruments': list(results_qs.values_list('instrument', flat=True).distinct()),
-            'alerts': json.dumps(
-                list(models.Alert.objects.filter(session_id=session_id).order_by('created_at')),
-                cls=DjangoJSONEncoder),
-            'data': data
+            'alerts': list(AlertSerializer(models.Alert.objects.filter(session_id=session_id).order_by('created_at'),
+                                           many=True).data),
+            'data': data,
+            'session_id': session_id
         }
+
         data_path = '{}/results/{}/{}/{}/session_{}.json'.format(
                 session_report.session.activity.vle.institution_id,
                 session_report.session.learner.learner_id,
@@ -137,6 +139,31 @@ def update_learner_activity_session_report(self, learner_id, activity_id, sessio
             )
         session_report.data.save(data_path,
                                  ContentFile(json.dumps(session_data, cls=DjangoJSONEncoder).encode('utf-8')))
+
+        max_level = 2  # Ok
+
+        # Update session_report levels with alerts information
+        if len(session_data['alerts']) > 0:
+            if models.Alert.objects.filter(session_id=session_id, level=2).count() > 0:
+                max_level = 4  # Alert
+            elif models.Alert.objects.filter(session_id=session_id, level__in=[1, 3]).count() > 0:
+                max_level = 3  # Warning
+
+        # todo: Update session_report levels with provider results
+        session_report.identity_level = 1
+        session_report.content_level = 1
+        session_report.integrity_level = 1
+
+        for activity_instrument in session_report.session.activity.get_learner_instruments(
+                session_report.session.learner):
+            if activity_instrument.instrument.identity:
+                session_report.identity_level = max_level
+
+            if activity_instrument.instrument.originality or activity_instrument.instrument.authorship:
+                session_report.content_level = max_level
+
+            if activity_instrument.instrument.integrity:
+                session_report.integrity_level = max_level
 
     session_report.save()
 
@@ -310,6 +337,15 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
             'data': session_data
         })
 
+        if session.identity_level > report.identity_level:
+            report.identity_level = session.identity_level
+
+        if session.integrity_level > report.integrity_level:
+            report.integrity_level = session.integrity_level
+
+        if session.content_level > report.content_level:
+            report.content_level = session.content_level
+
     # Add results for attachments without session
     documents = models.Request.objects.filter(learner_id=learner_id,
                                               activity_id=activity_id,
@@ -342,10 +378,14 @@ def update_learner_activity_report(learner_id, activity_id, force_update=False):
 
 
 @celery_app.task(ignore_result=True)
-def update_activity_report(activity_id):
-    pass
+def update_activity_report(activity_id, force_update=False):
+    activity = models.Activity.objects.get(id=activity_id)
+
+    for learner in activity.course.learners.all():
+        update_learner_activity_report(activity_id=activity_id, learner_id=learner.id, force_update=force_update)
 
 
 @celery_app.task(ignore_result=True)
-def update_course_report(course_id):
-    pass
+def update_course_report(course_id, force_update=False):
+    for activity in models.Activity.objects.filter(course_id=course_id):
+        update_activity_report(activity.id, force_update=False)
